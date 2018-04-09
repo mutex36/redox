@@ -7,66 +7,44 @@
 
 namespace redox {
 
-	/**
-	* SmartPtr
-	* A move-only smart pointer
-	*/
-	template<class T, class Allocator = allocator::DefaultAllocator<T>>
+	template<class T, class Allocator = DefaultAllocator<T>>
 	class SmartPtr : public NonCopyable {
 	public:
-		/**
-		* SmartPtr::SmartPtr()
-		* Constructor (Empty)
-		*/
-		SmartPtr() : _raw(nullptr) {
+		using ptr_t = T*;
+
+		_RDX_INLINE SmartPtr() : _raw(nullptr) {
 		}
 
-		/**
-		* SmartPtr::SmartPtr(T*)
-		* Constructs SmartPtr using a raw pointer
-		*/
-		SmartPtr(T* raw) : _raw(raw) {
+		_RDX_INLINE SmartPtr(ptr_t raw) : _raw(raw) {
 		}
 
-		/**
-		* SmartPtr::SmartPtr(&&)
-		* Move constructor
-		*/
-		SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
+		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
 			ref._raw = nullptr;
 		}
 
-		/**
-		* SmartPtr::operator=(&&)
-		* Copy assignment operator
-		*/
-		SmartPtr& operator=(SmartPtr&& ref) {
+		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
 			_raw = ref._raw;
 			ref._raw = nullptr;
 			return *this;
 		}
 
-		/**
-		* SmartPtr::~SmartPtr()
-		* Destructor
-		*/
-		~SmartPtr() {
+		_RDX_INLINE ~SmartPtr() {
 			Allocator::deallocate(_raw);
 		}
 
-		/**
-		* SmartPtr::operator->()
-		* Arrow operator.
-		*/
-		T* operator->() {
+		_RDX_INLINE ptr_t operator->() {
+			return _raw;
+		}
+
+		_RDX_INLINE ptr_t get() {
 			return _raw;
 		}
 
 	private:
-		T* _raw;
+		ptr_t _raw;
 	};
 
-	template<class T, class Allocator = allocator::DefaultAllocator<T>, class...Args>
+	template<class T, class Allocator = DefaultAllocator<T>, class...Args>
 	_RDX_INLINE SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
 		return { new (Allocator::allocate()) T(std::forward<Args>(args)...) };
 	}

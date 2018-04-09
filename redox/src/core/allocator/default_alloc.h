@@ -25,27 +25,15 @@ SOFTWARE.
 */
 #pragma once
 
-namespace redox::allocator {
-	/**
-	* DefaultAllocator
-	* A malloc/free based allocator
-	*/
+namespace redox {
 	template<typename T>
 	struct DefaultAllocator {
 
-		/**
-		* DefaultAllocator::allocate(n)
-		* Allocate a chunk of memory
-		*/
 		static T* allocate(const std::size_t n = 1) {
 			return reinterpret_cast<T*>(
 				std::malloc(sizeof(T) * n));
 		}
 
-		/**
-		* DefaultAllocator::deallocate(p)
-		* Deallocate previously allocated memory
-		*/
 		static void deallocate(T* ptr) {
 			if (ptr != nullptr)
 				std::free(ptr);

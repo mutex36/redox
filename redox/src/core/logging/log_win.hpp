@@ -23,19 +23,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#pragma once
+#include "core\core.h"
+
+#ifdef RDX_PLATFORM_WINDOWS
 #include "core\string.h"
-#include "core\logging\log.h"
-#include "core\buffer.h"
+#include "core\string_format.h"
+#include <Windows.h>
 
-int main() {
+namespace redox {
 
-	redox::Buffer<redox::String> test;
+	template<class...Args>
+	void log(const String& format, const Args&&...args) {
+		static HANDLE kStdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		WriteConsole(kStdHandle, format.cstr(), format.size(), NULL, NULL);
+	}
 
-	test.push("test1214");
-	test.push("test122");
-	test.push("te3f33f34");
-	test.push("te3g3g3214");
-
-
-	
 }
+
+#endif

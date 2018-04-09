@@ -89,6 +89,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -121,18 +122,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp" />
-    <ClCompile Include="src\core\logging\log_win.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\allocator\default_alloc.h" />
     <ClInclude Include="src\core\application.h" />
+    <ClInclude Include="src\core\buffer.h" />
     <ClInclude Include="src\core\core.h" />
     <ClInclude Include="src\core\logging\log.h" />
+    <ClInclude Include="src\core\logging\log_win.hpp" />
     <ClInclude Include="src\core\memory\smart_ptr.h" />
     <ClInclude Include="src\core\non_copyable.h" />
     <ClInclude Include="src\core\platform.h" />
     <ClInclude Include="src\core\string.h" />
+    <ClInclude Include="src\core\string_format.h" />
     <ClInclude Include="src\redox.h" />
   </ItemGroup>
   <ItemGroup>

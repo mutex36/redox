@@ -31,120 +31,20 @@ SOFTWARE.
 #include <cstring> //std::strlen
 
 #include "allocator\default_alloc.h"
-#include "non_copyable.h"
+#include "core\non_copyable.h"
 
 namespace redox {
 	namespace detail {
 
-		/**
-		* FixedString
-		* A fixed-size string container
-		*/
-		template<class CT, std::size_t N>
-		class FixedString {
-		public:
-			using value_type_t = CT;
-			using storage_type_t = typename std::aligned_storage<
-				sizeof(value_type_t), alignof(value_type_t)>::type;
-
-			/**
-			* FixedString::FixedString()
-			* Constructs FixedString (Empty)
-			*/
-			_RDX_INLINE FixedString() : _size(0) {
-				_zero_terminate();
-			}
-
-			/**
-			* FixedString::FixedString()
-			* Constructs FixedString using a c_string and it's length
-			*/
-			FixedString(const value_type_t* str, std::size_t length) {
-				if (length + 1 > N)
-					throw std::bad_alloc();
-
-				_size = length;
-				for (size_t i = 0; i < _size; i++)
-					at(i) = str[i];
-
-				_zero_terminate();
-			}
-
-			/**
-			* FixedString::FixedString()
-			* Constructs FixedString using a zero-terminated string
-			*/
-			FixedString(const value_type_t* str) : FixedString(str, std::strlen(str)) {
-			}
-
-			/**
-			* FixedString::~FixedString()
-			* Destructs FixedString
-			*/
-			~FixedString() = default;
-
-			/**
-			* FixedString::size()
-			* Returns the size of the stored string
-			*/
-			_RDX_INLINE std::size_t size() const {
-				return _size;
-			}
-
-			/**
-			* FixedString::operator[](size_t)
-			* Returns string character at given index
-			*/
-			_RDX_INLINE value_type_t& operator[](const std::size_t index) {
-				return at(index);
-			}
-
-			/**
-			* FixedString::at(size_t)
-			* Returns string character at given index
-			*/
-			_RDX_INLINE value_type_t& at(const std::size_t index) {
-				return *reinterpret_cast<value_type_t*>(_data + index);
-			}
-
-			/**
-			* FixedString::cstr()
-			* Returns a cstring representation
-			*/
-			_RDX_INLINE const value_type_t* cstr() const {
-				return _data;
-			}
-
-		private:
-			_RDX_INLINE void _zero_terminate() {
-				at(_size) = '\0';
-			}
-
-			storage_type_t _data[N];
-			std::size_t _size;
-		};
-
-		/**
-		* DynamicString
-		* A dynamic-size string container
-		*/
 		template<class CT, class Allocator>
-		class DynamicString {
+		class String {
 		public:
 			using value_type_t = CT;
 
-			/**
-			* DynamicString::DynamicString()
-			* Constructs DynamicString (Empty)
-			*/
-			_RDX_INLINE DynamicString() : _size(0), _reserved(0), _data(nullptr) {
+			_RDX_INLINE String() : _size(0), _reserved(0), _data(nullptr) {
 			}
 
-			/**
-			* DynamicString::DynamicString(str)
-			* Constructs FixedString using a c_string and it's length
-			*/
-			DynamicString(const value_type_t* str, std::size_t length) : DynamicString() {
+			String(const value_type_t* str, const std::size_t length) : String() {
 				reserve(length);
 				_size = length;
 				for (size_t i = 0; i < _size; i++)
@@ -154,18 +54,14 @@ namespace redox {
 					_zero_terminate();
 			}
 
-			/**
-			* DynamicString::DynamicString(str)
-			* Constructs DynamicString using a zero-terminated string
-			*/
-			_RDX_INLINE DynamicString(const value_type_t* str) : DynamicString(str, std::strlen(str)) {
+			_RDX_INLINE explicit String(const std::size_t rsv) : String() {
+				reserve(rsv);
 			}
 
-			/**
-			* DynamicString::DynamicString(&&)
-			* Move constructor
-			*/
-			_RDX_INLINE DynamicString(DynamicString&& ref) : _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
+			_RDX_INLINE String(const value_type_t* str) : String(str, std::strlen(str)) {
+			}
+
+			_RDX_INLINE String(String&& ref) : _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
 				ref._data = nullptr;
 
 #ifdef RDX_DEBUG
@@ -176,11 +72,7 @@ namespace redox {
 #endif
 			}
 
-			/**
-			* DynamicString::operator=(&&)
-			* Move assignment operator
-			*/
-			_RDX_INLINE DynamicString& operator=(DynamicString&& ref) {
+			_RDX_INLINE String& operator=(String&& ref) {
 				_data = ref._data;
 				_reserved = ref._reserved;
 				_size = ref._size;
@@ -196,89 +88,71 @@ namespace redox {
 				return *this;
 			}
 
-			/**
-			* DynamicString::DynamicString(const&)
-			* Copy constructor
-			*/
-			_RDX_INLINE DynamicString(const DynamicString& ref) : DynamicString(ref._data, ref._size) {
+			_RDX_INLINE String(const String& ref) : String(ref._data, ref._size) {
 			}
 
-			/**
-			* DynamicString::DynamicString(lhs, rhs)
-			* Constructs DynamicString by merging two strings
-			*/
-			_RDX_INLINE DynamicString(const DynamicString& lhs, const DynamicString& rhs) {
+			_RDX_INLINE String(const String& lhs, const String& rhs) {
 				//TODO
 			}
 
-			/**
-			* DynamicString::operator=(const&)
-			* Copy assignment operator
-			*/
-			DynamicString& operator=(const DynamicString& ref) = delete;
+			_RDX_INLINE String& operator=(const String& ref) {
+				//TODO
+				return *this;
+			}
 
-			/**
-			* DynamicString::operator+(const&)
-			* Concatenates two strings
-			*/
-			_RDX_INLINE DynamicString operator+(const DynamicString& rhs) {
+			_RDX_INLINE String operator+(const String& rhs) {
 				return { *this, rhs };
 			}
 
-			/**
-			* DynamicString::~DynamicString()
-			* Destructs DynamicString
-			*/
-			_RDX_INLINE ~DynamicString() {
+			_RDX_INLINE ~String() {
 				_dealloc();
 			}
 
-			/**
-			* DynamicString::reserve(size_t)
-			* Reserves/allocates memory without initializing it
-			*/
 			_RDX_INLINE void reserve(const std::size_t size) {
 				if (size > _reserved) {
 					_dealloc();
-					//todo:: realloc()
 					_data = Allocator::allocate(size + 1);
 					_reserved = size;
 				}
 			}
 
-			/**
-			* DynamicString::operator[](size_t)
-			* Returns string character at given index
-			*/
+			_RDX_INLINE String substr(const std::size_t off, const std::size_t size) const {
+				return { _data + off, size };
+			}
+
 			_RDX_INLINE value_type_t& operator[](const std::size_t index) {
 				return at(index);
 			}
 
-			/**
-			* DynamicString::at(size_t)
-			* Returns string character at given index
-			*/
 			_RDX_INLINE value_type_t& at(const std::size_t index) {
 				return _data[index];
 			}
 
-			/**
-			* DynamicString::size()
-			* Returns the size of the stored string
-			*/
+			_RDX_INLINE const value_type_t& operator[](const std::size_t index) const {
+				return at(index);
+			}
+
+			_RDX_INLINE const value_type_t& at(const std::size_t index) const {
+				return _data[index];
+			}
+
 			_RDX_INLINE std::size_t size() const {
 				return _size;
 			}
 
-			/**
-			* DynamicString::cstr()
-			* Returns a cstring representation
-			*/
 			_RDX_INLINE const value_type_t* cstr() const {
 				if (_data == nullptr)
 					return _empty;
 				return _data;
 			}
+
+			//_RDX_INLINE value_type_t* begin() const {
+			//	return _data;
+			//}
+
+			//_RDX_INLINE value_type_t* end() const {
+			//	return _data + _size;
+			//}
 
 		private:
 			_RDX_INLINE void _dealloc() {
@@ -296,9 +170,6 @@ namespace redox {
 			std::size_t _reserved;
 		};
 	}
-	
-	template<size_t N>
-	using FixedString = detail::FixedString<i8, N>;
 
-	using DynamicString = detail::DynamicString<i8, allocator::DefaultAllocator<i8>>;
+	using String = detail::String<i8, DefaultAllocator<i8>>;
 }

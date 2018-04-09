@@ -21,9 +21,6 @@
     <ClCompile Include="src\core\application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\logging\log_win.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\application.h">
@@ -47,10 +44,19 @@
     <ClInclude Include="src\core\non_copyable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\memory\smart_ptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\logging\log_win.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\core\logging\log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\memory\smart_ptr.h">
+    <ClInclude Include="src\core\string_format.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
