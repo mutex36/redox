@@ -32,13 +32,36 @@ SOFTWARE.
 #include <Windows.h>
 
 namespace redox {
+	namespace detail {
+		static const HANDLE kStdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	template<class...Args>
-	void log(const String& format, const Args&&...args) {
-		static HANDLE kStdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		WriteConsole(kStdHandle, format.cstr(), format.size(), NULL, NULL);
+		template<class...Args>
+		_RDX_INLINE void log(const redox::String& fmts, const Args&...args) {
+			auto fmt = format(fmts, args...);
+			WriteConsole(detail::kStdHandle, fmt.cstr(), fmt.size(), NULL, NULL);
+		}
+
+		template<class T1, class T2>
+		_RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
+			if (a == b) return true;
+			log("Assertion failed: {0} == {1}\n", a, b);
+			return false;
+		}
+
+		template<class T1, class T2>
+		_RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
+			if (a != b) return true;
+			log("Assertion failed: {0} != {1}\n", a, b);
+			return false;
+		}
+
+#ifdef RDX_COMPILER_MSC
+		template<class...Args>
+		_RDX_INLINE void debug_log(const redox::String& fmts, const Args&...args) {
+			auto fmt = format(fmts, args...);
+			OutputDebugString(fmt.cstr());
+		}
+#endif
 	}
-
 }
-
 #endif

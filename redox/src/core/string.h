@@ -25,13 +25,10 @@ SOFTWARE.
 */
 #pragma once
 #include "core.h"
+#include "allocator\default_alloc.h"
 
 #include <type_traits> //std::aligned_storage
-#include <stdexcept> //std::bad_alloc
-#include <cstring> //std::strlen
-
-#include "allocator\default_alloc.h"
-#include "core\non_copyable.h"
+#include <cstring> //std::strlen, std::memcpy
 
 namespace redox {
 	namespace detail {
@@ -39,100 +36,106 @@ namespace redox {
 		template<class CT, class Allocator>
 		class String {
 		public:
-			using value_type_t = CT;
-
 			_RDX_INLINE String() : _size(0), _reserved(0), _data(nullptr) {
 			}
 
-			String(const value_type_t* str, const std::size_t length) : String() {
-				reserve(length);
-				_size = length;
-				for (size_t i = 0; i < _size; i++)
-					at(i) = str[i];
-
-				if (_size > 0)
+			String(const CT* str, const std::size_t length) : String() {
+				if (length > 0) {
+					_reserve<false>(length);
+					std::memcpy(_data, str, length);
+					_size = length;
 					_zero_terminate();
+				}
 			}
 
 			_RDX_INLINE explicit String(const std::size_t rsv) : String() {
-				reserve(rsv);
+				_reserve<false>(rsv);
+				_zero_terminate();
 			}
 
-			_RDX_INLINE String(const value_type_t* str) : String(str, std::strlen(str)) {
+			_RDX_INLINE String(const CT* str) : String(str, std::strlen(str)) {
 			}
 
+			//MOVE CTOR
 			_RDX_INLINE String(String&& ref) : _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
 				ref._data = nullptr;
-
-#ifdef RDX_DEBUG
-				//Technically, moved-from objects are left in an undefined
-				//state, so this is not exactly needed. But it improves debugging.
 				ref._size = 0;
 				ref._reserved = 0;
-#endif
 			}
 
+			//MOVE ASSIGNMENT OP
 			_RDX_INLINE String& operator=(String&& ref) {
 				_data = ref._data;
 				_reserved = ref._reserved;
 				_size = ref._size;
 
 				ref._data = nullptr;
-
-#ifdef RDX_DEBUG
-				//Technically, moved-from objects are left in an undefined
-				//state, so this is not exactly needed. But it improves debugging.
 				ref._size = 0;
 				ref._reserved = 0;
-#endif
 				return *this;
 			}
 
+			//COPY CTOR
 			_RDX_INLINE String(const String& ref) : String(ref._data, ref._size) {
 			}
-
-			_RDX_INLINE String(const String& lhs, const String& rhs) {
-				//TODO
-			}
-
+			
+			//COPY ASSIGNMENT OP
 			_RDX_INLINE String& operator=(const String& ref) {
-				//TODO
+				if (ref._size > 0) {
+					_reserve<false>(ref._size);
+					std::memcpy(_data, ref._data, ref._size);
+					_size = ref._size;
+					_zero_terminate();
+				}
+				else _size = 0;
 				return *this;
 			}
 
-			_RDX_INLINE String operator+(const String& rhs) {
-				return { *this, rhs };
+			_RDX_INLINE bool operator==(const String& ref) const {
+				if (_size != ref._size)
+					return false;
+				return std::memcmp(_data, ref._data, _size) == 0;
+			}
+
+			_RDX_INLINE String& operator+=(const String& ref) {
+				if (ref._size > 0) {
+					_reserve<true>(_size + ref._size);
+					std::memcpy(_data + _size, ref._data, ref._size);
+					_size += ref._size;
+					_zero_terminate();
+				}
+				return *this;
 			}
 
 			_RDX_INLINE ~String() {
 				_dealloc();
 			}
 
-			_RDX_INLINE void reserve(const std::size_t size) {
-				if (size > _reserved) {
-					_dealloc();
-					_data = Allocator::allocate(size + 1);
-					_reserved = size;
-				}
+			_RDX_INLINE void reserve(const std::size_t rsv) {
+				_reserve<true>(rsv);
 			}
 
 			_RDX_INLINE String substr(const std::size_t off, const std::size_t size) const {
 				return { _data + off, size };
 			}
 
-			_RDX_INLINE value_type_t& operator[](const std::size_t index) {
+			_RDX_INLINE String substr(const std::size_t off) const {
+				return { _data + off, _size - off };
+			}
+
+			_RDX_INLINE CT& operator[](const std::size_t index) {
 				return at(index);
 			}
 
-			_RDX_INLINE value_type_t& at(const std::size_t index) {
+			_RDX_INLINE CT& at(const std::size_t index) {
 				return _data[index];
 			}
 
-			_RDX_INLINE const value_type_t& operator[](const std::size_t index) const {
+			_RDX_INLINE const CT& operator[](const std::size_t index) const {
 				return at(index);
 			}
 
-			_RDX_INLINE const value_type_t& at(const std::size_t index) const {
+			_RDX_INLINE const CT& at(const std::size_t index) const {
 				return _data[index];
 			}
 
@@ -140,31 +143,42 @@ namespace redox {
 				return _size;
 			}
 
-			_RDX_INLINE const value_type_t* cstr() const {
+			_RDX_INLINE bool empty() const {
+				return _size == 0;
+			}
+
+			_RDX_INLINE const CT* cstr() const {
 				if (_data == nullptr)
+					//When the string is default-constructed i.e. empty 
+					//we don't want to allocate memory just for 
+					//zero-termination. Instead we use a small "sentinel" buffer
 					return _empty;
 				return _data;
 			}
 
-			//_RDX_INLINE value_type_t* begin() const {
-			//	return _data;
-			//}
-
-			//_RDX_INLINE value_type_t* end() const {
-			//	return _data + _size;
-			//}
-
 		private:
+			template<bool Copy>
+			_RDX_INLINE void _reserve(const std::size_t rsv) {
+				if (rsv > _reserved) {
+					auto dest = Allocator::allocate(rsv + 1);
+					if (Copy && !empty())
+						std::memcpy(dest, _data, _size);
+					_dealloc();
+					_data = dest;
+					_reserved = rsv;
+				}
+			}
+
 			_RDX_INLINE void _dealloc() {
 				Allocator::deallocate(_data);
 			}
 
 			_RDX_INLINE void _zero_terminate() {
-				at(_size) = '\0';
+				_data[_size] = '\0';
 			}
 
-			value_type_t* _data;
-			const value_type_t _empty[1] = { '\0' };
+			CT* _data;
+			const CT _empty[1] = { '\0' };
 
 			std::size_t _size;
 			std::size_t _reserved;

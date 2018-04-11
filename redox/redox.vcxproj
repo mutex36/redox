@@ -90,6 +90,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/std:c++17 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -114,6 +115,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/std:c++17 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -123,25 +125,30 @@
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\window\window_win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\allocator\default_alloc.h" />
     <ClInclude Include="src\core\application.h" />
     <ClInclude Include="src\core\buffer.h" />
     <ClInclude Include="src\core\core.h" />
+    <ClInclude Include="src\core\error.h" />
+    <ClInclude Include="src\core\function.h" />
+    <ClInclude Include="src\core\hashmap.h" />
     <ClInclude Include="src\core\logging\log.h" />
     <ClInclude Include="src\core\logging\log_win.hpp" />
-    <ClInclude Include="src\core\memory\smart_ptr.h" />
+    <ClInclude Include="src\core\smart_ptr.h" />
     <ClInclude Include="src\core\non_copyable.h" />
     <ClInclude Include="src\core\platform.h" />
     <ClInclude Include="src\core\string.h" />
     <ClInclude Include="src\core\string_format.h" />
+    <ClInclude Include="src\core\sys\windows.h" />
     <ClInclude Include="src\redox.h" />
+    <ClInclude Include="src\window\window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="redox.licenseheader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

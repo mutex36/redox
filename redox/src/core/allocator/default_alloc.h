@@ -24,19 +24,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core\core.h"
+//#include <stdlib.h>
+#include <new>
 
 namespace redox {
 	template<typename T>
 	struct DefaultAllocator {
 
+		static constexpr auto alignment_v =
+			static_cast<std::align_val_t>(alignof(T));
+
 		static T* allocate(const std::size_t n = 1) {
+			//So ::operator new seems to be the only portable
+			//option for aligned, uninitialized memory allocation.
+			//There's C++17 std::aligned_alloc, which is not (yet) 
+			//supported by MSVC...and GCC 7...
 			return reinterpret_cast<T*>(
-				std::malloc(sizeof(T) * n));
+				::operator new(n * sizeof(T), alignment_v));
 		}
 
 		static void deallocate(T* ptr) {
-			if (ptr != nullptr)
-				std::free(ptr);
+			::operator delete(ptr, alignment_v);
 		}
 	};
 }

@@ -23,19 +23,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "core\string.h"
+#include "core\hashmap.h"
+
+#define RDX_LOG_TAG "Main"
 #include "core\logging\log.h"
-#include "core\buffer.h"
 
 int main() {
 
-	redox::Buffer<redox::String> test;
+	redox::Hashmap<float, int> hm(20);
 
-	test.push("test1214");
-	test.push("test122");
-	test.push("te3f33f34");
-	test.push("te3g3g3214");
+	hm[3.0f] = 14;
+
+	RDX_LOG("{0}", hm[12]);
 
 
-	
+	return 0;
 }

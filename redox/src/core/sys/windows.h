@@ -24,21 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core\core.h"
 
-#if defined _WIN32 || defined _WIN64
-#define RDX_PLATFORM_WINDOWS
-#elif defined __unix__ || defined unix
-#define RDX_PLATFORM_UNIX
-#elif defined __linux__
-#define RDX_PLATFORM_LINUX
-#elif defined __APPLE__ || defined __MACH__
-#define RDX_PLATFORM_OSX
-#endif
+#ifdef RDX_PLATFORM_WINDOWS
 
-#if defined _MSC_VER
-#define RDX_COMPILER_MSC
-#elif defined __GNUC__ || defined __GNUG__
-#define RDX_COMPILER_GCC
-#elif defined __clang__
-#define RDX_COMPILER_CLANG
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 #endif

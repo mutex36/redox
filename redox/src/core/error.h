@@ -24,21 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include <stdexcept>
 
-#if defined _WIN32 || defined _WIN64
-#define RDX_PLATFORM_WINDOWS
-#elif defined __unix__ || defined unix
-#define RDX_PLATFORM_UNIX
-#elif defined __linux__
-#define RDX_PLATFORM_LINUX
-#elif defined __APPLE__ || defined __MACH__
-#define RDX_PLATFORM_OSX
-#endif
+namespace redox {
 
-#if defined _MSC_VER
-#define RDX_COMPILER_MSC
-#elif defined __GNUC__ || defined __GNUG__
-#define RDX_COMPILER_GCC
-#elif defined __clang__
-#define RDX_COMPILER_CLANG
-#endif
+	struct Exception : public std::runtime_error {
+		using std::runtime_error::runtime_error;
+	};
+
+}

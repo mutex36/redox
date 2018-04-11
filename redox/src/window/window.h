@@ -24,21 +24,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core\core.h"
+#include "core\string.h"
+#include "core\smart_ptr.h"
+#include "core\function.h"
 
-#if defined _WIN32 || defined _WIN64
-#define RDX_PLATFORM_WINDOWS
-#elif defined __unix__ || defined unix
-#define RDX_PLATFORM_UNIX
-#elif defined __linux__
-#define RDX_PLATFORM_LINUX
-#elif defined __APPLE__ || defined __MACH__
-#define RDX_PLATFORM_OSX
-#endif
+namespace redox {
 
-#if defined _MSC_VER
-#define RDX_COMPILER_MSC
-#elif defined __GNUC__ || defined __GNUG__
-#define RDX_COMPILER_GCC
-#elif defined __clang__
-#define RDX_COMPILER_CLANG
-#endif
+	class Window {
+	public:
+		struct Size {
+			i32 width, height;
+		};
+
+		enum class Event {
+			CLOSE, MINIMIZE
+		};
+
+		using EventFn = Function<void(Event)>;
+
+		Window(const String& name, const Size& size);
+		~Window();
+
+		void show();
+		void process_events();
+		void hide();
+		void set_title(const String& title);
+		void event_callback(EventFn&& fn);
+
+		//internal
+		void _notify_event(const Event ev);
+
+	private:
+		EventFn _eventfn;
+
+		struct PIMPL;
+		SmartPtr<PIMPL> _pimpl;
+	};
+}

@@ -24,21 +24,51 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core\core.h"
+#include "core\non_copyable.h"
+#include "core\allocator\default_alloc.h"
 
-#if defined _WIN32 || defined _WIN64
-#define RDX_PLATFORM_WINDOWS
-#elif defined __unix__ || defined unix
-#define RDX_PLATFORM_UNIX
-#elif defined __linux__
-#define RDX_PLATFORM_LINUX
-#elif defined __APPLE__ || defined __MACH__
-#define RDX_PLATFORM_OSX
-#endif
+#include <type_traits> //std::forward
 
-#if defined _MSC_VER
-#define RDX_COMPILER_MSC
-#elif defined __GNUC__ || defined __GNUG__
-#define RDX_COMPILER_GCC
-#elif defined __clang__
-#define RDX_COMPILER_CLANG
-#endif
+namespace redox {
+
+	template<class T, class Allocator = DefaultAllocator<T>>
+	class SmartPtr : public NonCopyable {
+	public:
+		_RDX_INLINE SmartPtr() : _raw(nullptr) {
+		}
+
+		_RDX_INLINE SmartPtr(T* raw) : _raw(raw) {
+		}
+
+		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
+			ref._raw = nullptr;
+		}
+
+		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
+			_raw = ref._raw;
+			ref._raw = nullptr;
+			return *this;
+		}
+
+		_RDX_INLINE ~SmartPtr() {
+			Allocator::deallocate(_raw);
+		}
+
+		_RDX_INLINE T* operator->() {
+			return _raw;
+		}
+
+		_RDX_INLINE T* get() {
+			return _raw;
+		}
+
+	private:
+		T* _raw;
+	};
+
+	template<class T, class Allocator = DefaultAllocator<T>, class...Args>
+	_RDX_INLINE SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
+		return { new (Allocator::allocate()) T(std::forward<Args>(args)...) };
+	}
+}

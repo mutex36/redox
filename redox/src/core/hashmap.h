@@ -24,21 +24,43 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "buffer.h"
 
-#if defined _WIN32 || defined _WIN64
-#define RDX_PLATFORM_WINDOWS
-#elif defined __unix__ || defined unix
-#define RDX_PLATFORM_UNIX
-#elif defined __linux__
-#define RDX_PLATFORM_LINUX
-#elif defined __APPLE__ || defined __MACH__
-#define RDX_PLATFORM_OSX
-#endif
+namespace redox {
+	template<class Key, class Value>
+	struct Pair {
+		Key key;
+		Value value;
+	};
 
-#if defined _MSC_VER
-#define RDX_COMPILER_MSC
-#elif defined __GNUC__ || defined __GNUG__
-#define RDX_COMPILER_GCC
-#elif defined __clang__
-#define RDX_COMPILER_CLANG
-#endif
+	template<class T>
+	struct Hash {
+		std::size_t operator()(const T& exp) {
+			return static_cast<std::size_t>(exp);
+		}
+	};
+	
+	template<class Key, class Value,
+		class Allocator = DefaultAllocator<Pair<Key, Value>>>
+		class Hashmap {
+		public:
+			Hashmap(const std::size_t size) : _data(size) {
+				_data.construct();
+			}
+			~Hashmap() {
+
+			}
+
+			Value& operator[](const Key& key) {
+				Hash<Key> fn;
+				const std::size_t hash = fn(key);
+				return _data[hash % _data.size()].value;
+			}
+
+		private:
+			Buffer<Pair<Key, Value>> _data;
+	};
+
+	//template<class Key, class Value>
+	//using Hashmap = detail::Hashmap<Key, Value, 
+}
