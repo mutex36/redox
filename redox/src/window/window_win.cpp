@@ -99,9 +99,9 @@ redox::Window::~Window() {
 }
 
 void redox::Window::show() {
-	//SetFocus(_pimpl->handle);
-	//SetForegroundWindow(_pimpl->handle);
 	ShowWindow(_pimpl->handle, SW_SHOW);
+	SetFocus(_pimpl->handle);
+	SetForegroundWindow(_pimpl->handle);
 }
 
 void redox::Window::process_events() {

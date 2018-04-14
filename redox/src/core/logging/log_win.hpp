@@ -29,16 +29,30 @@ SOFTWARE.
 #ifdef RDX_PLATFORM_WINDOWS
 #include "core\string.h"
 #include "core\string_format.h"
-#include <Windows.h>
+#include "core\sys\windows.h"
 
 namespace redox {
 	namespace detail {
-		static const HANDLE kStdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 		template<class...Args>
 		_RDX_INLINE void log(const redox::String& fmts, const Args&...args) {
 			auto fmt = format(fmts, args...);
-			WriteConsole(detail::kStdHandle, fmt.cstr(), fmt.size(), NULL, NULL);
+			WriteConsole(detail::std_handle, fmt.cstr(), fmt.size(), NULL, NULL);
+		}
+
+		template<class T1>
+		_RDX_INLINE bool assert_true(const T1& a) {
+			if (a) return true;
+			log("Assertion failed: {0} is false\n", a);
+			return false;
+		}
+
+		template<class T1>
+		_RDX_INLINE bool assert_false(const T1& a) {
+			if (a) return false;
+			log("Assertion failed: {0} is true\n", a);
+			return false;
 		}
 
 		template<class T1, class T2>

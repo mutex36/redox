@@ -25,14 +25,13 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-//#include <stdlib.h>
-#include <new>
+#include <new> //::operator new
 
-namespace redox {
+namespace redox::allocation {
 	template<typename T>
 	struct DefaultAllocator {
 
-		static constexpr auto alignment_v =
+		static constexpr auto alignment =
 			static_cast<std::align_val_t>(alignof(T));
 
 		static T* allocate(const std::size_t n = 1) {
@@ -41,11 +40,11 @@ namespace redox {
 			//There's C++17 std::aligned_alloc, which is not (yet) 
 			//supported by MSVC...and GCC 7...
 			return reinterpret_cast<T*>(
-				::operator new(n * sizeof(T), alignment_v));
+				::operator new(n * sizeof(T), alignment));
 		}
 
 		static void deallocate(T* ptr) {
-			::operator delete(ptr, alignment_v);
+			::operator delete(ptr, alignment);
 		}
 	};
 }

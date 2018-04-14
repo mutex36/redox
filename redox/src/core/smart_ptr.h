@@ -26,13 +26,14 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\non_copyable.h"
-#include "core\allocator\default_alloc.h"
+#include "core\allocation\default_allocator.h"
 
 #include <type_traits> //std::forward
 
 namespace redox {
 
-	template<class T, class Allocator = DefaultAllocator<T>>
+	template<class T,
+		class Allocator = allocation::DefaultAllocator<T>>
 	class SmartPtr : public NonCopyable {
 	public:
 		_RDX_INLINE SmartPtr() : _raw(nullptr) {
@@ -67,7 +68,7 @@ namespace redox {
 		T* _raw;
 	};
 
-	template<class T, class Allocator = DefaultAllocator<T>, class...Args>
+	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
 	_RDX_INLINE SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
 		return { new (Allocator::allocate()) T(std::forward<Args>(args)...) };
 	}

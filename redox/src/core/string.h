@@ -25,7 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "core.h"
-#include "allocator\default_alloc.h"
+#include "allocation\default_allocator.h"
 
 #include <type_traits> //std::aligned_storage
 #include <cstring> //std::strlen, std::memcpy
@@ -33,13 +33,14 @@ SOFTWARE.
 namespace redox {
 	namespace detail {
 
-		template<class CT, class Allocator>
+		template<class CT,
+			class Allocator = allocation::DefaultAllocator<CT>>
 		class String {
 		public:
 			_RDX_INLINE String() : _size(0), _reserved(0), _data(nullptr) {
 			}
 
-			String(const CT* str, const std::size_t length) : String() {
+			String(const CT* str, std::size_t length) : String() {
 				if (length > 0) {
 					_reserve<false>(length);
 					std::memcpy(_data, str, length);
@@ -48,7 +49,7 @@ namespace redox {
 				}
 			}
 
-			_RDX_INLINE explicit String(const std::size_t rsv) : String() {
+			_RDX_INLINE explicit String(std::size_t rsv) : String() {
 				_reserve<false>(rsv);
 				_zero_terminate();
 			}
@@ -111,36 +112,32 @@ namespace redox {
 				_dealloc();
 			}
 
-			_RDX_INLINE void reserve(const std::size_t rsv) {
+			_RDX_INLINE void reserve(std::size_t rsv) {
 				_reserve<true>(rsv);
 			}
 
-			_RDX_INLINE String substr(const std::size_t off, const std::size_t size) const {
+			_RDX_INLINE String substr(std::size_t off, std::size_t size) const {
 				return { _data + off, size };
 			}
 
-			_RDX_INLINE String substr(const std::size_t off) const {
+			_RDX_INLINE String substr(std::size_t off) const {
 				return { _data + off, _size - off };
 			}
 
-			_RDX_INLINE CT& operator[](const std::size_t index) {
-				return at(index);
-			}
-
-			_RDX_INLINE CT& at(const std::size_t index) {
+			_RDX_INLINE CT& operator[](std::size_t index) {
 				return _data[index];
 			}
 
-			_RDX_INLINE const CT& operator[](const std::size_t index) const {
-				return at(index);
-			}
-
-			_RDX_INLINE const CT& at(const std::size_t index) const {
+			_RDX_INLINE const CT& operator[](std::size_t index) const {
 				return _data[index];
 			}
 
 			_RDX_INLINE std::size_t size() const {
 				return _size;
+			}
+
+			_RDX_INLINE std::size_t capacity() const {
+				return _reserved;
 			}
 
 			_RDX_INLINE bool empty() const {
@@ -158,7 +155,7 @@ namespace redox {
 
 		private:
 			template<bool Copy>
-			_RDX_INLINE void _reserve(const std::size_t rsv) {
+			_RDX_INLINE void _reserve(std::size_t rsv) {
 				if (rsv > _reserved) {
 					auto dest = Allocator::allocate(rsv + 1);
 					if (Copy && !empty())
@@ -185,5 +182,5 @@ namespace redox {
 		};
 	}
 
-	using String = detail::String<i8, DefaultAllocator<i8>>;
+	using String = detail::String<i8>;
 }

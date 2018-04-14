@@ -23,15 +23,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "graphics\vulkan\render_system.h"
+#pragma once
+#include "core\core.h"
 
-int main() {
-
-	redox::graphics::RenderSystem rs;
-
-
-
-
-
-	return 0;
+namespace redox::math {
+	template<class T>
+	constexpr auto round_multiple(T n, T m) {
+		if (m == 0) return n;
+		auto rmd = n % m;
+		if (rmd == 0) return n;
+		return n + m - rmd;
+	}
 }

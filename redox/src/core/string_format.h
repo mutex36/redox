@@ -53,37 +53,65 @@ namespace redox {
 		return std::strtoull(expr.cstr(), NULL, 10);
 	}
 
-	_RDX_INLINE ::redox::String lexical_cast(const i32& expr) {
-		i8 buffer[16]; //TODO: unsafe
-		_itoa_s(expr, buffer, sizeof(buffer), 10);
+	namespace detail {
+		template<class T>
+		struct binary { const T& value; };
+	}
+
+	template<class T>
+	detail::binary<T> binary(const T& value) {
+		return detail::binary<T>{value};
+	}
+
+	template<class T>
+	_RDX_INLINE redox::String lexical_cast(const detail::binary<T>& expr) {
+		redox::String output(sizeof(T) * 8);
+		for (std::size_t i = 0; i < output.capacity(); ++i)
+			output += ((expr.value >> i) & 0x1) ? "1" : "0";
+		return output;
+	}
+
+	_RDX_INLINE redox::String lexical_cast(const f64& expr) {
+		i8 buffer[_CVTBUFSIZE];
+		_gcvt_s(buffer, expr, 15);
 		return buffer;
 	}
 
-	_RDX_INLINE::redox::String lexical_cast(const i64& expr) {
+	_RDX_INLINE redox::String lexical_cast(const i32& expr) {
+		i8 buffer[16]; //TODO: unsafe
+		_itoa_s(expr, buffer, 10);
+		return buffer;
+	}
+
+	_RDX_INLINE redox::String lexical_cast(const i64& expr) {
 		 i8 buffer[16]; //TODO: unsafe
 		_i64toa_s(expr, buffer, sizeof(buffer), 10);
 		return buffer;
 	}
 
-	_RDX_INLINE::redox::String lexical_cast(const u64& expr) {
+	_RDX_INLINE redox::String lexical_cast(const u64& expr) {
 		i8 buffer[16]; //TODO: unsafe
 		_ui64toa_s(expr, buffer, sizeof(buffer), 10);
 		return buffer;
 	}
 
-	_RDX_INLINE::redox::String lexical_cast(const u32& expr) {
+	_RDX_INLINE redox::String lexical_cast(const u32& expr) {
 		i8 buffer[16]; //TODO: unsafe
 		_itoa_s(expr, buffer, sizeof(buffer), 10);
 		return buffer;
 	}
 
 	template<std::size_t N>
-	_RDX_INLINE ::redox::String lexical_cast(const char(&expr)[N]) {
+	_RDX_INLINE redox::String lexical_cast(const char(&expr)[N]) {
 		return static_cast<const char*>(expr);
 	}
 
-	_RDX_INLINE ::redox::String lexical_cast(const bool& expr) {
+	_RDX_INLINE redox::String lexical_cast(const bool& expr) {
 		return expr ? "true" : "false";
+	}
+
+	_RDX_INLINE redox::String lexical_cast(const String& expr) {
+		return expr;
 	}
 
 	_RDX_INLINE String format(const String& format) {
@@ -93,7 +121,7 @@ namespace redox {
 	template<class...Args>
 	String format(const String& format, const Args&...args) {
 		Buffer<String> parsed = { lexical_cast(args)... };
-		i8 s0 = -1; i8 s1 = 0;
+		std::size_t s0 = -1; std::size_t s1 = 0;
 		String output;
 
 		for (std::size_t i = 0; i < format.size(); ++i) {

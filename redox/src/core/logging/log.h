@@ -24,7 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core/core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
 #include "log_win.hpp"
@@ -45,4 +44,12 @@ if (!redox::detail::assert_eq(a,b))								\
 if (!redox::detail::assert_neq(a,b))							\
 	_RDX_DEBUG_BREAK();											\
 
-//#LOG#
+#define RDX_ASSERT_TRUE(a)										\
+if (!redox::detail::assert_true(a))								\
+	_RDX_DEBUG_BREAK();											\
+
+#define RDX_ASSERT_FALSE(a)										\
+if (!redox::detail::assert_false(a))							\
+	_RDX_DEBUG_BREAK();											\
+
+//###

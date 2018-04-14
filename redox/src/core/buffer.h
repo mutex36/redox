@@ -25,52 +25,56 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\allocator\default_alloc.h"
+#include "core\allocation\default_allocator.h"
+#include "core\allocation\growth_policy.h"
 
 #include <initializer_list>
-#include <type_traits> //std::move()
+#include <type_traits> //std::move
 #include <new> //placement-new
+#include <algorithm> //std::max
 
 namespace redox {
-
-	template<class T, class Allocator = DefaultAllocator<T>>
+	template<class T, 
+		class Allocator = allocation::DefaultAllocator<T>,
+		class GrowthPolicy = allocation::DefaultGrowth>
 	class Buffer {
 	public:
-		static constexpr f32 kGrowthFactor = 2.0f;
-
 		_RDX_INLINE Buffer() : _data(nullptr), _reserved(0), _size(0) {
 		}
 
-		_RDX_INLINE Buffer(const std::size_t size) : Buffer() {
-			reserve(size);
+		_RDX_INLINE Buffer(std::size_t size) : Buffer() {
+			resize(size);
 		}
 
-		_RDX_INLINE Buffer(std::initializer_list<T> values) : Buffer(values.size()) {
-			for (auto& v : values) {
+		_RDX_INLINE Buffer(std::initializer_list<T> values) : Buffer() {
+			reserve(values.size());
+
+			//Unfortunately, initializer_list is a static container
+			//that does not provide non-const access to it's data
+			//This makes moving impossible and copying the only viable option.
+			for (auto& v : values)
 				_push_no_checks(v);
-			}
 		}
 
-		void push(const T& element) {
-			if (_full()) {
-				//It makes little sense to grow the vector by just one element
-				//Doubling (GrowthFactor) the size is likely more efficient
-				//as it reduces expensive reallocations/copies
-				reserve(static_cast<std::size_t>((_size + 1) * kGrowthFactor));
-			}
-			_push_no_checks(element);
+		template<class _T>
+		void push(_T&& element) {
+			_realloc_check();
+			_push_no_checks(std::forward<_T>(element));
 		}
 
 		_RDX_INLINE ~Buffer() {
+			for (auto& c : *this) c.~T();
 			_dealloc();
 		}
 
-		_RDX_INLINE T& operator[](const std::size_t index) {
-			return at(index);
+		_RDX_INLINE T& operator[](std::size_t index) {
+			if (index >= _size)
+				throw Exception("index out of bounds");
+			return _data[index];
 		}
 
-		_RDX_INLINE T& at(const std::size_t index) {
-			if (index >= _size) 
+		_RDX_INLINE const T& operator[](std::size_t index) const {
+			if (index >= _size)
 				throw Exception("index out of bounds");
 			return _data[index];
 		}
@@ -88,11 +92,18 @@ namespace redox {
 			}
 		}
 
-		template<class...Args>
-		_RDX_INLINE void construct(Args&&...args) {
-			for (std::size_t elm = 0; elm < _reserved; ++elm)
-				new (_data + elm) T(std::forward<Args>(args)...);
-			_size = _reserved;
+		void resize(const std::size_t size) {
+			static_assert(std::is_default_constructible_v<T>);
+			if (size > _size) {
+				reserve(size);
+				for (std::size_t elm = _size; elm < size; ++elm)
+					new (_data + elm) T();
+				_size = size;
+			}
+		}
+
+		_RDX_INLINE T* data() {
+			return _data;
 		}
 
 		_RDX_INLINE std::size_t size() const {
@@ -103,22 +114,31 @@ namespace redox {
 			return _size == 0;
 		}
 
-		auto begin() const {
-			return _data; 
+		_RDX_INLINE auto begin() const {
+			return _data;
 		}
 
-		auto end() const {
+		_RDX_INLINE auto end() const {
 			return _data + _size;
 		}
 
 	private:
-		_RDX_INLINE void _push_no_checks(const T& element) {
-			new (_data + _size++) T(element);
+		_RDX_INLINE void _realloc_check() {
+			if (_full()) {
+				//It makes little sense to grow the vector by just one element
+				//Doubling (GrowthPolicy) the size is likely more efficient
+				//as it reduces expensive reallocations/copies
+				GrowthPolicy fn;
+				reserve(fn(_size));
+			}
+		}
+
+		template<class _T>
+		_RDX_INLINE void _push_no_checks(_T&& element) {
+			new (_data + _size++) T(std::forward<_T>(element));
 		}
 
 		_RDX_INLINE void _dealloc() {
-			for (std::size_t i = 0; i < _size; i++)
-				_data[i].~T();
 			Allocator::deallocate(_data);
 		}
 

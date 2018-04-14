@@ -89,7 +89,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;D:\VulkanSDK\1.1.70.1\Include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++17 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -124,25 +124,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\application.cpp" />
+    <ClCompile Include="src\graphics\vulkan\render_system.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\window\window_win.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\core\allocator\default_alloc.h" />
+    <ClInclude Include="src\core\allocation\default_allocator.h" />
+    <ClInclude Include="src\core\allocation\growth_policy.h" />
     <ClInclude Include="src\core\application.h" />
     <ClInclude Include="src\core\buffer.h" />
     <ClInclude Include="src\core\core.h" />
+    <ClInclude Include="src\core\dynamic_bitset.h" />
     <ClInclude Include="src\core\error.h" />
     <ClInclude Include="src\core\function.h" />
     <ClInclude Include="src\core\hashmap.h" />
     <ClInclude Include="src\core\logging\log.h" />
     <ClInclude Include="src\core\logging\log_win.hpp" />
+    <ClInclude Include="src\core\profiling\profiler.h" />
+    <ClInclude Include="src\core\profiling\profiler_win.hpp" />
     <ClInclude Include="src\core\smart_ptr.h" />
     <ClInclude Include="src\core\non_copyable.h" />
     <ClInclude Include="src\core\platform.h" />
     <ClInclude Include="src\core\string.h" />
     <ClInclude Include="src\core\string_format.h" />
     <ClInclude Include="src\core\sys\windows.h" />
+    <ClInclude Include="src\graphics\vulkan\render_system.h" />
+    <ClInclude Include="src\math\util.h" />
     <ClInclude Include="src\redox.h" />
     <ClInclude Include="src\window\window.h" />
   </ItemGroup>
