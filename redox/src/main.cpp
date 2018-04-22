@@ -25,13 +25,18 @@ SOFTWARE.
 */
 #include "graphics\vulkan\render_system.h"
 
+#include "core\string_format.h"
+
+
 int main() {
 
-	redox::graphics::RenderSystem rs;
+	redox::Window wnd("Test", {200,200});
+	redox::RenderSystem rs(&wnd);
+	wnd.show();
 
-
-
-
+	for (;;) {
+		wnd.process_events();
+	}
 
 	return 0;
 }

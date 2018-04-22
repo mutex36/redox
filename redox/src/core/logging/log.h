@@ -36,6 +36,8 @@ SOFTWARE.
 #define RDX_LOG(fmt, ...)										\
 redox::detail::log(RDX_LOG_TAG##": "##fmt##"\n",  __VA_ARGS__)	\
 
+#define RDX_ASSERT(a) RDX_ASSERT_TRUE(a)						\
+
 #define RDX_ASSERT_EQ(a,b)										\
 if (!redox::detail::assert_eq(a,b))								\
 	_RDX_DEBUG_BREAK();											\

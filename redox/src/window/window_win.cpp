@@ -24,14 +24,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "window.h"
-
-#define RDX_LOG_TAG "WindowSystem"
 #include "core\logging\log.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
 #include "core\sys\windows.h"
 
-struct redox::Window::PIMPL {
+#define RDX_LOG_TAG "WindowSystem"
+
+struct redox::Window::internal {
 	HWND handle;
 	HINSTANCE instance;
 	String classname;
@@ -66,45 +66,45 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 }
 
 redox::Window::Window(const String& title, const Size& size) {
-	_pimpl = make_smart_ptr<PIMPL>();
-	_pimpl->instance = GetModuleHandle(0);
-	_pimpl->classname = "redox_window";
+	_internal = make_smart_ptr<internal>();
+	_internal->instance = GetModuleHandle(0);
+	_internal->classname = "redox_window";
 
 	DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
 	WNDCLASS wndClass{};
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
 	wndClass.lpfnWndProc = WndProc;
-	wndClass.hInstance = _pimpl->instance;
+	wndClass.hInstance = _internal->instance;
 	wndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wndClass.hCursor = LoadCursor(NULL, IDC_HAND);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wndClass.lpszClassName = _pimpl->classname.cstr();
+	wndClass.lpszClassName = _internal->classname.cstr();
 
 	RegisterClass(&wndClass);
 
 	RECT r{ 0, 0, size.width, size.height };
 	AdjustWindowRect(&r, dwStyle, FALSE);
 
-	_pimpl->handle = CreateWindowEx(
-		NULL, _pimpl->classname.cstr(), title.cstr(), dwStyle,
+	_internal->handle = CreateWindowEx(
+		NULL, _internal->classname.cstr(), title.cstr(), dwStyle,
 		r.left, r.left, r.right - r.left, r.bottom - r.top,
-		NULL, NULL, _pimpl->instance, this);
+		NULL, NULL, _internal->instance, this);
 }
 
 
 redox::Window::~Window() {
-	DestroyWindow(_pimpl->handle);
-	UnregisterClass(_pimpl->classname.cstr(), _pimpl->instance);
+	DestroyWindow(_internal->handle);
+	UnregisterClass(_internal->classname.cstr(), _internal->instance);
 }
 
-void redox::Window::show() {
-	ShowWindow(_pimpl->handle, SW_SHOW);
-	SetFocus(_pimpl->handle);
-	SetForegroundWindow(_pimpl->handle);
+void redox::Window::show() const {
+	ShowWindow(_internal->handle, SW_SHOW);
+	SetFocus(_internal->handle);
+	SetForegroundWindow(_internal->handle);
 }
 
-void redox::Window::process_events() {
+void redox::Window::process_events() const {
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
@@ -112,20 +112,32 @@ void redox::Window::process_events() {
 	}
 }
 
-void redox::Window::hide() {
-	ShowWindow(_pimpl->handle, SW_HIDE);
+void redox::Window::hide() const {
+	ShowWindow(_internal->handle, SW_HIDE);
 }
 
 void redox::Window::set_title(const String& title) {
-	SetWindowText(_pimpl->handle, title.cstr());
+	SetWindowText(_internal->handle, title.cstr());
 }
 
-void redox::Window::event_callback(EventFn&& fn) {
+void redox::Window::event_callback(EventFn fn) {
 	_eventfn = fn;
+}
+
+void* redox::Window::get(const String & key) const {
+	if (key == "hwnd")
+		return _internal->handle;
+
+	if (key == "hinstance")
+		return _internal->instance;
+
+	return nullptr;
 }
 
 void redox::Window::_notify_event(const Event ev) {
 	if (_eventfn) 
 		_eventfn(ev);
 }
+
+
 #endif

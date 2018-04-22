@@ -5,5 +5,8 @@
 
 #pragma once
 
-#include "gtest/gtest.h"
+#include "gtest\gtest.h"
 #include "redox.h"
+
+#include "core\hashmap.h"
+#include "core\smart_ptr.h"

@@ -32,9 +32,7 @@ SOFTWARE.
 
 namespace redox {
 	namespace detail {
-
-		template<class CT,
-			class Allocator = allocation::DefaultAllocator<CT>>
+		template<class CT, class Allocator>
 		class String {
 		public:
 			_RDX_INLINE String() : _size(0), _reserved(0), _data(nullptr) {
@@ -54,11 +52,16 @@ namespace redox {
 				_zero_terminate();
 			}
 
+			template<std::size_t Length>
+			_RDX_INLINE String(const char(&literal)[Length]) : String(literal, Length){
+			}
+
 			_RDX_INLINE String(const CT* str) : String(str, std::strlen(str)) {
 			}
 
 			//MOVE CTOR
-			_RDX_INLINE String(String&& ref) : _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
+			_RDX_INLINE String(String&& ref)  
+				: _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
 				ref._data = nullptr;
 				ref._size = 0;
 				ref._reserved = 0;
@@ -149,7 +152,7 @@ namespace redox {
 					//When the string is default-constructed i.e. empty 
 					//we don't want to allocate memory just for 
 					//zero-termination. Instead we use a small "sentinel" buffer
-					return _empty;
+					return &_empty;
 				return _data;
 			}
 
@@ -175,12 +178,12 @@ namespace redox {
 			}
 
 			CT* _data;
-			const CT _empty[1] = { '\0' };
+			const CT _empty = '\0';
 
 			std::size_t _size;
 			std::size_t _reserved;
 		};
 	}
 
-	using String = detail::String<i8>;
+	using String = detail::String<i8, allocation::DefaultAllocator<i8>>;
 }

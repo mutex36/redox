@@ -27,7 +27,6 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\string.h"
 #include "core\smart_ptr.h"
-#include "core\function.h"
 
 namespace redox {
 
@@ -41,16 +40,18 @@ namespace redox {
 			CLOSE, MINIMIZE
 		};
 
-		using EventFn = Function<void(Event)>;
+		typedef void (*EventFn)(const Event);
 
 		Window(const String& name, const Size& size);
 		~Window();
 
-		void show();
-		void process_events();
-		void hide();
+		void show() const;
+		void process_events() const;
+		void hide() const;
 		void set_title(const String& title);
-		void event_callback(EventFn&& fn);
+		void event_callback(EventFn fn);
+
+		void* get(const String& key) const;
 
 		//internal
 		void _notify_event(const Event ev);
@@ -58,7 +59,7 @@ namespace redox {
 	private:
 		EventFn _eventfn;
 
-		struct PIMPL;
-		SmartPtr<PIMPL> _pimpl;
+		struct internal;
+		SmartPtr<internal> _internal;
 	};
 }

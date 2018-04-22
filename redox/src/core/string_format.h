@@ -59,7 +59,7 @@ namespace redox {
 	}
 
 	template<class T>
-	detail::binary<T> binary(const T& value) {
+	_RDX_INLINE detail::binary<T> binary(const T& value) {
 		return detail::binary<T>{value};
 	}
 

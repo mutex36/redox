@@ -29,22 +29,25 @@ SOFTWARE.
 
 namespace redox::allocation {
 	template<typename T>
-	struct DefaultAllocator {
+	class DefaultAllocator {
+	public:
+		using value_type = T;
+		using ptr_type = T*;
 
-		static constexpr auto alignment =
-			static_cast<std::align_val_t>(alignof(T));
+		//So {::operator new} seems to be the only portable
+		//option for aligned, uninitialized memory allocation.
+		//There's C++17 std::aligned_alloc, which is not (yet) 
+		//supported by MSVC...and GCC 7...
 
-		static T* allocate(const std::size_t n = 1) {
-			//So ::operator new seems to be the only portable
-			//option for aligned, uninitialized memory allocation.
-			//There's C++17 std::aligned_alloc, which is not (yet) 
-			//supported by MSVC...and GCC 7...
-			return reinterpret_cast<T*>(
-				::operator new(n * sizeof(T), alignment));
+		static ptr_type allocate(std::size_t n = 1) {
+			return reinterpret_cast<ptr_type>(
+				::operator new(n * sizeof(value_type),
+					static_cast<std::align_val_t>(alignof(value_type))));
 		}
 
-		static void deallocate(T* ptr) {
-			::operator delete(ptr, alignment);
+		static void deallocate(ptr_type ptr) noexcept {
+			::operator delete(ptr, 
+				static_cast<std::align_val_t>(alignof(value_type)), std::nothrow_t{});
 		}
 	};
 }

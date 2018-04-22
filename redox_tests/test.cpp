@@ -100,7 +100,7 @@ TEST(Bitset, SetGet) {
 }
 
 TEST(Hashmap, SetGet) {
-	redox::Hashmap<int, int> hm;
+	redox::Hashmap<size_t, size_t> hm;
 
 	for (size_t i = 0; i < 1000; i++)
 		hm.push(i, i);
@@ -108,4 +108,17 @@ TEST(Hashmap, SetGet) {
 	for (size_t i = 0; i < 1000; i++)
 		ASSERT_EQ(hm.get(i).value(), i);
 
+}
+
+struct Foo {
+	Foo(int _a, int _b) : a(_a), b(_b) {
+	}
+	int a, b;
+};
+
+TEST(SmartPtr, Construct) {
+	auto dd = redox::make_smart_ptr<Foo>(12, 44);
+
+	ASSERT_EQ(dd->a, 12);
+	ASSERT_EQ(dd->b, 44);
 }

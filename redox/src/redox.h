@@ -31,5 +31,3 @@ SOFTWARE.
 #include "core\buffer.h"
 #include "core\string.h"
 #include "core\string_format.h"
-
-#include "core\hashmap.h"

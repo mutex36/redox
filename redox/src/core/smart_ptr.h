@@ -36,10 +36,11 @@ namespace redox {
 		class Allocator = allocation::DefaultAllocator<T>>
 	class SmartPtr : public NonCopyable {
 	public:
-		_RDX_INLINE SmartPtr() : _raw(nullptr) {
-		}
+		using ptr_type = T*;
 
-		_RDX_INLINE SmartPtr(T* raw) : _raw(raw) {
+		SmartPtr() : _raw(nullptr) {
+		}
+		SmartPtr(ptr_type ptr) : _raw(ptr) {
 		}
 
 		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
@@ -56,20 +57,20 @@ namespace redox {
 			Allocator::deallocate(_raw);
 		}
 
-		_RDX_INLINE T* operator->() {
+		_RDX_INLINE ptr_type operator->() const {
 			return _raw;
 		}
 
-		_RDX_INLINE T* get() {
+		_RDX_INLINE ptr_type get() const {
 			return _raw;
 		}
 
 	private:
-		T* _raw;
+		ptr_type _raw;
 	};
 
 	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	_RDX_INLINE SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
+	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
 		return { new (Allocator::allocate()) T(std::forward<Args>(args)...) };
 	}
 }
