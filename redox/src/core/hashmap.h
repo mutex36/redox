@@ -25,7 +25,10 @@ SOFTWARE.
 */
 #pragma once
 #include "buffer.h"
+#include "hash.h"
 #include "dynamic_bitset.h"
+#include "non_copyable.h"
+
 #include "allocation\default_allocator.h"
 #include "allocation\growth_policy.h"
 
@@ -39,13 +42,6 @@ namespace redox {
 		Value value;
 	};
 
-	template<class T>
-	struct Hash {
-		std::size_t operator()(const T& exp) {
-			return static_cast<std::size_t>(exp);
-		}
-	};
-
 	struct LinearProbing {
 		std::size_t operator()(std::size_t slot, std::size_t index, std::size_t n) {
 			return (slot + index) % n;
@@ -56,12 +52,21 @@ namespace redox {
 		class Allocator = allocation::DefaultAllocator<Pair<Key, Value>>,
 		class GrowthPolicy = allocation::ExponentialGrowth,
 		class ProbingPolicy = LinearProbing>
-		class Hashmap {
+		class Hashmap : public NonCopyable {
 		public:
 			Hashmap(std::size_t size) : _data(size), _flags(size) {
 			}
 			Hashmap() = default;
 			~Hashmap() = default;
+
+			Hashmap(Hashmap&& ref) : _flags(std::move(ref._flags)), _data(std::move(ref._data)) {
+			}
+
+			_RDX_INLINE Hashmap& operator=(Hashmap&& ref) {
+				_flags = std::move(ref._flags);
+				_data = std::move(ref._data);
+				return *this;
+			}
 
 			template<class _Key, class _Value>
 			void push(_Key&& key, _Value&& value) {
@@ -81,7 +86,7 @@ namespace redox {
 
 			std::optional<Value> get(const Key& key) const {
 				if (empty())
-					throw Exception("hashmap is empty");
+					return std::nullopt;
 
 				auto slot = _hash(key);
 				if (_flags.get(slot)) {

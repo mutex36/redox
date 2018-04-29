@@ -25,52 +25,45 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\non_copyable.h"
-#include "core\allocation\default_allocator.h"
+#include "core\string.h"
+#include "core\smart_ptr.h"
 
-#include <type_traits> //std::forward
+#include <functional> //std::function
 
 namespace redox {
-
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>>
-	class SmartPtr : public NonCopyable {
+	class Window {
 	public:
-		using ptr_type = T*;
+		struct Bounds {
+			i32 width, height;
+		};
 
-		SmartPtr() : _raw(nullptr) {
-		}
-		SmartPtr(ptr_type ptr) : _raw(ptr) {
-		}
+		enum class Event {
+			CLOSE, MINIMIZE
+		};
 
-		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
-			ref._raw = nullptr;
-		}
+		using EventFn = std::function<void(Event)>;
 
-		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
-			_raw = ref._raw;
-			ref._raw = nullptr;
-			return *this;
-		}
+		Window(const String& name, const Bounds& bounds);
+		~Window();
 
-		_RDX_INLINE ~SmartPtr() {
-			Allocator::deallocate(_raw);
-		}
+		void show() const;
+		void process_events() const;
+		void hide() const;
+		void set_title(const String& title);
+		void set_callback(EventFn&& fn);
+		bool is_minimized() const;
+		Bounds bounds() const;
 
-		_RDX_INLINE ptr_type operator->() const {
-			return _raw;
-		}
+		void* get(const String& key) const;
 
-		_RDX_INLINE ptr_type get() const {
-			return _raw;
-		}
+		//internal
+		void _notify_event(const Event ev);
 
 	private:
-		ptr_type _raw;
-	};
+		EventFn _eventfn;
+		Bounds _bounds;
 
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
+		struct internal;
+		SmartPtr<internal> _internal;
+	};
 }

@@ -24,53 +24,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\non_copyable.h"
-#include "core\allocation\default_allocator.h"
-
-#include <type_traits> //std::forward
+#include "vulkan.h"
+#include "graphics.h"
+#include "shader.h"
+#include "swapchain.h"
+#include "resources\resource.h"
 
 namespace redox {
-
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>>
-	class SmartPtr : public NonCopyable {
+	class Pipeline {
 	public:
-		using ptr_type = T*;
+		Pipeline(Graphics& graphics, Swapchain& swapchain);
+		~Pipeline();
 
-		SmartPtr() : _raw(nullptr) {
-		}
-		SmartPtr(ptr_type ptr) : _raw(ptr) {
-		}
+		VkPipeline handle() const;
+		VkRenderPass render_pass() const;
 
-		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
-			ref._raw = nullptr;
-		}
-
-		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
-			_raw = ref._raw;
-			ref._raw = nullptr;
-			return *this;
-		}
-
-		_RDX_INLINE ~SmartPtr() {
-			Allocator::deallocate(_raw);
-		}
-
-		_RDX_INLINE ptr_type operator->() const {
-			return _raw;
-		}
-
-		_RDX_INLINE ptr_type get() const {
-			return _raw;
-		}
+		VkFramebuffer operator[](std::size_t index);
 
 	private:
-		ptr_type _raw;
-	};
+		void _init();
+		void _init_fb();
 
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
+		VkPipeline _handle;
+		VkPipelineLayout _layout;
+		VkRenderPass _renderPass;
+
+		Buffer<VkFramebuffer> _frameBuffers;
+
+		Resource<Shader> _vs;
+		Resource<Shader> _fs;
+
+		Graphics& _graphicsRef;
+		Swapchain& _swapchainRef;
+	};
 }

@@ -27,6 +27,8 @@ SOFTWARE.
 #include "core\core.h"
 #include <new> //::operator new
 
+#include <cstdlib>
+
 namespace redox::allocation {
 	template<typename T>
 	class DefaultAllocator {
@@ -34,10 +36,13 @@ namespace redox::allocation {
 		using value_type = T;
 		using ptr_type = T*;
 
+		template<class _T>
+		using rebind = DefaultAllocator<_T>;
+
 		//So {::operator new} seems to be the only portable
 		//option for aligned, uninitialized memory allocation.
 		//There's C++17 std::aligned_alloc, which is not (yet) 
-		//supported by MSVC...and GCC 7...
+		//supported by latest MSVC...and GCC 7...and clang
 
 		static ptr_type allocate(std::size_t n = 1) {
 			return reinterpret_cast<ptr_type>(

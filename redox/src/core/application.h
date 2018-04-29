@@ -24,6 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "platform\window.h"
+#include "graphics\vulkan\render_system.h"
+#include "core\config\config.h"
+#include "core\sys\timer.h"
 
 namespace redox {
 	class Application {
@@ -31,6 +35,13 @@ namespace redox {
 		Application();
 		~Application();
 
+		void run();
 
+	private:
+		Window _window;
+		RenderSystem _renderer;
+		Timer _timer;
+
+		bool _running{ false };
 	};
 }

@@ -25,52 +25,8 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\non_copyable.h"
-#include "core\allocation\default_allocator.h"
-
-#include <type_traits> //std::forward
 
 namespace redox {
-
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>>
-	class SmartPtr : public NonCopyable {
-	public:
-		using ptr_type = T*;
-
-		SmartPtr() : _raw(nullptr) {
-		}
-		SmartPtr(ptr_type ptr) : _raw(ptr) {
-		}
-
-		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
-			ref._raw = nullptr;
-		}
-
-		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
-			_raw = ref._raw;
-			ref._raw = nullptr;
-			return *this;
-		}
-
-		_RDX_INLINE ~SmartPtr() {
-			Allocator::deallocate(_raw);
-		}
-
-		_RDX_INLINE ptr_type operator->() const {
-			return _raw;
-		}
-
-		_RDX_INLINE ptr_type get() const {
-			return _raw;
-		}
-
-	private:
-		ptr_type _raw;
-	};
-
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
+	constexpr f64 pi = 3.141592653589793;
+	constexpr f64 d2r = pi / 180.;
 }

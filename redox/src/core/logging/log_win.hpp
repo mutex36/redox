@@ -31,51 +31,49 @@ SOFTWARE.
 #include "core\string_format.h"
 #include "core\sys\windows.h"
 
-namespace redox {
-	namespace detail {
-		static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+namespace redox::detail {
+	static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		template<class...Args>
-		_RDX_INLINE void log(const redox::String& fmts, const Args&...args) {
-			auto fmt = format(fmts, args...);
-			WriteConsole(detail::std_handle, fmt.cstr(), fmt.size(), NULL, NULL);
-		}
+	template<class...Args>
+	_RDX_INLINE void log(const redox::String& fmts, const Args&...args) {
+		auto fmt = format(fmts, args...);
+		WriteConsole(detail::std_handle, fmt.cstr(), fmt.size(), NULL, NULL);
+	}
 
-		template<class T1>
-		_RDX_INLINE bool assert_true(const T1& a) {
-			if (a) return true;
-			log("Assertion failed: {0} is false\n", a);
-			return false;
-		}
+	template<class T1>
+	_RDX_INLINE bool assert_true(const T1& a) {
+		if (a) return true;
+		log("Assertion failed: {0} == true\n", a);
+		return false;
+	}
 
-		template<class T1>
-		_RDX_INLINE bool assert_false(const T1& a) {
-			if (a) return false;
-			log("Assertion failed: {0} is true\n", a);
-			return false;
-		}
+	template<class T1>
+	_RDX_INLINE bool assert_false(const T1& a) {
+		if (!a) return true;
+		log("Assertion failed: {0} == false\n", a);
+		return false;
+	}
 
-		template<class T1, class T2>
-		_RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
-			if (a == b) return true;
-			log("Assertion failed: {0} == {1}\n", a, b);
-			return false;
-		}
+	template<class T1, class T2>
+	_RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
+		if (a == b) return true;
+		log("Assertion failed: {0} == {1}\n", a, b);
+		return false;
+	}
 
-		template<class T1, class T2>
-		_RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
-			if (a != b) return true;
-			log("Assertion failed: {0} != {1}\n", a, b);
-			return false;
-		}
+	template<class T1, class T2>
+	_RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
+		if (a != b) return true;
+		log("Assertion failed: {0} != {1}\n", a, b);
+		return false;
+	}
 
 #ifdef RDX_COMPILER_MSC
-		template<class...Args>
-		_RDX_INLINE void debug_log(const redox::String& fmts, const Args&...args) {
-			auto fmt = format(fmts, args...);
-			OutputDebugString(fmt.cstr());
-		}
-#endif
+	template<class...Args>
+	_RDX_INLINE void debug_log(const redox::String& fmts, const Args&...args) {
+		auto fmt = format(fmts, args...);
+		OutputDebugString(fmt.cstr());
 	}
+#endif
 }
 #endif

@@ -23,20 +23,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "graphics\vulkan\render_system.h"
-
-#include "core\string_format.h"
+#include "redox.h"
 
 
 int main() {
 
-	redox::Window wnd("Test", {200,200});
-	redox::RenderSystem rs(&wnd);
-	wnd.show();
-
-	for (;;) {
-		wnd.process_events();
-	}
+	redox::Application app;
+	app.run();
 
 	return 0;
 }

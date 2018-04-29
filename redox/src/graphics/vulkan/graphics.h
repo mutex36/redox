@@ -24,53 +24,52 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\non_copyable.h"
-#include "core\allocation\default_allocator.h"
+#include "vulkan.h"
+#include "platform\window.h"
+#include "resources\resource_factory.h"
+#include "shader.h"
 
-#include <type_traits> //std::forward
+#include <optional> //std::optional
 
 namespace redox {
-
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>>
-	class SmartPtr : public NonCopyable {
+	class Graphics {
 	public:
-		using ptr_type = T*;
+		Graphics(const Window& window);
+		~Graphics();
 
-		SmartPtr() : _raw(nullptr) {
-		}
-		SmartPtr(ptr_type ptr) : _raw(ptr) {
-		}
+		VkDevice device() const;
+		VkPhysicalDevice physical_device() const;
+		VkSurfaceKHR surface() const;
+		VkQueue graphics_queue() const;
+		VkQueue present_queue() const;
+		uint32_t queue_family() const;
 
-		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
-			ref._raw = nullptr;
-		}
-
-		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
-			_raw = ref._raw;
-			ref._raw = nullptr;
-			return *this;
-		}
-
-		_RDX_INLINE ~SmartPtr() {
-			Allocator::deallocate(_raw);
-		}
-
-		_RDX_INLINE ptr_type operator->() const {
-			return _raw;
-		}
-
-		_RDX_INLINE ptr_type get() const {
-			return _raw;
-		}
+		ResourceFactory<Shader>& get_shader_factory();
 
 	private:
-		ptr_type _raw;
-	};
+		void _init_instance();
+		void _init_physical_device();
+		void _init_surface();
+		void _init_device();
 
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
+		VkPhysicalDevice _pick_device();
+		std::optional<uint32_t> _pick_queue_family();
+
+		ResourceFactory<Shader> _shaderFactory;
+
+		Buffer<VkQueueFamilyProperties> _queueFamilies;
+		uint32_t _queueFamily;
+		VkQueue _graphicsQueue;
+
+		VkInstance _instance;
+		VkDevice _device;
+		VkPhysicalDevice _physicalDevice;
+		VkSurfaceKHR _surface;
+
+		const Window& _window;
+
+#ifdef RDX_VULKAN_VALIDATION
+		VkDebugReportCallbackEXT _debugReportCallback;
+#endif
+	};
 }

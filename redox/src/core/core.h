@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+
 namespace redox {
 	typedef float f32;
 	typedef double f64;
@@ -35,19 +36,19 @@ namespace redox {
 	typedef unsigned char u8;
 	typedef unsigned int u32;
 	typedef unsigned long long u64;
+
+	typedef u8 byte;
 }
 
 #include "platform.h"
 #include "error.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
-#define _RDX_INLINE __forceinline
-
-#ifdef RDX_COMPILER_MSC
-#define _RDX_DEBUG_BREAK __debugbreak
-#if _DEBUG
-#define RDX_DEBUG 
-#endif
-#endif
-
+	#define _RDX_INLINE __forceinline
+	#ifdef RDX_COMPILER_MSC
+		#define _RDX_DEBUG_BREAK __debugbreak
+		#if _DEBUG
+			#define RDX_DEBUG 
+		#endif
+	#endif
 #endif

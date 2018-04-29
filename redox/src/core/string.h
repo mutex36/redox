@@ -32,13 +32,15 @@ SOFTWARE.
 
 namespace redox {
 	namespace detail {
-		template<class CT, class Allocator>
+		template<class CharType, class Allocator>
 		class String {
 		public:
+			using size_type = std::size_t;
+
 			_RDX_INLINE String() : _size(0), _reserved(0), _data(nullptr) {
 			}
 
-			String(const CT* str, std::size_t length) : String() {
+			String(const CharType* str, size_type length) : String() {
 				if (length > 0) {
 					_reserve<false>(length);
 					std::memcpy(_data, str, length);
@@ -47,16 +49,16 @@ namespace redox {
 				}
 			}
 
-			_RDX_INLINE explicit String(std::size_t rsv) : String() {
+			_RDX_INLINE explicit String(size_type rsv) : String() {
 				_reserve<false>(rsv);
 				_zero_terminate();
 			}
 
-			template<std::size_t Length>
-			_RDX_INLINE String(const char(&literal)[Length]) : String(literal, Length){
+			template<size_type Length>
+			String(const CharType(&literal)[Length]) : String(literal, Length){
 			}
 
-			_RDX_INLINE String(const CT* str) : String(str, std::strlen(str)) {
+			String(const CharType* str) : String(str, std::strlen(str)) {
 			}
 
 			//MOVE CTOR
@@ -84,7 +86,7 @@ namespace redox {
 			}
 			
 			//COPY ASSIGNMENT OP
-			_RDX_INLINE String& operator=(const String& ref) {
+			String& operator=(const String& ref) {
 				if (ref._size > 0) {
 					_reserve<false>(ref._size);
 					std::memcpy(_data, ref._data, ref._size);
@@ -104,42 +106,53 @@ namespace redox {
 			_RDX_INLINE String& operator+=(const String& ref) {
 				if (ref._size > 0) {
 					_reserve<true>(_size + ref._size);
-					std::memcpy(_data + _size, ref._data, ref._size);
-					_size += ref._size;
+					_append_no_checks(ref);
 					_zero_terminate();
 				}
 				return *this;
+			}
+
+			String operator+(const String& ref) {
+				String out(_size + ref._size);
+				out._append_no_checks(*this);
+				out._append_no_checks(ref);
+				out._zero_terminate();
+				return out;
 			}
 
 			_RDX_INLINE ~String() {
 				_dealloc();
 			}
 
-			_RDX_INLINE void reserve(std::size_t rsv) {
+			_RDX_INLINE void reserve(size_type rsv) {
 				_reserve<true>(rsv);
 			}
 
-			_RDX_INLINE String substr(std::size_t off, std::size_t size) const {
+			_RDX_INLINE String substr(size_type off, size_type size) const {
 				return { _data + off, size };
 			}
 
-			_RDX_INLINE String substr(std::size_t off) const {
+			_RDX_INLINE String substr(size_type off) const {
 				return { _data + off, _size - off };
 			}
 
-			_RDX_INLINE CT& operator[](std::size_t index) {
+			_RDX_INLINE CharType& operator[](size_type index) {
+				if (index >= _size)
+					throw Exception("index out of bounds");
 				return _data[index];
 			}
 
-			_RDX_INLINE const CT& operator[](std::size_t index) const {
+			_RDX_INLINE const CharType& operator[](size_type index) const {
+				if (index >= _size)
+					throw Exception("index out of bounds");
 				return _data[index];
 			}
 
-			_RDX_INLINE std::size_t size() const {
+			_RDX_INLINE size_type size() const {
 				return _size;
 			}
 
-			_RDX_INLINE std::size_t capacity() const {
+			_RDX_INLINE size_type capacity() const {
 				return _reserved;
 			}
 
@@ -147,7 +160,7 @@ namespace redox {
 				return _size == 0;
 			}
 
-			_RDX_INLINE const CT* cstr() const {
+			_RDX_INLINE const CharType* cstr() const {
 				if (_data == nullptr)
 					//When the string is default-constructed i.e. empty 
 					//we don't want to allocate memory just for 
@@ -157,8 +170,13 @@ namespace redox {
 			}
 
 		private:
+			_RDX_INLINE void _append_no_checks(const String& ref) {
+				std::memcpy(_data + _size, ref._data, ref._size);
+				_size += ref._size;
+			}
+
 			template<bool Copy>
-			_RDX_INLINE void _reserve(std::size_t rsv) {
+			void _reserve(size_type rsv) {
 				if (rsv > _reserved) {
 					auto dest = Allocator::allocate(rsv + 1);
 					if (Copy && !empty())
@@ -177,11 +195,11 @@ namespace redox {
 				_data[_size] = '\0';
 			}
 
-			CT* _data;
-			const CT _empty = '\0';
+			CharType* _data;
+			const CharType _empty = '\0';
 
-			std::size_t _size;
-			std::size_t _reserved;
+			size_type _size;
+			size_type _reserved;
 		};
 	}
 

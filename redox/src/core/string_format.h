@@ -72,9 +72,9 @@ namespace redox {
 	}
 
 	_RDX_INLINE redox::String lexical_cast(const f64& expr) {
-		i8 buffer[_CVTBUFSIZE];
-		_gcvt_s(buffer, expr, 15);
-		return buffer;
+		char result[16];
+		sprintf(result, "%.3f", expr);
+		return result;
 	}
 
 	_RDX_INLINE redox::String lexical_cast(const i32& expr) {
@@ -104,6 +104,10 @@ namespace redox {
 	template<std::size_t N>
 	_RDX_INLINE redox::String lexical_cast(const char(&expr)[N]) {
 		return static_cast<const char*>(expr);
+	}
+
+	_RDX_INLINE redox::String lexical_cast(const char* expr) {
+		return expr;
 	}
 
 	_RDX_INLINE redox::String lexical_cast(const bool& expr) {

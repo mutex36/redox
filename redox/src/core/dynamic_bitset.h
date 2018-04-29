@@ -28,6 +28,7 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\allocation\default_allocator.h"
 #include "core\buffer.h"
+#include "core\non_copyable.h"
 
 #include "math\util.h"
 #include "logging\log.h"
@@ -38,7 +39,7 @@ namespace redox {
 	namespace detail {
 		template<class UnitType, 
 			class Allocator = allocation::DefaultAllocator<UnitType>>
-		class DynBitset {
+		class DynBitset : public NonCopyable {
 		public:
 			static constexpr auto bits_per_unit = sizeof(UnitType) * 8;
 			static constexpr auto unit_0ff_mask 
@@ -49,8 +50,16 @@ namespace redox {
 			DynBitset(std::size_t size) {
 				resize(size);
 			}
-
 			~DynBitset() = default;
+
+			DynBitset(DynBitset&& ref) : _size(ref._size), _units(std::move(ref._units)) {
+			}
+
+			_RDX_INLINE DynBitset& operator=(DynBitset&& ref) {
+				_size = ref._size;
+				_units = std::move(ref._units);
+				return *this;
+			}
 
 			_RDX_INLINE void resize(std::size_t size) {
 				_units.resize(_required_units(size));

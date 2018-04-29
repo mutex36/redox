@@ -1,57 +1,66 @@
+/*
+redox
+-----------
+MIT License
+
+Copyright (c) 2018 Luis von der Eltz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #pragma once
 #include "vulkan.h"
 #include "core\core.h"
 #include "core\buffer.h"
 #include "core\non_copyable.h"
 
-#include "window\window.h"
+#include "platform\window.h"
 
 #include <type_traits> //std::forward
 
+#include "graphics.h"
+#include "swapchain.h"
+#include "pipeline.h"
+#include "command_pool.h"
+#include "resources\resource_factory.h"
+
 namespace redox {
 
-	class RenderSystem : public NonCopyable {
+	class RenderSystem {
 	public:
-		RenderSystem(const Window* window);
+		RenderSystem(const Window& window);
 		~RenderSystem();
 
+		void demo_setup();
+		void render();
+
+		void wait_pending();
+
 	private:
-		void _init_instance();
-		void _init_phsyical_device();
-		void _init_device();
-		void _init_surface();
+		void _recreate_swapchain();
+		void _init_semaphores();
 
-		VkInstance _instance{ nullptr };
-		VkPhysicalDevice _physical_device{ nullptr };
-		VkDevice _device{ nullptr };
-		VkSurfaceKHR _surface{ nullptr };
+		Graphics _graphics;
+		Swapchain _swapchain;
+		Pipeline _pipeline;
+		CommandPool _commandPool;
 
-		Buffer<const char*> _layers;
-		Buffer<const char*> _extensions;
-		Buffer<const char*> _device_extensions;
-
-
-		int32_t _graphics_queue_family{ -1 };
-		int32_t _presentation_queue_family{ -1 };
-
-		VkQueue _presentation_queue{ nullptr };
-
-		Buffer<VkQueueFamilyProperties> _queue_families;
-
-		template<class Fn>
-		int32_t _find_queue_family(Fn&& fn) {
-			for (int32_t i = 0; i < _queue_families.size(); i++) {
-				if (_queue_families[i].queueCount > 0 && fn(_queue_families[i], i))
-					return i;
-			}
-			return -1;
-		}
-
-		const Window* _window;
-
-#ifdef RDX_VULKAN_VALIDATION
-		VkDebugReportCallbackEXT _debugreportcallback{ nullptr };
-#endif
-
+		VkSemaphore _imageAvailableSemaphore{ nullptr };
+		VkSemaphore _renderFinishedSemaphore{ nullptr };
 	};
 }

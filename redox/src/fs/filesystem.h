@@ -26,40 +26,29 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\string.h"
+#include "core\buffer.h"
+
 #include "core\smart_ptr.h"
+#include "core\utility.h"
 
 namespace redox {
-
-	class Window {
+	class File {
 	public:
-		struct Size {
-			i32 width, height;
+		enum class Mode {
+			READ = 1 << 0,
+			WRITE = 1 << 1
 		};
 
-		enum class Event {
-			CLOSE, MINIMIZE
-		};
+		File(const String& file, const Mode mode);
+		~File();
 
-		typedef void (*EventFn)(const Event);
-
-		Window(const String& name, const Size& size);
-		~Window();
-
-		void show() const;
-		void process_events() const;
-		void hide() const;
-		void set_title(const String& title);
-		void event_callback(EventFn fn);
-
-		void* get(const String& key) const;
-
-		//internal
-		void _notify_event(const Event ev);
+		std::size_t size() const;
+		Buffer<i8> read();
 
 	private:
-		EventFn _eventfn;
-
 		struct internal;
 		SmartPtr<internal> _internal;
 	};
+
+	RDX_ENABLE_ENUM_FLAGS(File::Mode);
 }

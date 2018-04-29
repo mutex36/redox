@@ -52,12 +52,11 @@ TEST(String, CopyMove) {
 	ASSERT_EQ(empty, empty2);
 }
 
-
 TEST(String, Format) {
 	auto fmt = redox::format("1234{0}#{1}{0}", 5, "1234");
 	ASSERT_STREQ(fmt.cstr(), "12345#12345");
 
-	auto fmt2 = redox::format("{0}", redox::binary((char)0x80));
+	auto fmt2 = redox::format("{0}", redox::binary((uint8_t)0x80));
 	ASSERT_STREQ(fmt2.cstr(), "00000001");
 }
 
@@ -117,8 +116,61 @@ struct Foo {
 };
 
 TEST(SmartPtr, Construct) {
-	auto dd = redox::make_smart_ptr<Foo>(12, 44);
+	auto original = redox::make_smart_ptr<Foo>(12, 44);
 
-	ASSERT_EQ(dd->a, 12);
-	ASSERT_EQ(dd->b, 44);
+	ASSERT_EQ(original->a, 12);
+	ASSERT_EQ(original->b, 44);
+
+	auto copy = std::move(original);
+
+	ASSERT_EQ(copy->a, 12);
+	ASSERT_EQ(copy->b, 44);
+}
+
+TEST(RefCounted, Construct) {
+	auto original = redox::make_ref_counted<Foo>(12, 44);
+
+	auto copy1 = original;
+	ASSERT_EQ(copy1.ref_count(), 2);
+
+	auto copy2(std::move(copy1));
+	ASSERT_EQ(copy2.ref_count(), 2);
+
+	auto copy3 = copy2;
+	ASSERT_EQ(copy3.ref_count(), 3);
+
+	redox::RefCounted<Foo> empty;
+	empty = copy3;
+	ASSERT_EQ(copy3.ref_count(), 4);
+
+	ASSERT_EQ(copy3->a, 12);
+	ASSERT_EQ(copy3->b, 44);
+}
+
+
+TEST(Vec, Ops) {
+
+	redox::Vec3f a(3.0f, 3.0f, 3.0f);
+	redox::Vec3f b(3.0f, 3.0f, 3.0f);
+
+	auto c = a + b;
+	ASSERT_FLOAT_EQ(c.x, 6.0f);
+	ASSERT_FLOAT_EQ(c.y, 6.0f);
+	ASSERT_FLOAT_EQ(c.x, 6.0f);
+
+	auto d = a * b;
+	ASSERT_FLOAT_EQ(d.x, 9.0f);
+	ASSERT_FLOAT_EQ(d.y, 9.0f);
+	ASSERT_FLOAT_EQ(d.x, 9.0f);
+
+	auto e = d * 4.0f;
+	ASSERT_FLOAT_EQ(e.x, 36.0f);
+	ASSERT_FLOAT_EQ(e.y, 36.0f);
+	ASSERT_FLOAT_EQ(e.x, 36.0f);
+
+	auto le = e.Length();
+	ASSERT_FLOAT_EQ(le, 62.353829072479584);
+
+	auto adb = a.Dot(b);
+	ASSERT_FLOAT_EQ(adb, 27.0f);
 }

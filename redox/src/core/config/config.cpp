@@ -23,54 +23,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#pragma once
-#include "core\core.h"
-#include "core\non_copyable.h"
-#include "core\allocation\default_allocator.h"
+#include "config.h"
+#include "fs\filesystem.h"
 
-#include <type_traits> //std::forward
+redox::Configuration::Configuration(const String& file) {
 
-namespace redox {
 
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>>
-	class SmartPtr : public NonCopyable {
-	public:
-		using ptr_type = T*;
 
-		SmartPtr() : _raw(nullptr) {
-		}
-		SmartPtr(ptr_type ptr) : _raw(ptr) {
-		}
 
-		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
-			ref._raw = nullptr;
-		}
+}
 
-		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
-			_raw = ref._raw;
-			ref._raw = nullptr;
-			return *this;
-		}
-
-		_RDX_INLINE ~SmartPtr() {
-			Allocator::deallocate(_raw);
-		}
-
-		_RDX_INLINE ptr_type operator->() const {
-			return _raw;
-		}
-
-		_RDX_INLINE ptr_type get() const {
-			return _raw;
-		}
-
-	private:
-		ptr_type _raw;
-	};
-
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
+redox::Configuration::~Configuration() {
 }

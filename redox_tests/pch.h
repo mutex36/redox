@@ -10,3 +10,6 @@
 
 #include "core\hashmap.h"
 #include "core\smart_ptr.h"
+#include "core\ref_counted.h"
+
+#include "math\math.h"

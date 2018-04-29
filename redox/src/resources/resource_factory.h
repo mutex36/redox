@@ -25,52 +25,35 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\non_copyable.h"
-#include "core\allocation\default_allocator.h"
+#include "core\string.h"
+#include "core\hashmap.h"
+#include "resources\resource.h"
 
 #include <type_traits> //std::forward
 
 namespace redox {
-
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>>
-	class SmartPtr : public NonCopyable {
+	template<class ResourceType>
+	class ResourceFactory {
 	public:
-		using ptr_type = T*;
+		template<class Allocator = allocation::DefaultAllocator<ResourceType>, class...Args>
+		Resource<ResourceType> load(const String& file, Args&&...args) {
+			auto lookup = _cache.get(file);
+			if (lookup) return lookup.value();
 
-		SmartPtr() : _raw(nullptr) {
-		}
-		SmartPtr(ptr_type ptr) : _raw(ptr) {
-		}
-
-		_RDX_INLINE SmartPtr(SmartPtr&& ref) : _raw(ref._raw) {
-			ref._raw = nullptr;
-		}
-
-		_RDX_INLINE SmartPtr& operator=(SmartPtr&& ref) {
-			_raw = ref._raw;
-			ref._raw = nullptr;
-			return *this;
-		}
-
-		_RDX_INLINE ~SmartPtr() {
-			Allocator::deallocate(_raw);
-		}
-
-		_RDX_INLINE ptr_type operator->() const {
-			return _raw;
-		}
-
-		_RDX_INLINE ptr_type get() const {
-			return _raw;
+			auto rx = make_resource<ResourceType, Allocator>(
+				_resolve(file), std::forward<Args>(args)...);
+			_cache.push(file, rx);
+			return rx;
 		}
 
 	private:
-		ptr_type _raw;
-	};
+		String _resolve(const String& file) {
+			return _resourcePath + file;
+		}
 
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	SmartPtr<T, Allocator> make_smart_ptr(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
+		Hashmap<String, Resource<ResourceType>> _cache;
+
+		//TODO: load from config
+		String _resourcePath = R"(C:\Users\luis9\Desktop\redox\redox\resources\)";
+	};
 }

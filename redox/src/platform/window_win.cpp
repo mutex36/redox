@@ -23,10 +23,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "window.h"
-#include "core\logging\log.h"
+#include "core\core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
+#include "window.h"
+#include "core\logging\log.h"
 #include "core\sys\windows.h"
 
 #define RDX_LOG_TAG "WindowSystem"
@@ -65,12 +66,12 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-redox::Window::Window(const String& title, const Size& size) {
+redox::Window::Window(const String& title, const Bounds& bounds) : _bounds(bounds) {
 	_internal = make_smart_ptr<internal>();
 	_internal->instance = GetModuleHandle(0);
 	_internal->classname = "redox_window";
 
-	DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+	DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_OVERLAPPEDWINDOW;
 
 	WNDCLASS wndClass{};
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -83,7 +84,7 @@ redox::Window::Window(const String& title, const Size& size) {
 
 	RegisterClass(&wndClass);
 
-	RECT r{ 0, 0, size.width, size.height };
+	RECT r{ 0, 0, _bounds.width, _bounds.height };
 	AdjustWindowRect(&r, dwStyle, FALSE);
 
 	_internal->handle = CreateWindowEx(
@@ -120,11 +121,19 @@ void redox::Window::set_title(const String& title) {
 	SetWindowText(_internal->handle, title.cstr());
 }
 
-void redox::Window::event_callback(EventFn fn) {
-	_eventfn = fn;
+void redox::Window::set_callback(EventFn && fn) {
+	_eventfn = std::move(fn);
 }
 
-void* redox::Window::get(const String & key) const {
+bool redox::Window::is_minimized() const {
+	return IsIconic(_internal->handle);
+}
+
+redox::Window::Bounds redox::Window::bounds() const {
+	return _bounds;
+}
+
+void* redox::Window::get(const String& key) const {
 	if (key == "hwnd")
 		return _internal->handle;
 
@@ -135,9 +144,8 @@ void* redox::Window::get(const String & key) const {
 }
 
 void redox::Window::_notify_event(const Event ev) {
-	if (_eventfn) 
+	if (_eventfn)
 		_eventfn(ev);
 }
-
 
 #endif

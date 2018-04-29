@@ -34,26 +34,44 @@ SOFTWARE.
 #include <algorithm> //std::max
 
 namespace redox {
-	template<class T, 
-		class Allocator = allocation::DefaultAllocator<T>,
+	template<class ValueType, 
+		class Allocator = allocation::DefaultAllocator<ValueType>,
 		class GrowthPolicy = allocation::DefaultGrowth>
-	class Buffer {
+	class Buffer : public NonCopyable {
 	public:
-		_RDX_INLINE Buffer() : _data(nullptr), _reserved(0), _size(0) {
+		using size_type = std::size_t;
+
+		Buffer() : _data(nullptr), _reserved(0), _size(0) {
 		}
 
-		_RDX_INLINE Buffer(std::size_t size) : Buffer() {
+		_RDX_INLINE Buffer(size_type size) : Buffer() {
 			resize(size);
 		}
 
-		_RDX_INLINE Buffer(std::initializer_list<T> values) : Buffer() {
+		_RDX_INLINE Buffer(std::initializer_list<ValueType> values) : Buffer() {
 			reserve(values.size());
 
 			//Unfortunately, initializer_list is a static container
 			//that does not provide non-const access to it's data
 			//This makes moving impossible and copying the only viable option.
-			for (auto& v : values)
+			for (const auto& v : values)
 				_push_no_checks(v);
+		}
+
+		_RDX_INLINE Buffer(Buffer&& ref) : _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
+			ref._data = nullptr;
+			ref._size = 0;
+			ref._reserved = 0;
+		}
+
+		_RDX_INLINE Buffer& operator=(Buffer&& ref) {
+			_data = ref._data;
+			_size = ref._size;
+			_reserved = ref._reserved;
+			ref._data = nullptr;
+			ref._size = 0;
+			ref._reserved = 0;
+			return *this;
 		}
 
 		template<class _T>
@@ -63,28 +81,30 @@ namespace redox {
 		}
 
 		_RDX_INLINE ~Buffer() {
-			for (auto& c : *this) c.~T();
+			if constexpr(!std::is_trivially_destructible_v<ValueType>)
+				for (auto& c : *this) c.~ValueType();
+
 			_dealloc();
 		}
 
-		_RDX_INLINE T& operator[](std::size_t index) {
+		_RDX_INLINE ValueType& operator[](size_type index) {
 			if (index >= _size)
 				throw Exception("index out of bounds");
 			return _data[index];
 		}
 
-		_RDX_INLINE const T& operator[](std::size_t index) const {
+		_RDX_INLINE const ValueType& operator[](size_type index) const {
 			if (index >= _size)
 				throw Exception("index out of bounds");
 			return _data[index];
 		}
 
-		void reserve(const std::size_t size) {
+		void reserve(size_type size) {
 			if (size > _reserved) {
 				auto dest = Allocator::allocate(size);
 				if (!empty()) {
-					for (std::size_t elm = 0; elm < _size; ++elm)
-						new (dest + elm) T(std::move(_data[elm]));
+					for (size_type elm = 0; elm < _size; ++elm)
+						new (dest + elm) ValueType(std::move(_data[elm]));
 				}
 				_dealloc();
 				_data = dest;
@@ -92,25 +112,25 @@ namespace redox {
 			}
 		}
 
-		void resize(const std::size_t size) {
-			static_assert(std::is_default_constructible_v<T>);
+		void resize(size_type size) {
+			static_assert(std::is_default_constructible_v<ValueType>);
 			if (size > _size) {
 				reserve(size);
-				for (std::size_t elm = _size; elm < size; ++elm)
-					new (_data + elm) T();
+				for (size_type elm = _size; elm < size; ++elm)
+					new (_data + elm) ValueType();
 				_size = size;
 			}
 		}
 
-		_RDX_INLINE T* data() {
+		_RDX_INLINE ValueType* data() const {
 			return _data;
 		}
 
-		_RDX_INLINE std::size_t size() const {
+		_RDX_INLINE size_type size() const {
 			return _size;
 		}
 
-		_RDX_INLINE std::size_t empty() const {
+		_RDX_INLINE size_type empty() const {
 			return _size == 0;
 		}
 
@@ -135,7 +155,7 @@ namespace redox {
 
 		template<class _T>
 		_RDX_INLINE void _push_no_checks(_T&& element) {
-			new (_data + _size++) T(std::forward<_T>(element));
+			new (_data + _size++) ValueType(std::forward<_T>(element));
 		}
 
 		_RDX_INLINE void _dealloc() {
@@ -146,8 +166,8 @@ namespace redox {
 			return _size == _reserved;
 		}
 
-		std::size_t _reserved;
-		std::size_t _size;
-		T* _data;
+		size_type _reserved;
+		size_type _size;
+		ValueType* _data;
 	};
 }

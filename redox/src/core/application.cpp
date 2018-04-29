@@ -25,9 +25,45 @@ SOFTWARE.
 */
 #include "application.h"
 
-redox::Application::Application() {
+#include "string_format.h"
 
+redox::Application::Application() 
+	: _window("redox engine", { 500 , 500 }), _renderer(_window) {
+
+	//TODO: demo
+	_renderer.demo_setup();
+
+	_window.set_callback([this](Window::Event event) {
+		switch (event) {
+		case redox::Window::Event::CLOSE:
+			_running = false;
+			break;
+		}
+	});
 }
 
 redox::Application::~Application() {
+}
+
+void redox::Application::run() {
+	_window.show();
+	_timer.start();
+	_running = true;
+
+	while (_running) {
+		_timer.reset();
+		_window.process_events();
+
+		if (_window.is_minimized())
+			continue;
+
+		_renderer.render();
+
+		auto delta = _timer.elapsed();
+		auto fps = 1000. / delta;
+		_window.set_title(
+			redox::format("redox engine | {0}fps", fps));
+	}
+
+	_renderer.wait_pending();
 }
