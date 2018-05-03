@@ -43,6 +43,7 @@ namespace redox {
 		VkQueue graphics_queue() const;
 		VkQueue present_queue() const;
 		uint32_t queue_family() const;
+		uint32_t find_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 		ResourceFactory<Shader>& get_shader_factory();
 

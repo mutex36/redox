@@ -23,25 +23,47 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#pragma once
-#include "platform\window.h"
-#include "graphics\vulkan\render_system.h"
-#include "core\config\config.h"
-#include "platform\timer.h"
+#include "core\core.h"
 
-namespace redox {
-	class Application {
-	public:
-		Application();
-		~Application();
+#ifdef RDX_PLATFORM_WINDOWS
+#include "filesystem.h"
+#include "platform\windows.h"
 
-		void run();
+struct redox::io::File::internal {
+	HANDLE handle;
+};
 
-	private:
-		Window _window;
-		RenderSystem _renderer;
-		Timer _timer;
+redox::io::File::File(const redox::io::Path& file, const Mode mode) {
+	_internal = make_smart_ptr<internal>();
 
-		bool _running{ false };
-	};
+	DWORD access{ 0 };
+	if ((mode & Mode::READ) == Mode::READ)
+		access |= GENERIC_READ;
+
+	if ((mode & Mode::WRITE) == Mode::WRITE)
+		access |= GENERIC_READ;
+
+	_internal->handle = CreateFile(file.cstr(), access, 0, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 }
+
+redox::io::File::~File() {
+	CloseHandle(_internal->handle);
+}
+
+std::size_t redox::io::File::size() const {
+	return GetFileSize(_internal->handle, NULL);
+}
+
+redox::Buffer<redox::i8> redox::io::File::read() {
+	Buffer<i8> out(size());
+
+	DWORD dwBytesRead;
+	if (!ReadFile(_internal->handle,
+		out.data(), out.size(), &dwBytesRead, NULL))
+		throw Exception("failed to read file");
+
+	return out;
+}
+
+#endif

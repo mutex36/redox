@@ -28,7 +28,7 @@ SOFTWARE.
 #ifdef RDX_PLATFORM_WINDOWS
 #include "window.h"
 #include "core\logging\log.h"
-#include "core\sys\windows.h"
+#include "platform\windows.h"
 
 #define RDX_LOG_TAG "WindowSystem"
 

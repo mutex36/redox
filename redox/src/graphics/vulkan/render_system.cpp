@@ -38,7 +38,7 @@ SOFTWARE.
 
 redox::RenderSystem::RenderSystem(const Window& window)
 	: _graphics(window), _swapchain(_graphics),
-	_pipeline(_graphics, _swapchain),
+	_pipeline(_graphics, _swapchain, DefaultVertex::get_layout()),
 	_commandPool(_graphics, _swapchain.size()) {
 
 	_init_semaphores();
@@ -134,7 +134,7 @@ void redox::RenderSystem::_recreate_swapchain() {
 	RDX_LOG("Recreating swapchain...");
 
 	util::reconstruct(_swapchain, _graphics);
-	util::reconstruct(_pipeline, _graphics, _swapchain);
+	util::reconstruct(_pipeline, _graphics, _swapchain, DefaultVertex::get_layout());
 	util::reconstruct(_commandPool, _graphics, _swapchain.size());
 
 	//TODO: DEMO

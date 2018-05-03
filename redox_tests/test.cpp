@@ -150,8 +150,8 @@ TEST(RefCounted, Construct) {
 
 TEST(Vec, Ops) {
 
-	redox::Vec3f a(3.0f, 3.0f, 3.0f);
-	redox::Vec3f b(3.0f, 3.0f, 3.0f);
+	redox::math::Vec3f a(3.0f, 3.0f, 3.0f);
+	redox::math::Vec3f b(3.0f, 3.0f, 3.0f);
 
 	auto c = a + b;
 	ASSERT_FLOAT_EQ(c.x, 6.0f);

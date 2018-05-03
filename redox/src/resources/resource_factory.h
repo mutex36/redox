@@ -36,7 +36,7 @@ namespace redox {
 	class ResourceFactory {
 	public:
 		template<class Allocator = allocation::DefaultAllocator<ResourceType>, class...Args>
-		Resource<ResourceType> load(const String& file, Args&&...args) {
+		Resource<ResourceType> load(const io::Path& file, Args&&...args) {
 			auto lookup = _cache.get(file);
 			if (lookup) return lookup.value();
 
@@ -47,13 +47,13 @@ namespace redox {
 		}
 
 	private:
-		String _resolve(const String& file) {
+		io::Path _resolve(const io::Path& file) const {
 			return _resourcePath + file;
 		}
 
 		Hashmap<String, Resource<ResourceType>> _cache;
 
 		//TODO: load from config
-		String _resourcePath = R"(C:\Users\luis9\Desktop\redox\redox\resources\)";
+		io::Path _resourcePath = R"(C:\Users\luis9\Desktop\redox\redox\resources\)";
 	};
 }

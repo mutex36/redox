@@ -30,13 +30,15 @@ SOFTWARE.
 #include "core\string.h"
 #include "core\ref_counted.h"
 
+#include "platform\filesystem.h"
+
 namespace redox {
 	class Graphics;
 
 	class Shader
 	{
 	public:
-		Shader(const String& file, Graphics& graphics);
+		Shader(const io::Path& file, Graphics& graphics);
 		~Shader();
 
 		VkShaderModule handle() const;

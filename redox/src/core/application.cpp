@@ -30,6 +30,7 @@ SOFTWARE.
 redox::Application::Application() 
 	: _window("redox engine", { 500 , 500 }), _renderer(_window) {
 
+
 	//TODO: demo
 	_renderer.demo_setup();
 

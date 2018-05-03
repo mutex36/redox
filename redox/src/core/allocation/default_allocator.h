@@ -27,8 +27,6 @@ SOFTWARE.
 #include "core\core.h"
 #include <new> //::operator new
 
-#include <cstdlib>
-
 namespace redox::allocation {
 	template<typename T>
 	class DefaultAllocator {

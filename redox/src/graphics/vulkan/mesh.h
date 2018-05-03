@@ -23,47 +23,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "core\core.h"
+#pragma once
+#include "vulkan.h"
+#include "graphics.h"
+#include "core\string.h"
 
-#ifdef RDX_PLATFORM_WINDOWS
-#include "filesystem.h"
-#include "core\sys\windows.h"
+namespace redox {
+	class Mesh {
+		Mesh(const io::Path& file, Graphics& graphics);
+		~Mesh();
 
-struct redox::File::internal {
-	HANDLE handle;
-};
+	private:
+		void _init(VkDeviceSize bufferSize);
 
-redox::File::File(const String& file, const Mode mode) {
-	_internal = make_smart_ptr<internal>();
-
-	DWORD access{ 0 };
-	if ((mode & Mode::READ) == Mode::READ)
-		access |= GENERIC_READ;
-
-	if ((mode & Mode::WRITE) == Mode::WRITE)
-		access |= GENERIC_READ;
-
-	_internal->handle = CreateFile(file.cstr(), access, 0, NULL,
-		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		Graphics& _graphicsRef;
+		VkBuffer _handle;
+		VkDeviceMemory _memory;
+	};
 }
-
-redox::File::~File() {
-	CloseHandle(_internal->handle);
-}
-
-std::size_t redox::File::size() const {
-	return GetFileSize(_internal->handle, NULL);
-}
-
-redox::Buffer<redox::i8> redox::File::read() {
-	Buffer<i8> out(size());
-
-	DWORD dwBytesRead;
-	if (!ReadFile(_internal->handle,
-		out.data(), out.size(), &dwBytesRead, NULL))
-		throw Exception("failed to read file");
-
-	return out;
-}
-
-#endif

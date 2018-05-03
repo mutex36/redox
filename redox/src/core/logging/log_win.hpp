@@ -29,7 +29,7 @@ SOFTWARE.
 #ifdef RDX_PLATFORM_WINDOWS
 #include "core\string.h"
 #include "core\string_format.h"
-#include "core\sys\windows.h"
+#include "platform\windows.h"
 
 namespace redox::detail {
 	static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);

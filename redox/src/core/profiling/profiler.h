@@ -26,7 +26,7 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\string.h"
-#include "core\sys\timer.h"
+#include "platform\timer.h"
 
 #include "core\logging\log.h"
 
@@ -43,10 +43,11 @@ namespace redox {
 		}
 
 		_RDX_INLINE ~Profiler() {
-			auto result = _timer.elapsed();
-			RDX_LOG("PROFILER: {0}ms", result);
+			auto ms = _timer.elapsed();
+			RDX_LOG("PROFILER: {0}ms", ms);
 		}
 
 		Timer _timer;
+		HANDLE _perf;
 	};
 }

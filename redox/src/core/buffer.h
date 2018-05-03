@@ -74,7 +74,8 @@ namespace redox {
 			return *this;
 		}
 
-		template<class _T>
+		template<class _T,
+			class = std::enable_if_t<std::is_same_v<std::decay_t<_T>, ValueType>>>
 		void push(_T&& element) {
 			_realloc_check();
 			_push_no_checks(std::forward<_T>(element));

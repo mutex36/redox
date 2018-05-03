@@ -26,7 +26,7 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 
-namespace redox {
+namespace redox::math {
 	constexpr f64 pi = 3.141592653589793;
 	constexpr f64 d2r = pi / 180.;
 }

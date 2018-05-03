@@ -43,6 +43,11 @@ namespace redox {
 			ref.~T();
 			new (&ref) T(std::forward<Args>(args)...);
 		}
+
+		template <typename M, typename T>
+		constexpr std::size_t offset_of(M T::* p, T sample = T()) {
+			return std::size_t(&(sample.*p)) - std::size_t(&sample);
+		}
 	}
 
 	//Define bit flag operations for any POW2-indexed strongly-typed enum

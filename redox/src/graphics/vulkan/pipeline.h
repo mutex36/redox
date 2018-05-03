@@ -29,16 +29,19 @@ SOFTWARE.
 #include "shader.h"
 #include "swapchain.h"
 #include "resources\resource.h"
+#include "core\utility.h"
+#include "vertex_layout.h"
+
+#include "math\math.h"
 
 namespace redox {
 	class Pipeline {
 	public:
-		Pipeline(Graphics& graphics, Swapchain& swapchain);
+		Pipeline(Graphics& graphics, Swapchain& swapchain, VertexLayout&& vertexLayout);
 		~Pipeline();
 
 		VkPipeline handle() const;
 		VkRenderPass render_pass() const;
-
 		VkFramebuffer operator[](std::size_t index);
 
 	private:
@@ -53,6 +56,7 @@ namespace redox {
 
 		Resource<Shader> _vs;
 		Resource<Shader> _fs;
+		VertexLayout _vertexLayout;
 
 		Graphics& _graphicsRef;
 		Swapchain& _swapchainRef;

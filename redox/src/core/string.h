@@ -112,7 +112,7 @@ namespace redox {
 				return *this;
 			}
 
-			String operator+(const String& ref) {
+			String operator+(const String& ref) const {
 				String out(_size + ref._size);
 				out._append_no_checks(*this);
 				out._append_no_checks(ref);

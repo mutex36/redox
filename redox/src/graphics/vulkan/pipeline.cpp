@@ -24,11 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "pipeline.h"
-
 #include "core\utility.h"
 
-redox::Pipeline::Pipeline(Graphics& graphics, Swapchain& swapchain) :
-	_graphicsRef(graphics), _swapchainRef(swapchain) {
+redox::Pipeline::Pipeline(Graphics& graphics, Swapchain& swapchain, VertexLayout&& vertexLayout) :
+	_graphicsRef(graphics), _swapchainRef(swapchain), _vertexLayout(std::move(vertexLayout)) {
 
 	auto& sf = _graphicsRef.get_shader_factory();
 	_vs = sf.load("shader\\vert.spv", _graphicsRef);
@@ -63,10 +62,10 @@ void redox::Pipeline::_init() {
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr;
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(_vertexLayout.attrDesc.size());
+	vertexInputInfo.pVertexBindingDescriptions = &_vertexLayout.bindingDesc;
+	vertexInputInfo.pVertexAttributeDescriptions = _vertexLayout.attrDesc.data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

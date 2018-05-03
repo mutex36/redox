@@ -31,7 +31,9 @@ SOFTWARE.
 #include "core\smart_ptr.h"
 #include "core\utility.h"
 
-namespace redox {
+namespace redox::io {
+	using Path = String;
+
 	class File {
 	public:
 		enum class Mode {
@@ -39,7 +41,7 @@ namespace redox {
 			WRITE = 1 << 1
 		};
 
-		File(const String& file, const Mode mode);
+		File(const Path& file, const Mode mode);
 		~File();
 
 		std::size_t size() const;
@@ -49,6 +51,8 @@ namespace redox {
 		struct internal;
 		SmartPtr<internal> _internal;
 	};
+}
 
-	RDX_ENABLE_ENUM_FLAGS(File::Mode);
+namespace redox {
+	RDX_ENABLE_ENUM_FLAGS(::redox::io::File::Mode);
 }

@@ -30,7 +30,7 @@ SOFTWARE.
 #include <vulkan/vulkan.h>
 
 #ifdef RDX_PLATFORM_WINDOWS 
-#include "core\sys\windows.h"
+#include "platform\windows.h"
 #include <vulkan\vulkan_win32.h>
 #endif
 

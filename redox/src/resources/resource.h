@@ -27,21 +27,27 @@ SOFTWARE.
 #include "core\ref_counted.h"
 #include "core\hash.h"
 
+#include "platform\filesystem.h"
+
 namespace redox {
 	template<class T, 
 		class Allocator = allocation::DefaultAllocator<T>>
 	class Resource : public RefCounted<T, Allocator> {
+		using base_type = RefCounted<T, Allocator>;
 	
-		using RefCounted<T, Allocator>::RefCounted;
+		Resource(const io::Path& file, const T* ptr) : _filename(file), base_type(ptr) {
+		}
 
-		//hash_type hash() const {
-		//	Hash<T> hashFn;
-		//	return hashFn(*this->get());
-		//}
+		const io::Path& filename() const {
+			return _filename;
+		}
+
+	private:
+		io::Path _filename;
 	};
 
 	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	Resource<T, Allocator> make_resource(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
+	Resource<T, Allocator> make_resource(const io::Path& file, Args&&...args) {
+		return { file, new (Allocator::allocate()) T(file, std::forward<Args>(args)...) };
 	}
 }

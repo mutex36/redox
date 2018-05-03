@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core.h"
 #include <stdexcept>
 
 namespace redox {
@@ -31,5 +32,14 @@ namespace redox {
 	struct Exception : public std::runtime_error {
 		using std::runtime_error::runtime_error;
 	};
+
+//#ifdef RDX_PLATFORM_WINDOWS
+//#include "platform\windows.h"
+//
+//	struct PlatformException : public std::runtime_error {
+//		
+//	};
+//
+//#endif
 
 }

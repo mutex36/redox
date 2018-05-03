@@ -24,7 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "graphics.h"
-
 #include "core\utility.h"
 
 redox::Graphics::Graphics(const Window& window) : _window(window) {
@@ -69,6 +68,20 @@ VkQueue redox::Graphics::present_queue() const {
 
 uint32_t redox::Graphics::queue_family() const {
 	return _queueFamily;
+}
+
+uint32_t redox::Graphics::find_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memProperties);
+
+	for (std::size_t i = 0; i < memProperties.memoryTypeCount; i++) {
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+
+	throw Exception("failed to find suitable memory type");
+
 }
 
 redox::ResourceFactory<redox::Shader>& redox::Graphics::get_shader_factory() {

@@ -26,11 +26,11 @@ SOFTWARE.
 #include "shader.h"
 #include "graphics.h"
 
-#include "fs\filesystem.h"
+#include "platform\filesystem.h"
 
-redox::Shader::Shader(const String& file, Graphics& graphics) : _graphicsRef(graphics) {
+redox::Shader::Shader(const io::Path& file, Graphics& graphics) : _graphicsRef(graphics) {
 
-	File fstream(file, File::Mode::READ);
+	io::File fstream(file, io::File::Mode::READ);
 	auto buffer = fstream.read();
 
 	VkShaderModuleCreateInfo createInfo{};

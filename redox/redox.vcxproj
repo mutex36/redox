@@ -141,8 +141,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\config\config.cpp" />
-    <ClCompile Include="src\core\sys\timer_win.cpp" />
-    <ClCompile Include="src\fs\filesystem_win.cpp" />
+    <ClCompile Include="src\graphics\vulkan\mesh.cpp" />
+    <ClCompile Include="src\platform\timer_win.cpp" />
+    <ClCompile Include="src\platform\filesystem_win.cpp" />
     <ClCompile Include="src\graphics\vulkan\command_pool.cpp" />
     <ClCompile Include="src\graphics\vulkan\graphics.cpp" />
     <ClCompile Include="src\graphics\vulkan\pipeline.cpp" />
@@ -157,8 +158,10 @@
     <ClInclude Include="src\core\config\config.h" />
     <ClInclude Include="src\core\hash.h" />
     <ClInclude Include="src\core\ref_counted.h" />
-    <ClInclude Include="src\core\sys\timer.h" />
-    <ClInclude Include="src\fs\filesystem.h" />
+    <ClInclude Include="src\graphics\vulkan\mesh.h" />
+    <ClInclude Include="src\graphics\vulkan\vertex_layout.h" />
+    <ClInclude Include="src\platform\timer.h" />
+    <ClInclude Include="src\platform\filesystem.h" />
     <ClInclude Include="src\graphics\vulkan\command_pool.h" />
     <ClInclude Include="src\graphics\vulkan\graphics.h" />
     <ClInclude Include="src\graphics\vulkan\pipeline.h" />
@@ -179,7 +182,7 @@
     <ClInclude Include="src\core\platform.h" />
     <ClInclude Include="src\core\string.h" />
     <ClInclude Include="src\core\string_format.h" />
-    <ClInclude Include="src\core\sys\windows.h" />
+    <ClInclude Include="src\platform\windows.h" />
     <ClInclude Include="src\graphics\vulkan\render_system.h" />
     <ClInclude Include="src\graphics\vulkan\swapchain.h" />
     <ClInclude Include="src\graphics\vulkan\vulkan.h" />
@@ -195,7 +198,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="redox.licenseheader" />
-    <None Include="resources\config\settings.ini" />
     <None Include="src\core\utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
