@@ -30,8 +30,7 @@ SOFTWARE.
 #include "graphics.h"
 #include "vulkan.h"
 
-namespace redox {
-
+namespace redox::graphics {
 	class Swapchain {
 	public:
 		Swapchain(const Graphics& graphics);
@@ -39,8 +38,8 @@ namespace redox {
 
 		VkSwapchainKHR handle() const;
 		VkExtent2D extent() const;
-		VkImageView operator[](std::size_t index) const;
-		std::size_t size() const;
+		VkImageView image(std::size_t index) const;
+		std::size_t num_images() const;
 
 	private:
 		void _init();
@@ -55,6 +54,5 @@ namespace redox {
 		VkExtent2D _extent;
 
 		const Graphics& _graphicsRef;
-
 	};
 }

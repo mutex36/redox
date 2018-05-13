@@ -27,33 +27,39 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\string.h"
 #include "core\hashmap.h"
-#include "resources\resource.h"
+#include "platform\filesystem.h"
+#include "core\ref_counted.h"
+
+#include "helper.h"
 
 #include <type_traits> //std::forward
 
 namespace redox {
-	template<class ResourceType>
+	template<class T, class Allocator = allocation::DefaultAllocator<T>>
+	using Resource = RefCounted<T, Allocator>;
+
+	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
+	Resource<T, Allocator> make_resource(Args&&...args) {
+		return make_ref_counted<T, Allocator>(std::forward<Args>(args)...);
+	}
+
+	template<class CRTP_Derived, class ResourceType>
 	class ResourceFactory {
 	public:
-		template<class Allocator = allocation::DefaultAllocator<ResourceType>, class...Args>
+		template<class...Args>
 		Resource<ResourceType> load(const io::Path& file, Args&&...args) {
 			auto lookup = _cache.get(file);
 			if (lookup) return lookup.value();
 
-			auto rx = make_resource<ResourceType, Allocator>(
-				_resolve(file), std::forward<Args>(args)...);
+			auto path = ResourceHelper::instance().resolve_path(file);
+			auto rx = static_cast<CRTP_Derived*>(this)->internal_load(
+				path, std::forward<Args>(args)...);
+
 			_cache.push(file, rx);
 			return rx;
 		}
 
 	private:
-		io::Path _resolve(const io::Path& file) const {
-			return _resourcePath + file;
-		}
-
 		Hashmap<String, Resource<ResourceType>> _cache;
-
-		//TODO: load from config
-		io::Path _resourcePath = R"(C:\Users\luis9\Desktop\redox\redox\resources\)";
 	};
 }

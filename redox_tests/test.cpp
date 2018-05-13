@@ -156,21 +156,41 @@ TEST(Vec, Ops) {
 	auto c = a + b;
 	ASSERT_FLOAT_EQ(c.x, 6.0f);
 	ASSERT_FLOAT_EQ(c.y, 6.0f);
-	ASSERT_FLOAT_EQ(c.x, 6.0f);
+	ASSERT_FLOAT_EQ(c.z, 6.0f);
 
 	auto d = a * b;
 	ASSERT_FLOAT_EQ(d.x, 9.0f);
 	ASSERT_FLOAT_EQ(d.y, 9.0f);
-	ASSERT_FLOAT_EQ(d.x, 9.0f);
+	ASSERT_FLOAT_EQ(d.z, 9.0f);
 
 	auto e = d * 4.0f;
 	ASSERT_FLOAT_EQ(e.x, 36.0f);
 	ASSERT_FLOAT_EQ(e.y, 36.0f);
-	ASSERT_FLOAT_EQ(e.x, 36.0f);
+	ASSERT_FLOAT_EQ(e.z, 36.0f);
 
 	auto le = e.Length();
-	ASSERT_FLOAT_EQ(le, 62.353829072479584);
+	ASSERT_FLOAT_EQ(le, 62.353829072479584f);
 
 	auto adb = a.Dot(b);
 	ASSERT_FLOAT_EQ(adb, 27.0f);
+
+	redox::math::Vec3f ax(1,2,3);
+	redox::math::Vec3f ay(1,5,7);
+	auto crs = ax.Cross(ay);
+
+	ASSERT_FLOAT_EQ(crs.x, -1.0f);
+	ASSERT_FLOAT_EQ(crs.y, -4.0f);
+	ASSERT_FLOAT_EQ(crs.z, 3.0f);
+
+	redox::math::Vec4f kkh;
+	kkh.x = 1;
+	kkh.y = 2;
+	kkh.z = 3;
+	kkh.w = 4;
+
+	ASSERT_FLOAT_EQ(kkh.x, 1.0f);
+	ASSERT_FLOAT_EQ(kkh.y, 2.0f);
+	ASSERT_FLOAT_EQ(kkh.z, 3.0f);
+	ASSERT_FLOAT_EQ(kkh.w, 4.0f);
+
 }

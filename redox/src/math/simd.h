@@ -26,7 +26,7 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 
-#ifdef RDX_COMPILER_MSC
+#ifdef RDX_COMPILER_MSVC
 #include <intrin.h>
 #elif defined RDX_COMPILER_GCC || RDX_COMPILER_CLANG
 #include <x86intrin.h>
@@ -37,7 +37,40 @@ namespace redox::simd {
 	typedef __m128d f64x4;
 	typedef __m128i i32x4;
 
-	constexpr size_t alignment = 16;
+	constexpr std::size_t alignment = 16;
+
+	template<class Scalar, class XMM, u32 Index>
+	struct accessor {
+		_RDX_INLINE operator Scalar() const noexcept {
+			return extract_by_index<Index>(_xmm);
+		}
+
+		_RDX_INLINE accessor& operator=(const Scalar value) noexcept {
+			_xmm = set_by_index<Index>(value, _xmm);
+			return *this;
+		}
+
+		XMM& _xmm;
+	};
+
+	template<u32 Index, class XMM>
+	_RDX_INLINE auto extract_by_index(XMM xmm) {
+		return extract_lower(
+			shuffle<Index, Index, Index, Index>(xmm, xmm));
+	}
+
+	template<u32 Index, class Scalar, class XMM>
+	_RDX_INLINE auto set_by_index(const Scalar value, XMM xmm) {
+		//if constexpr(Index == 0)
+		//	return move_lower(xmm, set_lower(value));
+
+		return blend<(0x1 << Index)>(xmm, set_all(value));
+	}
+
+	template<u32 imm8>
+	_RDX_INLINE f32x4 blend(f32x4 lhs, f32x4 rhs) {
+		return _mm_blend_ps(lhs, rhs, imm8);
+	}
 
 	_RDX_INLINE f32x4 add(f32x4 lhs, f32x4 rhs) {
 		return _mm_add_ps(lhs, rhs);

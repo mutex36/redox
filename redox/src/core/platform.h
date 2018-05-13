@@ -36,7 +36,7 @@ SOFTWARE.
 #endif
 
 #if defined _MSC_VER
-#define RDX_COMPILER_MSC
+#define RDX_COMPILER_MSVC
 #elif defined __GNUC__ || defined __GNUG__
 #define RDX_COMPILER_GCC
 #elif defined __clang__

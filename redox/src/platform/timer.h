@@ -27,7 +27,7 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\smart_ptr.h"
 
-namespace redox {
+namespace redox::platform {
 	class Timer {
 	public:
 		Timer();

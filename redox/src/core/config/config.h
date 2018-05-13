@@ -26,15 +26,34 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\string.h"
+#include "core\string_format.h"
+
+#include "thirdparty/ini/ini.h"
 
 namespace redox {
 	class Configuration {
 	public:
+		class value_proxy {
+		public:
+			value_proxy(ini_t* conf, const String& group, const String& value) {
+				_ini_val = ini_get(conf, group.cstr(), value.cstr());
+			}
+
+			template<class T>
+			operator T() const {
+				return parse<T>(_ini_val);
+			}
+
+		private:
+			const char* _ini_val;
+		};
+
 		Configuration(const String& file);
 		~Configuration();
 
+		value_proxy get(const String& group, const String& value) const;
+
 	private:
-
-
+		ini_t* _config;
 	};
 }

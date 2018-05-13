@@ -25,23 +25,27 @@ SOFTWARE.
 */
 #pragma once
 #include "core\buffer.h"
-
 #include "vulkan.h"
-#include "graphics.h"
-#include "swapchain.h"
 
-namespace redox {
+namespace redox::graphics {
+	class Graphics;
 
 	class CommandPool {
 	public:
-		CommandPool(const Graphics& graphics, uint32_t numBuffer);
+		CommandPool(const Graphics& graphics,
+			VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 		~CommandPool();
 
+		void free_all();
+		void resize(std::size_t numBuffers);
+
 		std::size_t size() const;
+		VkCommandPool handle() const;
+
 		VkCommandBuffer operator[](std::size_t index) const;
 
 	private:
-		void _init();
+		void _init(VkCommandPoolCreateFlags flags);
 		const Graphics& _graphicsRef;
 
 		VkCommandPool _handle;

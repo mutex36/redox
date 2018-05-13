@@ -28,6 +28,7 @@ SOFTWARE.
 #include "core\string.h"
 #include "platform\timer.h"
 
+#define RDX_LOG_TAG "Profiler"
 #include "core\logging\log.h"
 
 #define _RDX_HELPER_CONCAT_IMPL(x,y) x##y
@@ -38,16 +39,14 @@ SOFTWARE.
 namespace redox {
 	struct Profiler {
 		_RDX_INLINE Profiler(const redox::String& name) {
-			RDX_LOG("PROFILER: {0}", name);
+			RDX_LOG("{0}", name);
 			_timer.start();
 		}
 
 		_RDX_INLINE ~Profiler() {
-			auto ms = _timer.elapsed();
-			RDX_LOG("PROFILER: {0}ms", ms);
+			RDX_LOG("{0}ms", _timer.elapsed());
 		}
 
-		Timer _timer;
-		HANDLE _perf;
+		platform::Timer _timer;
 	};
 }

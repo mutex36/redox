@@ -31,25 +31,29 @@ SOFTWARE.
 
 #include "core\profiling\profiler.h"
 
-#include "core\logging\log.h"
-#define RDX_LOG_TAG "Vulkan"
-
 #include "shader.h"
 
-redox::RenderSystem::RenderSystem(const Window& window)
-	: _graphics(window), _swapchain(_graphics),
+#define RDX_LOG_TAG "RenderSystem"
+
+redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config)
+	: _graphics(window, config), _swapchain(_graphics), _configRef(config),
 	_pipeline(_graphics, _swapchain, DefaultVertex::get_layout()),
-	_commandPool(_graphics, _swapchain.size()) {
+	_commandPool(_graphics), _auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
 
 	_init_semaphores();
+	_commandPool.resize(_swapchain.num_images());
+
+	auto& mf = _graphics.mesh_factory();
+	_demoMesh = mf.load("meshes\\test.rdxmesh", _graphics, _auxCommandPool);
 }
 
-redox::RenderSystem::~RenderSystem() {
+redox::graphics::RenderSystem::~RenderSystem() {
+	_wait_pending();
 	vkDestroySemaphore(_graphics.device(), _renderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(_graphics.device(), _imageAvailableSemaphore, nullptr);
 }
 
-void redox::RenderSystem::demo_setup() {
+void redox::graphics::RenderSystem::demo_setup() {
 	_RDX_PROFILE;
 	for (std::size_t index = 0; index < _commandPool.size(); ++index) {
 		auto commandBuffer = _commandPool[index];
@@ -73,10 +77,17 @@ void redox::RenderSystem::demo_setup() {
 		renderPassInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.handle());
-		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
+		const auto& vbo = _demoMesh->vertex_buffer();
+		const auto& ebo = _demoMesh->index_buffer();
+
+		VkBuffer vertexBuffers[] = { vbo.handle() };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(commandBuffer, ebo.handle(), 0, VK_INDEX_TYPE_UINT16);
+
+		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(ebo.size()), 1, 0, 0, 0);
 		vkCmdEndRenderPass(commandBuffer);
 
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -84,7 +95,7 @@ void redox::RenderSystem::demo_setup() {
 	}
 }
 
-void redox::RenderSystem::render() {
+void redox::graphics::RenderSystem::render() {
 	vkQueueWaitIdle(_graphics.present_queue());
 	auto swapChainHandle = _swapchain.handle();
 
@@ -124,24 +135,34 @@ void redox::RenderSystem::render() {
 		_recreate_swapchain();
 }
 
-void redox::RenderSystem::wait_pending() {
+void redox::graphics::RenderSystem::_wait_pending() {
 	vkDeviceWaitIdle(_graphics.device());
 }
 
-void redox::RenderSystem::_recreate_swapchain() {
-	wait_pending();
+const redox::graphics::CommandPool& redox::graphics::RenderSystem::command_pool() const {
+	return _commandPool;
+}
+
+const redox::graphics::CommandPool& redox::graphics::RenderSystem::aux_command_pool() const {
+	return _auxCommandPool;
+}
+
+void redox::graphics::RenderSystem::_recreate_swapchain() {
+	_wait_pending();
 
 	RDX_LOG("Recreating swapchain...");
 
 	util::reconstruct(_swapchain, _graphics);
 	util::reconstruct(_pipeline, _graphics, _swapchain, DefaultVertex::get_layout());
-	util::reconstruct(_commandPool, _graphics, _swapchain.size());
 
-	//TODO: DEMO
+	_commandPool.free_all();
+	_commandPool.resize(_swapchain.num_images());
+
+	//TODO: demo
 	demo_setup();
 }
 
-void redox::RenderSystem::_init_semaphores() {
+void redox::graphics::RenderSystem::_init_semaphores() {
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 

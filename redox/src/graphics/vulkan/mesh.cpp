@@ -24,47 +24,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "mesh.h"
-
+#include "graphics.h"
 #include "platform\filesystem.h"
 
-redox::Mesh::Mesh(const io::Path& file, Graphics& graphics) : _graphicsRef(graphics) {
-
-
-	auto size = static_cast<VkDeviceSize>();
-	_init(size);
-
-	void* data;
-	vkMapMemory(_graphicsRef.device(), _memory, 0, size, 0, &data);
-	memcpy(data, buffer.data(), size);
-	vkUnmapMemory(_graphicsRef.device(), _memory);
+uint32_t redox::graphics::Mesh::vertex_count() const {
+	return _vertexCount;
 }
 
-redox::Mesh::~Mesh() {
-	vkDestroyBuffer(_graphicsRef.device(), _handle, nullptr);
-	vkFreeMemory(_graphicsRef.device(), _memory, nullptr);
+const redox::graphics::BufferBase& redox::graphics::Mesh::vertex_buffer() const {
+	return _vertexBuffer;
 }
 
-void redox::Mesh::_init(VkDeviceSize bufferSize) {
-	VkBufferCreateInfo bufferInfo{};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = bufferSize;
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	if (vkCreateBuffer(_graphicsRef.device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
-		throw Exception("failed to create vertex buffer");
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(_graphicsRef.device(), _handle, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = _graphicsRef.find_memory_type(memRequirements.memoryTypeBits,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	if (vkAllocateMemory(_graphicsRef.device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
-		throw Exception("failed to allocate vertex buffer memory");
-
-	vkBindBufferMemory(_graphicsRef.device(), _handle, _memory, 0);
+const redox::graphics::BufferBase& redox::graphics::Mesh::index_buffer() const {
+	return _indexBuffer;
 }

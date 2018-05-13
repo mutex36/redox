@@ -29,10 +29,11 @@ SOFTWARE.
 #include "window.h"
 #include "core\logging\log.h"
 #include "platform\windows.h"
+#include "resources\helper.h"
 
 #define RDX_LOG_TAG "WindowSystem"
 
-struct redox::Window::internal {
+struct redox::platform::Window::internal {
 	HWND handle;
 	HINSTANCE instance;
 	String classname;
@@ -46,18 +47,25 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	}
 
 	LONG_PTR wndptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
-	auto instance = reinterpret_cast<redox::Window*>(wndptr);
+	auto instance = reinterpret_cast<redox::platform::Window*>(wndptr);
 
 	if (instance != nullptr) {
 		switch (msg) {
 			case WM_CLOSE: {
-				instance->_notify_event(redox::Window::Event::CLOSE);
+				instance->_notify_event(redox::platform::Window::Event::CLOSE);
 				break;
 			}
 			case WM_SYSCOMMAND: {
-				auto cmd = wp & 0xfff0;
-				if (cmd == SC_MINIMIZE)
-					instance->_notify_event(redox::Window::Event::MINIMIZE);
+				if ((wp & 0xfff0) == SC_MINIMIZE)
+					instance->_notify_event(redox::platform::Window::Event::MINIMIZE);
+				break;
+			}
+			case WM_KILLFOCUS: {
+				instance->_notify_event(redox::platform::Window::Event::LOSTFOCUS);
+				break;
+			}
+			case WM_SETFOCUS: {
+				instance->_notify_event(redox::platform::Window::Event::GAINFOCUS);
 				break;
 			}
 		}
@@ -66,84 +74,99 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-redox::Window::Window(const String& title, const Bounds& bounds) : _bounds(bounds) {
+redox::platform::Window::Window(const String& title,
+	const Bounds& bounds, const Appearance& appearance) : _bounds(bounds) {
 	_internal = make_smart_ptr<internal>();
 	_internal->instance = GetModuleHandle(0);
 	_internal->classname = "redox_window";
 
-	DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_OVERLAPPEDWINDOW;
+	DWORD dwStyle = WS_SYSMENU | WS_MINIMIZEBOX;
+
+	auto iconFile = ResourceHelper::instance().resolve_path(appearance.icon);
+	auto icon = (HICON)LoadImage(NULL, iconFile.cstr(), IMAGE_ICON,
+		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
 
 	WNDCLASS wndClass{};
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
 	wndClass.lpfnWndProc = WndProc;
 	wndClass.hInstance = _internal->instance;
-	wndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wndClass.hIcon = icon;
 	wndClass.hCursor = LoadCursor(NULL, IDC_HAND);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wndClass.lpszClassName = _internal->classname.cstr();
 
 	RegisterClass(&wndClass);
 
-	RECT r{ 0, 0, _bounds.width, _bounds.height };
-	AdjustWindowRect(&r, dwStyle, FALSE);
+	RECT windowRect{ 0,0 };
+	if (appearance.fullscreen) {
+		windowRect.right = GetSystemMetrics(SM_CXSCREEN);
+		windowRect.bottom = GetSystemMetrics(SM_CYSCREEN);
+		dwStyle |= WS_POPUP;
+	} else {
+		windowRect.right = _bounds.width;
+		windowRect.bottom = _bounds.height;
+		AdjustWindowRect(&windowRect, dwStyle, FALSE);
+		dwStyle |= WS_OVERLAPPEDWINDOW | WS_CAPTION;
+	}
 
 	_internal->handle = CreateWindowEx(
 		NULL, _internal->classname.cstr(), title.cstr(), dwStyle,
-		r.left, r.left, r.right - r.left, r.bottom - r.top,
+		windowRect.left, windowRect.left, 
+		windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
 		NULL, NULL, _internal->instance, this);
 }
 
-
-redox::Window::~Window() {
+redox::platform::Window::~Window() {
 	DestroyWindow(_internal->handle);
 	UnregisterClass(_internal->classname.cstr(), _internal->instance);
 }
 
-void redox::Window::show() const {
+void redox::platform::Window::show() const {
 	ShowWindow(_internal->handle, SW_SHOW);
 	SetFocus(_internal->handle);
 	SetForegroundWindow(_internal->handle);
 }
 
-void redox::Window::process_events() const {
+void _process_events(HWND hwnd, UINT rangeMin, UINT rangeMax) {
 	MSG msg;
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+	while (PeekMessage(&msg, hwnd, rangeMin, rangeMax, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
 }
 
-void redox::Window::hide() const {
+void redox::platform::Window::process_events() const {
+	//We want to skip all keyboard/mouse/input related
+	//messages. These are processed and handled by the input manager
+	_process_events(_internal->handle, 0, WM_INPUT);
+	_process_events(_internal->handle, WM_KEYLAST, 0);
+}
+
+void redox::platform::Window::hide() const {
 	ShowWindow(_internal->handle, SW_HIDE);
 }
 
-void redox::Window::set_title(const String& title) {
+void redox::platform::Window::set_title(const String& title) {
 	SetWindowText(_internal->handle, title.cstr());
 }
 
-void redox::Window::set_callback(EventFn && fn) {
+void redox::platform::Window::set_callback(EventFn && fn) {
 	_eventfn = std::move(fn);
 }
 
-bool redox::Window::is_minimized() const {
+bool redox::platform::Window::is_minimized() const {
 	return IsIconic(_internal->handle);
 }
 
-redox::Window::Bounds redox::Window::bounds() const {
+redox::platform::Window::Bounds redox::platform::Window::bounds() const {
 	return _bounds;
 }
 
-void* redox::Window::get(const String& key) const {
-	if (key == "hwnd")
-		return _internal->handle;
-
-	if (key == "hinstance")
-		return _internal->instance;
-
-	return nullptr;
+void* redox::platform::Window::native_handle() const {
+	return _internal->handle;
 }
 
-void redox::Window::_notify_event(const Event ev) {
+void redox::platform::Window::_notify_event(const Event ev) {
 	if (_eventfn)
 		_eventfn(ev);
 }

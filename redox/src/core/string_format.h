@@ -39,6 +39,11 @@ namespace redox {
 	}
 
 	template<>
+	_RDX_INLINE String parse(const String& expr) {
+		return expr;
+	}
+
+	template<>
 	_RDX_INLINE f32 parse(const String& expr) {
 		return std::strtof(expr.cstr(), NULL);
 	}
@@ -49,8 +54,31 @@ namespace redox {
 	}
 
 	template<>
+	_RDX_INLINE i32 parse(const String& expr) {
+		return std::strtol(expr.cstr(), NULL, 10);
+	}
+
+	template<>
 	_RDX_INLINE u64 parse(const String& expr) {
 		return std::strtoull(expr.cstr(), NULL, 10);
+	}
+
+	template<>
+	_RDX_INLINE u32 parse(const String& expr) {
+		return std::strtoul(expr.cstr(), NULL, 10);
+	}
+
+	template<>
+	_RDX_INLINE bool parse(const String& expr) {
+		if (expr.empty())
+			throw Exception("parsing error");
+		if (expr[0] == '1' || expr == "true")
+			return true;
+
+		if (expr[0] == '0' || expr == "false")
+			return false;
+
+		throw Exception("parsing error");
 	}
 
 	namespace detail {
@@ -59,7 +87,7 @@ namespace redox {
 	}
 
 	template<class T>
-	_RDX_INLINE detail::binary<T> binary(const T& value) {
+	constexpr auto binary(const T& value) {
 		return detail::binary<T>{value};
 	}
 
@@ -73,7 +101,7 @@ namespace redox {
 
 	_RDX_INLINE redox::String lexical_cast(const f64& expr) {
 		char result[16];
-		sprintf(result, "%.3f", expr);
+		sprintf_s(result, "%.3f", expr);
 		return result;
 	}
 
@@ -126,7 +154,10 @@ namespace redox {
 	String format(const String& format, const Args&...args) {
 		Buffer<String> parsed = { lexical_cast(args)... };
 		std::size_t s0 = -1; std::size_t s1 = 0;
-		String output;
+
+		//Roughly approximate the size of the result string
+		//This prevents expensive reallocations during formatting
+		String output(format.size() + sizeof...(Args) * 3);
 
 		for (std::size_t i = 0; i < format.size(); ++i) {
 			if (format[i] == '{') {

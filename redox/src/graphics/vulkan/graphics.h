@@ -26,15 +26,20 @@ SOFTWARE.
 #pragma once
 #include "vulkan.h"
 #include "platform\window.h"
-#include "resources\resource_factory.h"
+#include "core\config\config.h"
 #include "shader.h"
+#include "mesh.h"
+#include "command_pool.h"
+
+#include "factory\mesh_factory.h"
+#include "factory\shader_factory.h"
 
 #include <optional> //std::optional
 
-namespace redox {
+namespace redox::graphics {
 	class Graphics {
 	public:
-		Graphics(const Window& window);
+		Graphics(const platform::Window& window, const Configuration& config);
 		~Graphics();
 
 		VkDevice device() const;
@@ -43,9 +48,15 @@ namespace redox {
 		VkQueue graphics_queue() const;
 		VkQueue present_queue() const;
 		uint32_t queue_family() const;
-		uint32_t find_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
-		ResourceFactory<Shader>& get_shader_factory();
+		std::optional<uint32_t> pick_memory_type(
+			uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
+		VkPresentModeKHR pick_presentation_mode() const;
+		VkSurfaceFormatKHR pick_surface_format() const;
+
+		ShaderFactory& shader_factory();
+		MeshFactory& mesh_factory();
 
 	private:
 		void _init_instance();
@@ -56,7 +67,8 @@ namespace redox {
 		VkPhysicalDevice _pick_device();
 		std::optional<uint32_t> _pick_queue_family();
 
-		ResourceFactory<Shader> _shaderFactory;
+		MeshFactory _meshFactory;
+		ShaderFactory _shaderFactory;
 
 		Buffer<VkQueueFamilyProperties> _queueFamilies;
 		uint32_t _queueFamily;
@@ -67,7 +79,8 @@ namespace redox {
 		VkPhysicalDevice _physicalDevice;
 		VkSurfaceKHR _surface;
 
-		const Window& _window;
+		const platform::Window& _windowRef;
+		const Configuration& _configRef;
 
 #ifdef RDX_VULKAN_VALIDATION
 		VkDebugReportCallbackEXT _debugReportCallback;

@@ -28,23 +28,23 @@ SOFTWARE.
 
 #include "core\core.h"
 #include "core\string.h"
-#include "core\ref_counted.h"
+#include "resources\factory.h"
 
 #include "platform\filesystem.h"
 
-namespace redox {
+namespace redox::graphics {
 	class Graphics;
 
 	class Shader
 	{
 	public:
-		Shader(const io::Path& file, Graphics& graphics);
+		Shader(const Buffer<i8>& buffer, const Graphics& graphics);
 		~Shader();
 
 		VkShaderModule handle() const;
 
 	private:
-		Graphics& _graphicsRef;
+		const Graphics& _graphicsRef;
 		VkShaderModule _handle;
 	};
 }

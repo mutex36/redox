@@ -39,14 +39,20 @@ namespace redox {
 		//probably not the cleanest way, but it's a good solution for now.
 
 		template<class T, class...Args>
-		void reconstruct(T& ref, Args&&...args) {
+		constexpr void reconstruct(T& ref, Args&&...args) {
 			ref.~T();
 			new (&ref) T(std::forward<Args>(args)...);
 		}
 
-		template <typename M, typename T>
-		constexpr std::size_t offset_of(M T::* p, T sample = T()) {
-			return std::size_t(&(sample.*p)) - std::size_t(&sample);
+		template<class M, class T>
+		constexpr auto offset_of(M T::* p, T sample = T()) {
+			return reinterpret_cast<std::size_t>(&(sample.*p))
+				- reinterpret_cast<std::size_t>(&sample);
+		}
+
+		template<std::size_t Index, class T>
+		constexpr auto check_bit(T expr) noexcept {
+			return static_cast<bool>((expr >> Index) & 0x1);
 		}
 	}
 

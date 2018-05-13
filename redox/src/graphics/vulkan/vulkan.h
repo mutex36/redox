@@ -25,6 +25,8 @@ SOFTWARE.
 */
 #pragma once
 #include "core\string.h"
+
+#define RDX_LOG_TAG "RenderSystem"
 #include "core\logging\log.h"
 
 #include <vulkan/vulkan.h>
@@ -38,11 +40,11 @@ SOFTWARE.
 #define RDX_VULKAN_VALIDATION
 #endif
 
-static const char* RDX_VULKAN_LAYERS[] = {
+static constexpr const char* RDX_VULKAN_LAYERS[] = {
 	"VK_LAYER_LUNARG_standard_validation"
 };
 
-static const char* RDX_VULKAN_EXTENSIONS[] = {
+static constexpr const char* RDX_VULKAN_EXTENSIONS[] = {
 	VK_KHR_SURFACE_EXTENSION_NAME,
 
 #ifdef RDX_PLATFORM_WINDOWS
@@ -54,7 +56,7 @@ static const char* RDX_VULKAN_EXTENSIONS[] = {
 #endif
 };
 
-static const char* RDX_VULKAN_DEVICE_EXTENSIONS[] = {
+static constexpr const char* RDX_VULKAN_DEVICE_EXTENSIONS[] = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 

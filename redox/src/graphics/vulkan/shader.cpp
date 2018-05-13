@@ -28,10 +28,8 @@ SOFTWARE.
 
 #include "platform\filesystem.h"
 
-redox::Shader::Shader(const io::Path& file, Graphics& graphics) : _graphicsRef(graphics) {
-
-	io::File fstream(file, io::File::Mode::READ);
-	auto buffer = fstream.read();
+redox::graphics::Shader::Shader(const Buffer<i8>& buffer, const Graphics& graphics)
+	: _graphicsRef(graphics) {
 
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -42,10 +40,10 @@ redox::Shader::Shader(const io::Path& file, Graphics& graphics) : _graphicsRef(g
 		throw Exception("failed to create shader module");
 }
 
-redox::Shader::~Shader() {
+redox::graphics::Shader::~Shader() {
 	vkDestroyShaderModule(_graphicsRef.device(), _handle, nullptr);
 }
 
-VkShaderModule redox::Shader::handle() const {
+VkShaderModule redox::graphics::Shader::handle() const {
 	return _handle;
 }

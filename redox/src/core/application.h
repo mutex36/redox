@@ -28,6 +28,9 @@ SOFTWARE.
 #include "graphics\vulkan\render_system.h"
 #include "core\config\config.h"
 #include "platform\timer.h"
+#include "input\input_system.h"
+
+#include <atomic>
 
 namespace redox {
 	class Application {
@@ -35,13 +38,28 @@ namespace redox {
 		Application();
 		~Application();
 
+		static Application& instance() {
+			static Application app;
+			return app;
+		}
+
+		enum class State {
+			RUNNING, PAUSED, TERMINATED
+		};
+
 		void run();
+		void stop();
+
+		const Configuration& config() const;
 
 	private:
-		Window _window;
-		RenderSystem _renderer;
-		Timer _timer;
+		Configuration _config;
+		platform::Window _window;
+		platform::Timer _timer;
 
-		bool _running{ false };
+		input::InputSystem _inputSystem;
+		graphics::RenderSystem _renderSystem;
+
+		Application::State _state;
 	};
 }

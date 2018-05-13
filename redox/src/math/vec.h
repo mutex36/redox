@@ -28,28 +28,36 @@ SOFTWARE.
 
 #include "simd.h"
 
+//Accessing scalar by union seems portable, but in C++ UB and (potentially) inefficient.
+//https://stackoverflow.com/questions/12624466/get-member-of-m128-by-index
+#define RDX_SIMD_ACCESSOR_IMPL
+
 namespace redox::math {
 	namespace detail {
-		//Accessing scalar by union seems portable, but in C++ UB and (potentially) inefficient.
-		//https://stackoverflow.com/questions/12624466/get-member-of-m128-by-index
 		template<class Scalar, class XMM, std::size_t Size>
 		struct VecBase;
 
 		template<class Scalar, class XMM>
 		struct VecBase<Scalar, XMM, 2> {
-			VecBase(XMM xmm) : data(xmm) {}
-			VecBase(Scalar x, Scalar y)
-				: VecBase(simd::set(x,y)) {
+			VecBase(XMM xmm) : _xmm(xmm) {}
+			VecBase(Scalar x, Scalar y) : VecBase(simd::set(x,y)) {
 			}
+
+#ifdef RDX_SIMD_ACCESSOR_IMPL
+			XMM _xmm;
+			simd::accessor<Scalar, XMM, 0> x{ _xmm };
+			simd::accessor<Scalar, XMM, 1> y{ _xmm };
+#else
 			union alignas(simd::alignment) {
 				Scalar x, y;
-				XMM data;
+				XMM _xmm;
 			};
+#endif
 		};
 
 		template<typename Scalar, typename XMM>
 		struct VecBase<Scalar, XMM, 3> {
-			VecBase(XMM xmm) : data(xmm) {}
+			VecBase(XMM xmm) : _xmm(xmm) {}
 			VecBase(Scalar x, Scalar y, Scalar z)
 				: VecBase(simd::set(x, y, z)) {
 			}
@@ -57,30 +65,46 @@ namespace redox::math {
 			_RDX_INLINE VecBase Cross(const VecBase& rhs) const {
 				return simd::sub(
 					simd::mul(
-						simd::shuffle<3, 0, 2, 1>(data, data),
-						simd::shuffle<3, 1, 0, 2>(rhs.data, rhs.data)),
+						simd::shuffle<3, 0, 2, 1>(_xmm, _xmm),
+						simd::shuffle<3, 1, 0, 2>(rhs._xmm, rhs._xmm)),
 					simd::mul(
-						simd::shuffle<3, 1, 0, 2>(data, data),
-						simd::shuffle<3, 0, 2, 1>(rhs.data, rhs.data))
+						simd::shuffle<3, 1, 0, 2>(_xmm, _xmm),
+						simd::shuffle<3, 0, 2, 1>(rhs._xmm, rhs._xmm))
 				);
 			}
 
+#ifdef RDX_SIMD_ACCESSOR_IMPL
+			XMM _xmm;
+			simd::accessor<Scalar, XMM, 0> x{ _xmm };
+			simd::accessor<Scalar, XMM, 1> y{ _xmm };
+			simd::accessor<Scalar, XMM, 2> z{ _xmm };
+#else
 			union alignas(simd::alignment) {
 				Scalar x, y, z;
-				XMM data;
+				XMM _xmm;
 			};
+#endif
 		};
 
 		template<class Scalar, class XMM>
 		struct VecBase<Scalar, XMM, 4> {
-			VecBase(XMM xmm) : data(xmm) {}
+			VecBase(XMM xmm) : _xmm(xmm) {}
 			VecBase(Scalar x, Scalar y, Scalar z, Scalar w) 
 				: VecBase(simd::set(x, y, z, w)) {
 			}
+
+#ifdef RDX_SIMD_ACCESSOR_IMPL
+			XMM _xmm;
+			simd::accessor<Scalar, XMM, 0> x{ _xmm };
+			simd::accessor<Scalar, XMM, 1> y{ _xmm };
+			simd::accessor<Scalar, XMM, 2> z{ _xmm };
+			simd::accessor<Scalar, XMM, 3> w{ _xmm };
+#else
 			union alignas(simd::alignment) {
 				Scalar x, y, z, w;
-				XMM data;
+				XMM _xmm;
 			};
+#endif
 		};
 	}
 	
@@ -92,44 +116,44 @@ namespace redox::math {
 		Vec() : base_type(simd::set_zero()) {}
 
 		_RDX_INLINE Vec operator+(const Vec& rhs) const {
-			return simd::add(data, rhs.data);
+			return simd::add(_xmm, rhs._xmm);
 		}
 		_RDX_INLINE Vec operator-(const Vec& rhs) const {
-			return simd::sub(data, rhs.data);
+			return simd::sub(_xmm, rhs._xmm);
 		}
 		_RDX_INLINE Vec operator*(const Vec& rhs) const {
-			return simd::mul(data, rhs.data);
+			return simd::mul(_xmm, rhs._xmm);
 		}
 		_RDX_INLINE Vec operator/(const Vec& rhs) const {
-			return simd::div(data, rhs.data);
+			return simd::div(_xmm, rhs._xmm);
 		}
 
 		_RDX_INLINE Vec operator+(Scalar rhs) const {
-			return simd::add(data, simd::set_all(rhs));
+			return simd::add(_xmm, simd::set_all(rhs));
 		}
 		_RDX_INLINE Vec operator-(Scalar rhs) const {
-			return simd::sub(data, simd::set_all(rhs));
+			return simd::sub(_xmm, simd::set_all(rhs));
 		}
 		_RDX_INLINE Vec operator*(Scalar rhs) const {
-			return simd::mul(data, simd::set_all(rhs));
+			return simd::mul(_xmm, simd::set_all(rhs));
 		}
 		_RDX_INLINE Vec operator/(Scalar rhs) const {
-			return simd::div(data, simd::set_all(rhs));
+			return simd::div(_xmm, simd::set_all(rhs));
 		}
 
 		_RDX_INLINE Scalar Dot(const Vec& rhs) const {
 			return simd::extract_lower(
-				simd::dot<0x71>(data, rhs.data));
+				simd::dot<0x71>(_xmm, rhs._xmm));
 		}
 
 		_RDX_INLINE Scalar Length() const {
 			return simd::extract_lower(
-				simd::sqrt_lower(simd::dot<0x71>(data, data))
+				simd::sqrt_lower(simd::dot<0x71>(_xmm, _xmm))
 			);
 		}
 		_RDX_INLINE Vec Normalize() const {
-			return simd::mul(data, 
-				simd::rsqrt(simd::dot<0x77>(data, data)));
+			return simd::mul(_xmm,
+				simd::rsqrt(simd::dot<0x77>(_xmm, _xmm)));
 		}
 	};
 

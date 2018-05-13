@@ -27,23 +27,32 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\string.h"
 #include "core\smart_ptr.h"
+#include "core\utility.h"
+
+#include "filesystem.h"
 
 #include <functional> //std::function
 
-namespace redox {
+namespace redox::platform {
 	class Window {
 	public:
 		struct Bounds {
 			i32 width, height;
 		};
 
+		struct Appearance {
+			io::Path icon;
+			bool fullscreen;
+		};
+
 		enum class Event {
-			CLOSE, MINIMIZE
+			CLOSE, MINIMIZE, LOSTFOCUS, GAINFOCUS
 		};
 
 		using EventFn = std::function<void(Event)>;
 
-		Window(const String& name, const Bounds& bounds);
+		Window(const String& name, 
+			const Bounds& bounds, const Appearance& appearance);
 		~Window();
 
 		void show() const;
@@ -53,8 +62,7 @@ namespace redox {
 		void set_callback(EventFn&& fn);
 		bool is_minimized() const;
 		Bounds bounds() const;
-
-		void* get(const String& key) const;
+		void* native_handle() const;
 
 		//internal
 		void _notify_event(const Event ev);

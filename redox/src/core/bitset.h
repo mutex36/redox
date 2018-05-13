@@ -28,7 +28,6 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\allocation\default_allocator.h"
 #include "core\buffer.h"
-#include "core\non_copyable.h"
 
 #include "math\util.h"
 #include "logging\log.h"
@@ -39,26 +38,22 @@ namespace redox {
 	namespace detail {
 		template<class UnitType, 
 			class Allocator = allocation::DefaultAllocator<UnitType>>
-		class DynBitset : public NonCopyable {
+		class DynBitset {
 		public:
+			static_assert(std::is_unsigned_v<UnitType>,
+				"UnitType should be unsigned");
+
 			static constexpr auto bits_per_unit = sizeof(UnitType) * 8;
 			static constexpr auto unit_0ff_mask 
 				= std::numeric_limits<UnitType>::max();
 
 			DynBitset() : _size(0) {
 			}
-			DynBitset(std::size_t size) {
-				resize(size);
-			}
+
 			~DynBitset() = default;
 
-			DynBitset(DynBitset&& ref) : _size(ref._size), _units(std::move(ref._units)) {
-			}
-
-			_RDX_INLINE DynBitset& operator=(DynBitset&& ref) {
-				_size = ref._size;
-				_units = std::move(ref._units);
-				return *this;
+			_RDX_INLINE DynBitset(std::size_t size) {
+				resize(size);
 			}
 
 			_RDX_INLINE void resize(std::size_t size) {
@@ -79,13 +74,13 @@ namespace redox {
 				unit ^= (-static_cast<UnitType>(value) ^ unit) & mask;
 			}
 
-			u64 to_u64() const {
-				if (_units.size() > sizeof(u64) / sizeof(UnitType))
+			uint64_t to_u64() const {
+				if (_units.size() > sizeof(uint64_t) / sizeof(UnitType))
 					throw Exception("u64 overflow");
 
-				u64 output = 0; u64 index = 0;
+				uint64_t output = 0; std::size_t index = 0;
 				for (auto& unit : _units) {
-					auto unit64 = static_cast<u64>(unit);
+					auto unit64 = static_cast<uint64_t>(unit);
 					output |= (unit64 << (index++ * bits_per_unit));
 				}
 				return output;
@@ -98,9 +93,20 @@ namespace redox {
 			_RDX_INLINE std::size_t size() const {
 				return _size;
 			}
+			
+			_RDX_INLINE void clear_bits() const {
+				for (auto& unit : _units)
+					unit = static_cast<UnitType>(0x0);
+			}
+
+			_RDX_INLINE void clear() {
+				_units.clear();
+				_size = 0;
+			}
 
 			bool all() const {
-				if (_size == 0) return false;
+				if (_size == 0)
+					return false;
 
 				std::size_t index = 0;
 				while(index < _units.size() - 1) {
@@ -134,5 +140,5 @@ namespace redox {
 		};
 	}
 
-	using DynBitset = detail::DynBitset<u8>;
+	using DynBitset = detail::DynBitset<uint8_t>;
 }

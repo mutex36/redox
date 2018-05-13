@@ -32,7 +32,7 @@ SOFTWARE.
 #include "core\utility.h"
 
 namespace redox::io {
-	using Path = String;
+	using Path = redox::String;
 
 	class File {
 	public:

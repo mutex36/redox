@@ -24,30 +24,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\ref_counted.h"
-#include "core\hash.h"
 
-#include "platform\filesystem.h"
-
-namespace redox {
-	template<class T, 
-		class Allocator = allocation::DefaultAllocator<T>>
-	class Resource : public RefCounted<T, Allocator> {
-		using base_type = RefCounted<T, Allocator>;
-	
-		Resource(const io::Path& file, const T* ptr) : _filename(file), base_type(ptr) {
-		}
-
-		const io::Path& filename() const {
-			return _filename;
-		}
-
-	private:
-		io::Path _filename;
+namespace redox::input {
+	enum class Keys {
+		A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+		D1, D2, D3, D4, D5, D6, D7, D8, D9,
+		F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12
 	};
-
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	Resource<T, Allocator> make_resource(const io::Path& file, Args&&...args) {
-		return { file, new (Allocator::allocate()) T(file, std::forward<Args>(args)...) };
-	}
 }

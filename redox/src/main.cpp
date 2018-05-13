@@ -25,11 +25,10 @@ SOFTWARE.
 */
 #include "redox.h"
 
-
 int main() {
 
-	redox::Application app;
-	app.run();
+	auto& myApp = redox::Application::instance();
+	myApp.run();
 
 	return 0;
 }

@@ -27,6 +27,6 @@ SOFTWARE.
 #include "core\core.h"
 
 namespace redox::math {
-	constexpr f64 pi = 3.141592653589793;
-	constexpr f64 d2r = pi / 180.;
+	constexpr auto pi = 3.141592653589793;
+	constexpr auto d2r = pi / 180.;
 }

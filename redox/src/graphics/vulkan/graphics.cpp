@@ -26,14 +26,15 @@ SOFTWARE.
 #include "graphics.h"
 #include "core\utility.h"
 
-redox::Graphics::Graphics(const Window& window) : _window(window) {
+redox::graphics::Graphics::Graphics(const platform::Window& window, const Configuration& config)
+	: _windowRef(window), _configRef(config) {
 	_init_instance();
 	_init_physical_device();
 	_init_surface();
 	_init_device();
 }
 
-redox::Graphics::~Graphics() {
+redox::graphics::Graphics::~Graphics() {
 	vkDestroyDevice(_device, nullptr);
 	vkDestroySurfaceKHR(_instance, _surface, nullptr);
 
@@ -46,49 +47,89 @@ redox::Graphics::~Graphics() {
 	vkDestroyInstance(_instance, nullptr);
 }
 
-VkDevice redox::Graphics::device() const {
+VkDevice redox::graphics::Graphics::device() const {
 	return _device;
 }
 
-VkPhysicalDevice redox::Graphics::physical_device() const {
+VkPhysicalDevice redox::graphics::Graphics::physical_device() const {
 	return _physicalDevice;
 }
 
-VkSurfaceKHR redox::Graphics::surface() const {
+VkSurfaceKHR redox::graphics::Graphics::surface() const {
 	return _surface;
 }
 
-VkQueue redox::Graphics::graphics_queue() const {
+VkQueue redox::graphics::Graphics::graphics_queue() const {
 	return _graphicsQueue;
 }
 
-VkQueue redox::Graphics::present_queue() const {
+VkQueue redox::graphics::Graphics::present_queue() const {
 	return _graphicsQueue;
 }
 
-uint32_t redox::Graphics::queue_family() const {
+uint32_t redox::graphics::Graphics::queue_family() const {
 	return _queueFamily;
 }
 
-uint32_t redox::Graphics::find_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
+std::optional<uint32_t> redox::graphics::Graphics::pick_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memProperties);
 
 	for (std::size_t i = 0; i < memProperties.memoryTypeCount; i++) {
 		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-			return i;
+			return static_cast<uint32_t>(i);
+		}
+	}
+	return std::nullopt;
+}
+
+VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
+	uint32_t count;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, nullptr);
+
+	Buffer<VkPresentModeKHR> modes(count);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, modes.data());
+
+	if (_configRef.get("Engine", "vsync"))
+		return VK_PRESENT_MODE_FIFO_KHR;
+
+	for (auto& mode : modes) {
+		if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
+			return mode;
+	}
+
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
+	uint32_t count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, &count, nullptr);
+
+	Buffer<VkSurfaceFormatKHR> formats(count);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, &count, formats.data());
+
+	if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
+		return { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+	}
+
+	for (auto& format : formats) {
+		if (format.format == VK_FORMAT_B8G8R8A8_UNORM && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			return format;
 		}
 	}
 
-	throw Exception("failed to find suitable memory type");
-
+	return formats[0];
 }
 
-redox::ResourceFactory<redox::Shader>& redox::Graphics::get_shader_factory() {
+redox::graphics::ShaderFactory& redox::graphics::Graphics::shader_factory() {
 	return _shaderFactory;
 }
 
-void redox::Graphics::_init_instance() {
+redox::graphics::MeshFactory& redox::graphics::Graphics::mesh_factory() {
+	return _meshFactory;
+}
+
+void redox::graphics::Graphics::_init_instance() {
 	RDX_LOG("Initializing instance...");
 
 	VkApplicationInfo appInfo{};
@@ -139,7 +180,7 @@ void redox::Graphics::_init_instance() {
 #endif
 }
 
-void redox::Graphics::_init_physical_device() {
+void redox::graphics::Graphics::_init_physical_device() {
 	RDX_LOG("Choosing physical device...");
 
 	_physicalDevice = _pick_device();
@@ -152,15 +193,15 @@ void redox::Graphics::_init_physical_device() {
 	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, _queueFamilies.data());
 }
 
-void redox::Graphics::_init_surface() {
+void redox::graphics::Graphics::_init_surface() {
 
 #ifdef RDX_PLATFORM_WINDOWS
 	RDX_LOG("Creating surface (WIN32)...");
 
 	VkWin32SurfaceCreateInfoKHR createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	createInfo.hwnd = reinterpret_cast<HWND>(_window.get("hwnd"));
-	createInfo.hinstance = reinterpret_cast<HINSTANCE>(_window.get("hinstance"));
+	createInfo.hwnd = reinterpret_cast<HWND>(_windowRef.native_handle());
+	createInfo.hinstance = GetModuleHandle(0);
 
 	auto CreateWin32SurfaceKHR =
 		reinterpret_cast<PFN_vkCreateWin32SurfaceKHR>(vkGetInstanceProcAddr(_instance, "vkCreateWin32SurfaceKHR"));
@@ -173,7 +214,7 @@ void redox::Graphics::_init_surface() {
 
 }
 
-void redox::Graphics::_init_device() {
+void redox::graphics::Graphics::_init_device() {
 	RDX_LOG("Initializing logical device...");
 
 	auto fqi = _pick_queue_family();
@@ -209,7 +250,7 @@ void redox::Graphics::_init_device() {
 	//vkGetDeviceQueue(_device, _queueIndex, 0, &_presentQueue);
 }
 
-VkPhysicalDevice redox::Graphics::_pick_device() {
+VkPhysicalDevice redox::graphics::Graphics::_pick_device() {
 	uint32_t num;
 	vkEnumeratePhysicalDevices(_instance, &num, nullptr);
 
@@ -232,7 +273,7 @@ VkPhysicalDevice redox::Graphics::_pick_device() {
 	return VK_NULL_HANDLE;
 }
 
-std::optional<uint32_t> redox::Graphics::_pick_queue_family() {
+std::optional<uint32_t> redox::graphics::Graphics::_pick_queue_family() {
 
 	for (size_t queueIndex = 0; queueIndex < _queueFamilies.size(); queueIndex++) {
 		if (_queueFamilies[queueIndex].queueCount < 2)
@@ -242,11 +283,12 @@ std::optional<uint32_t> redox::Graphics::_pick_queue_family() {
 			continue;
 
 		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice, queueIndex, _surface, &presentSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice, 
+			static_cast<uint32_t>(queueIndex), _surface, &presentSupport);
 
 		if (!presentSupport) continue;
 		
-		return queueIndex;
+		return static_cast<uint32_t>(queueIndex);
 	}
 
 	return std::nullopt;

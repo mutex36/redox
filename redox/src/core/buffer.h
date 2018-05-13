@@ -25,6 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
+#include "core\non_copyable.h"
 #include "core\allocation\default_allocator.h"
 #include "core\allocation\growth_policy.h"
 
@@ -74,17 +75,25 @@ namespace redox {
 			return *this;
 		}
 
-		template<class _T,
-			class = std::enable_if_t<std::is_same_v<std::decay_t<_T>, ValueType>>>
-		void push(_T&& element) {
-			_realloc_check();
-			_push_no_checks(std::forward<_T>(element));
+		template<class T>
+		_RDX_INLINE void push(T&& element) {
+			_grow_if_needed();
+			_push_no_checks(std::forward<T>(element));
+		}
+
+		template<class...Args>
+		_RDX_INLINE void emplace(Args&&...args) {
+			_grow_if_needed();
+			_emplace_no_checks(std::forward<Args>(args)...);
+		}
+
+		_RDX_INLINE void clear() {
+			_size = 0;
+			_destruct();
 		}
 
 		_RDX_INLINE ~Buffer() {
-			if constexpr(!std::is_trivially_destructible_v<ValueType>)
-				for (auto& c : *this) c.~ValueType();
-
+			_destruct();
 			_dealloc();
 		}
 
@@ -100,27 +109,23 @@ namespace redox {
 			return _data[index];
 		}
 
-		void reserve(size_type size) {
-			if (size > _reserved) {
-				auto dest = Allocator::allocate(size);
-				if (!empty()) {
-					for (size_type elm = 0; elm < _size; ++elm)
-						new (dest + elm) ValueType(std::move(_data[elm]));
-				}
+		void reserve(size_type reserve) {
+			if (reserve > _reserved) {
+				auto dest = Allocator::allocate(reserve);
+				for (size_type elm = 0; elm < _size; ++elm)
+					new (dest + elm) ValueType(std::move(_data[elm]));
 				_dealloc();
 				_data = dest;
-				_reserved = size;
+				_reserved = reserve;
 			}
 		}
 
 		void resize(size_type size) {
 			static_assert(std::is_default_constructible_v<ValueType>);
-			if (size > _size) {
-				reserve(size);
-				for (size_type elm = _size; elm < size; ++elm)
-					new (_data + elm) ValueType();
-				_size = size;
-			}
+			reserve(size);
+			for (size_type elm = _size; elm < size; ++elm)
+				new (_data + elm) ValueType();
+			_size = size;
 		}
 
 		_RDX_INLINE ValueType* data() const {
@@ -129,6 +134,10 @@ namespace redox {
 
 		_RDX_INLINE size_type size() const {
 			return _size;
+		}
+
+		_RDX_INLINE size_type byte_size() const {
+			return _size * sizeof(ValueType);
 		}
 
 		_RDX_INLINE size_type empty() const {
@@ -144,8 +153,8 @@ namespace redox {
 		}
 
 	private:
-		_RDX_INLINE void _realloc_check() {
-			if (_full()) {
+		_RDX_INLINE void _grow_if_needed() {
+			if (_size == _reserved) {
 				//It makes little sense to grow the vector by just one element
 				//Doubling (GrowthPolicy) the size is likely more efficient
 				//as it reduces expensive reallocations/copies
@@ -154,17 +163,26 @@ namespace redox {
 			}
 		}
 
-		template<class _T>
-		_RDX_INLINE void _push_no_checks(_T&& element) {
-			new (_data + _size++) ValueType(std::forward<_T>(element));
+		_RDX_INLINE void _destruct() {
+			if constexpr(std::is_trivially_destructible_v<ValueType>)
+				return; //no need to destruct trivially destructible types
+
+			for (auto& c : *this)
+				c.~ValueType();
+		}
+
+		template<class T>
+		_RDX_INLINE void _push_no_checks(T&& element) {
+			new (_data + _size++) ValueType(std::forward<T>(element));
+		}
+
+		template<class...Args>
+		_RDX_INLINE void _emplace_no_checks(Args&&...args) {
+			new (_data + _size++) ValueType(std::forward<Args>(args)...);
 		}
 
 		_RDX_INLINE void _dealloc() {
 			Allocator::deallocate(_data);
-		}
-
-		_RDX_INLINE bool _full() {
-			return _size == _reserved;
 		}
 
 		size_type _reserved;

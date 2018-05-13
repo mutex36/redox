@@ -37,7 +37,8 @@ namespace redox::detail {
 	template<class...Args>
 	_RDX_INLINE void log(const redox::String& fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
-		WriteConsole(detail::std_handle, fmt.cstr(), fmt.size(), NULL, NULL);
+		WriteConsole(detail::std_handle, fmt.cstr(), 
+			static_cast<DWORD>(fmt.size()), NULL, NULL);
 	}
 
 	template<class T1>
@@ -68,12 +69,10 @@ namespace redox::detail {
 		return false;
 	}
 
-#ifdef RDX_COMPILER_MSC
 	template<class...Args>
 	_RDX_INLINE void debug_log(const redox::String& fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
 		OutputDebugString(fmt.cstr());
 	}
-#endif
 }
 #endif

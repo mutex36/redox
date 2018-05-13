@@ -37,28 +37,34 @@ SOFTWARE.
 #include "swapchain.h"
 #include "pipeline.h"
 #include "command_pool.h"
-#include "resources\resource_factory.h"
+#include "resources\factory.h"
 
-namespace redox {
-
+namespace redox::graphics {
 	class RenderSystem {
 	public:
-		RenderSystem(const Window& window);
+		RenderSystem(const platform::Window& window, const Configuration& config);
 		~RenderSystem();
 
 		void demo_setup();
 		void render();
 
-		void wait_pending();
+		const CommandPool& command_pool() const;
+		const CommandPool& aux_command_pool() const;
 
 	private:
+		Resource<Mesh> _demoMesh;
+
 		void _recreate_swapchain();
 		void _init_semaphores();
+		void _wait_pending();
 
 		Graphics _graphics;
 		Swapchain _swapchain;
 		Pipeline _pipeline;
 		CommandPool _commandPool;
+		CommandPool _auxCommandPool;
+
+		const Configuration& _configRef;
 
 		VkSemaphore _imageAvailableSemaphore{ nullptr };
 		VkSemaphore _renderFinishedSemaphore{ nullptr };

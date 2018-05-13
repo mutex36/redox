@@ -29,37 +29,35 @@ SOFTWARE.
 #include "timer.h"
 #include "windows.h"
 
-namespace redox {
-	struct redox::Timer::internal {
-		LARGE_INTEGER start;
-		LARGE_INTEGER end;
-		LARGE_INTEGER freq;
-	};
+struct redox::platform::Timer::internal {
+	LARGE_INTEGER start;
+	LARGE_INTEGER end;
+	LARGE_INTEGER freq;
+};
 
-	redox::Timer::Timer() {
-		_internal = make_smart_ptr<internal>();
-		QueryPerformanceFrequency(&_internal->freq);
-	}
+redox::platform::Timer::Timer() {
+	_internal = make_smart_ptr<internal>();
+	QueryPerformanceFrequency(&_internal->freq);
+}
 
-	redox::Timer::~Timer() {
-	}
+redox::platform::Timer::~Timer() {
+}
 
-	void Timer::start() {
-		QueryPerformanceCounter(&_internal->start);
-	}
+void redox::platform::Timer::start() {
+	QueryPerformanceCounter(&_internal->start);
+}
 
-	void redox::Timer::reset() {
-		QueryPerformanceCounter(&_internal->start);
-	}
+void redox::platform::Timer::reset() {
+	QueryPerformanceCounter(&_internal->start);
+}
 
-	redox::f64 redox::Timer::elapsed() {
-		QueryPerformanceCounter(&_internal->end);
-		return static_cast<redox::f64>(
-			_internal->end.QuadPart - _internal->start.QuadPart) / _internal->freq.QuadPart * 1000.;
-	}
+redox::f64 redox::platform::Timer::elapsed() {
+	QueryPerformanceCounter(&_internal->end);
+	return static_cast<redox::f64>(
+		_internal->end.QuadPart - _internal->start.QuadPart) / _internal->freq.QuadPart * 1000.;
+}
 
-	redox::f64 Timer::freq() {
-		return static_cast<redox::f64>(_internal->freq.QuadPart);
-	}
+redox::f64 redox::platform::Timer::freq() {
+	return static_cast<redox::f64>(_internal->freq.QuadPart);
 }
 #endif

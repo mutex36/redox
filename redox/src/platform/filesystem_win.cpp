@@ -41,7 +41,7 @@ redox::io::File::File(const redox::io::Path& file, const Mode mode) {
 		access |= GENERIC_READ;
 
 	if ((mode & Mode::WRITE) == Mode::WRITE)
-		access |= GENERIC_READ;
+		access |= GENERIC_WRITE;
 
 	_internal->handle = CreateFile(file.cstr(), access, 0, NULL,
 		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

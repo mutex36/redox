@@ -28,13 +28,12 @@ SOFTWARE.
 #include "graphics.h"
 #include "shader.h"
 #include "swapchain.h"
-#include "resources\resource.h"
 #include "core\utility.h"
 #include "vertex_layout.h"
 
 #include "math\math.h"
 
-namespace redox {
+namespace redox::graphics {
 	class Pipeline {
 	public:
 		Pipeline(Graphics& graphics, Swapchain& swapchain, VertexLayout&& vertexLayout);

@@ -25,47 +25,42 @@ SOFTWARE.
 */
 #include "swapchain.h"
 
-redox::Swapchain::Swapchain(const Graphics& graphics) : _graphicsRef(graphics) {
+#include "core\profiling\profiler.h"
+
+redox::graphics::Swapchain::Swapchain(const Graphics& graphics) : _graphicsRef(graphics) {
 	_init();
 	_init_images();
 }
 
-redox::Swapchain::~Swapchain() {
+redox::graphics::Swapchain::~Swapchain() {
 	_destroy();
 }
 
-VkSwapchainKHR redox::Swapchain::handle() const {
+VkSwapchainKHR redox::graphics::Swapchain::handle() const {
 	return _handle;
 }
 
-VkExtent2D redox::Swapchain::extent() const {
+VkExtent2D redox::graphics::Swapchain::extent() const {
 	return _extent;
 }
 
-VkImageView redox::Swapchain::operator[](std::size_t index) const {
+VkImageView redox::graphics::Swapchain::image(std::size_t index) const {
 	return _imageViews[index];
 }
 
-std::size_t redox::Swapchain::size() const {
+std::size_t redox::graphics::Swapchain::num_images() const {
 	return _imageViews.size();
 }
 
-void redox::Swapchain::_init() {
+void redox::graphics::Swapchain::_init() {
 
 	VkSurfaceCapabilitiesKHR scp;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
 		_graphicsRef.physical_device(), _graphicsRef.surface(), &scp);
 
-	uint32_t formatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(
-		_graphicsRef.physical_device(), _graphicsRef.surface(), &formatCount, nullptr);
+	auto surfaceFormat = _graphicsRef.pick_surface_format();
+	auto presentationMode = _graphicsRef.pick_presentation_mode();
 
-	Buffer<VkSurfaceFormatKHR> formats(formatCount);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(
-		_graphicsRef.physical_device(), _graphicsRef.surface(), &formatCount, formats.data());
-
-
-	//TODO: look at VK_PRESENT_MODE_MAILBOX_KHR
 	_extent.width = std::clamp(scp.currentExtent.width,
 		scp.minImageExtent.width, scp.maxImageExtent.width);
 	_extent.height = std::clamp(scp.currentExtent.height,
@@ -75,15 +70,15 @@ void redox::Swapchain::_init() {
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	createInfo.surface = _graphicsRef.surface();
 	createInfo.minImageCount = scp.minImageCount;
-	createInfo.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-	createInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageColorSpace = surfaceFormat.colorSpace;
 	createInfo.imageExtent = _extent;
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	createInfo.preTransform = scp.currentTransform;
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+	createInfo.presentMode = presentationMode;
 	createInfo.clipped = VK_TRUE;
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -91,7 +86,8 @@ void redox::Swapchain::_init() {
 		throw Exception("failed to create swapchain");
 }
 
-void redox::Swapchain::_init_images() {
+void redox::graphics::Swapchain::_init_images() {
+	_RDX_PROFILE;
 
 	uint32_t imageCount;
 	vkGetSwapchainImagesKHR(_graphicsRef.device(), _handle, &imageCount, nullptr);
@@ -121,7 +117,7 @@ void redox::Swapchain::_init_images() {
 	}
 }
 
-void redox::Swapchain::_destroy() {
+void redox::graphics::Swapchain::_destroy() {
 	for (auto& iv : _imageViews)
 		vkDestroyImageView(_graphicsRef.device(), iv, nullptr);
 	vkDestroySwapchainKHR(_graphicsRef.device(), _handle, nullptr);

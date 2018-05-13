@@ -26,18 +26,33 @@ SOFTWARE.
 #include "application.h"
 
 #include "string_format.h"
+#include "platform\misc.h"
+
+#define RDX_LOG_TAG "Application"
+
+#include <iostream>
+#include <thread>
 
 redox::Application::Application() 
-	: _window("redox engine", { 500 , 500 }), _renderer(_window) {
+	: _config(R"(C:\Users\luis9\Desktop\redox\redox\config\settings.ini)"),
+	  _window("redox engine", 
+		  { _config.get("Engine", "resolution_x"), _config.get("Engine", "resolution_y") },
+		  { _config.get("Surface", "icon"), _config.get("Surface", "fullscreen") }),
+	  _renderSystem(_window, _config), _inputSystem(_window) {
 
+	_renderSystem.demo_setup();
 
-	//TODO: demo
-	_renderer.demo_setup();
-
-	_window.set_callback([this](Window::Event event) {
+	_window.set_callback([this](platform::Window::Event event) {
 		switch (event) {
-		case redox::Window::Event::CLOSE:
-			_running = false;
+		case platform::Window::Event::CLOSE:
+			_state = State::TERMINATED;
+			break;
+		case platform::Window::Event::LOSTFOCUS:
+			if (_state != State::TERMINATED)
+				_state = State::PAUSED;
+			break;
+		case platform::Window::Event::GAINFOCUS:
+			_state = State::RUNNING;
 			break;
 		}
 	});
@@ -48,23 +63,38 @@ redox::Application::~Application() {
 
 void redox::Application::run() {
 	_window.show();
+	_state = State::RUNNING;
+
+	const u32 max_fps = _config.get("Engine", "max_fps");
+	const auto timestep = 1000. / max_fps;
+
 	_timer.start();
-	_running = true;
 
-	while (_running) {
-		_timer.reset();
+	while (_state != State::TERMINATED) {
+		auto dt_ms = _timer.elapsed();
+
 		_window.process_events();
+		_inputSystem.poll();
 
-		if (_window.is_minimized())
+		if (_state == State::PAUSED) {
+			RDX_SLEEP_MS(1);
 			continue;
+		}
 
-		_renderer.render();
+		if (dt_ms >= timestep) {
+			_timer.reset();
+			_renderSystem.render();
 
-		auto delta = _timer.elapsed();
-		auto fps = 1000. / delta;
-		_window.set_title(
-			redox::format("redox engine | {0}fps", fps));
+			_window.set_title(
+				redox::format("redox engine | {0}fps", 1000. / dt_ms));
+		}
 	}
+}
 
-	_renderer.wait_pending();
+void redox::Application::stop() {
+	_state = State::TERMINATED;
+}
+
+const redox::Configuration& redox::Application::config() const {
+	return _config;
 }

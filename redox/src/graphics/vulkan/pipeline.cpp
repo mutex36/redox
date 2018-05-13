@@ -26,10 +26,10 @@ SOFTWARE.
 #include "pipeline.h"
 #include "core\utility.h"
 
-redox::Pipeline::Pipeline(Graphics& graphics, Swapchain& swapchain, VertexLayout&& vertexLayout) :
+redox::graphics::Pipeline::Pipeline(Graphics& graphics, Swapchain& swapchain, VertexLayout&& vertexLayout) :
 	_graphicsRef(graphics), _swapchainRef(swapchain), _vertexLayout(std::move(vertexLayout)) {
 
-	auto& sf = _graphicsRef.get_shader_factory();
+	auto& sf = _graphicsRef.shader_factory();
 	_vs = sf.load("shader\\vert.spv", _graphicsRef);
 	_fs = sf.load("shader\\frag.spv", _graphicsRef);
 
@@ -37,7 +37,7 @@ redox::Pipeline::Pipeline(Graphics& graphics, Swapchain& swapchain, VertexLayout
 	_init_fb();
 }
 
-redox::Pipeline::~Pipeline() {
+redox::graphics::Pipeline::~Pipeline() {
 	for (auto& fb : _frameBuffers)
 		vkDestroyFramebuffer(_graphicsRef.device(), fb, nullptr);
 
@@ -46,19 +46,19 @@ redox::Pipeline::~Pipeline() {
 	vkDestroyRenderPass(_graphicsRef.device(), _renderPass, nullptr);
 }
 
-VkPipeline redox::Pipeline::handle() const {
+VkPipeline redox::graphics::Pipeline::handle() const {
 	return _handle;
 }
 
-VkRenderPass redox::Pipeline::render_pass() const {
+VkRenderPass redox::graphics::Pipeline::render_pass() const {
 	return _renderPass;
 }
 
-VkFramebuffer redox::Pipeline::operator[](std::size_t index) {
+VkFramebuffer redox::graphics::Pipeline::operator[](std::size_t index) {
 	return _frameBuffers[index];
 }
 
-void redox::Pipeline::_init() {
+void redox::graphics::Pipeline::_init() {
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -207,12 +207,12 @@ void redox::Pipeline::_init() {
 
 }
 
-void redox::Pipeline::_init_fb() {
+void redox::graphics::Pipeline::_init_fb() {
 	auto swapChainExtent = _swapchainRef.extent();
-	_frameBuffers.resize(_swapchainRef.size());
+	_frameBuffers.resize(_swapchainRef.num_images());
 
 	for (size_t i = 0; i < _frameBuffers.size(); i++) {
-		VkImageView attachmentViews[] = { _swapchainRef[i] };
+		VkImageView attachmentViews[] = { _swapchainRef.image(i) };
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

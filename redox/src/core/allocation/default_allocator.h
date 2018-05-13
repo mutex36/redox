@@ -29,8 +29,7 @@ SOFTWARE.
 
 namespace redox::allocation {
 	template<typename T>
-	class DefaultAllocator {
-	public:
+	struct DefaultAllocator {
 		using value_type = T;
 		using ptr_type = T*;
 

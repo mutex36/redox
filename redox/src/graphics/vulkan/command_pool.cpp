@@ -24,40 +24,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "command_pool.h"
+#include "graphics.h"
 
-redox::CommandPool::CommandPool(const Graphics& graphics, uint32_t numBuffer) 
-	: _graphicsRef(graphics), _commandBuffers(numBuffer) {
-	_init();
+redox::graphics::CommandPool::CommandPool(const Graphics& graphics, VkCommandPoolCreateFlags flags)
+	: _graphicsRef(graphics) {
+	_init(flags);
 }
 
-redox::CommandPool::~CommandPool() {
+redox::graphics::CommandPool::~CommandPool() {
 	vkDestroyCommandPool(_graphicsRef.device(), _handle, nullptr);
 }
 
-std::size_t redox::CommandPool::size() const {
-	return _commandBuffers.size();
+void redox::graphics::CommandPool::free_all() {
+	vkFreeCommandBuffers(_graphicsRef.device(), 
+		_handle, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
-VkCommandBuffer redox::CommandPool::operator[](std::size_t index) const {
-	return _commandBuffers[index];
-}
-
-void redox::CommandPool::_init() {
-
-	VkCommandPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = _graphicsRef.queue_family();
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-	if (vkCreateCommandPool(_graphicsRef.device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
-		throw Exception("failed to create commandpool");
+void redox::graphics::CommandPool::resize(std::size_t numBuffers) {
+	_commandBuffers.resize(numBuffers);
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = _handle;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)_commandBuffers.size();
+	allocInfo.commandBufferCount = static_cast<uint32_t>(_commandBuffers.size());
 
 	if (vkAllocateCommandBuffers(_graphicsRef.device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
 		throw Exception("failed to create commandbuffers");
+}
+
+std::size_t redox::graphics::CommandPool::size() const {
+	return _commandBuffers.size();
+}
+
+VkCommandPool redox::graphics::CommandPool::handle() const {
+	return _handle;
+}
+
+VkCommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {
+	return _commandBuffers[index];
+}
+
+void redox::graphics::CommandPool::_init(VkCommandPoolCreateFlags flags) {
+
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = _graphicsRef.queue_family();
+	poolInfo.flags = flags; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+	if (vkCreateCommandPool(_graphicsRef.device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+		throw Exception("failed to create commandpool");
 }

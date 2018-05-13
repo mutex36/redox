@@ -24,34 +24,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core\core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
 #include "log_win.hpp"
 #endif
 
-#ifndef RDX_LOG_TAG
-#define RDX_LOG_TAG "Engine"
+#define RDX_LOG(fmt, ...) redox::detail::log(RDX_LOG_TAG##": "##fmt##"\n",  __VA_ARGS__)
+
+#ifdef RDX_DEBUG
+#define RDX_DEBUG_LOG(fmt, ...) redox::detail::debug_log(##fmt##"\n",  __VA_ARGS__)
+#else
+#define RDX_DEBUG_LOG(...)
 #endif
 
-#define RDX_LOG(fmt, ...)										\
-redox::detail::log(RDX_LOG_TAG##": "##fmt##"\n",  __VA_ARGS__)	\
+#define RDX_ASSERT(a) RDX_ASSERT_TRUE(a)
 
-#define RDX_ASSERT(a) RDX_ASSERT_TRUE(a)						\
+#define RDX_ASSERT_EQ(a,b)				\
+if (!redox::detail::assert_eq(a,b))		\
+	_RDX_DEBUG_BREAK();					\
 
-#define RDX_ASSERT_EQ(a,b)										\
-if (!redox::detail::assert_eq(a,b))								\
-	_RDX_DEBUG_BREAK();											\
+#define RDX_ASSERT_NEQ(a,b)				\
+if (!redox::detail::assert_neq(a,b))	\
+	_RDX_DEBUG_BREAK();					\
 
-#define RDX_ASSERT_NEQ(a,b)										\
-if (!redox::detail::assert_neq(a,b))							\
-	_RDX_DEBUG_BREAK();											\
+#define RDX_ASSERT_TRUE(a)				\
+if (!redox::detail::assert_true(a))		\
+	_RDX_DEBUG_BREAK();					\
 
-#define RDX_ASSERT_TRUE(a)										\
-if (!redox::detail::assert_true(a))								\
-	_RDX_DEBUG_BREAK();											\
-
-#define RDX_ASSERT_FALSE(a)										\
-if (!redox::detail::assert_false(a))							\
-	_RDX_DEBUG_BREAK();											\
+#define RDX_ASSERT_FALSE(a)				\
+if (!redox::detail::assert_false(a))	\
+	_RDX_DEBUG_BREAK();					\
 
 //###

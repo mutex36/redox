@@ -29,13 +29,13 @@ SOFTWARE.
 #include "core\logging\log.h"
 
 redox::Configuration::Configuration(const String& file) {
-
-	
-
-
-
-
+	_config = ini_load(file.cstr());
 }
 
 redox::Configuration::~Configuration() {
+	ini_free(_config);
+}
+
+redox::Configuration::value_proxy redox::Configuration::get(const String& group, const String& value) const {
+	return { _config, group, value };
 }

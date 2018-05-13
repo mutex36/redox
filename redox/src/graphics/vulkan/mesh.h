@@ -25,19 +25,45 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
-#include "graphics.h"
-#include "core\string.h"
+#include "buffer_base.h"
+#include "vertex_layout.h"
+#include "resources\factory.h"
 
-namespace redox {
+#include "platform\filesystem.h"
+
+namespace redox::graphics {
+	class Graphics;
+
 	class Mesh {
-		Mesh(const io::Path& file, Graphics& graphics);
-		~Mesh();
+	public:
+		template<class Vertex>
+		Mesh(const Buffer<Vertex>& vertices, const Buffer<uint16_t>& indices, const Graphics& graphics, const CommandPool& commandPool)
+			: _graphicsRef(graphics), _vertexCount(vertices.size()),
+			_vertexBuffer(vertices.byte_size(), graphics, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+			_indexBuffer(indices.byte_size(), graphics, VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+
+			_vertexBuffer.map([&vertices](void* dest) {
+				std::memcpy(dest, vertices.data(), vertices.byte_size());
+			});
+
+			_indexBuffer.map([&indices](void* dest) {
+				std::memcpy(dest, indices.data(), indices.byte_size());
+			});
+
+			_vertexBuffer.transfer(commandPool);
+			_indexBuffer.transfer(commandPool);
+		}
+		~Mesh() = default;
+
+		uint32_t vertex_count() const;
+		const BufferBase& vertex_buffer() const;
+		const BufferBase& index_buffer() const;
 
 	private:
-		void _init(VkDeviceSize bufferSize);
-
-		Graphics& _graphicsRef;
-		VkBuffer _handle;
-		VkDeviceMemory _memory;
+		uint32_t _vertexCount;
+		const Graphics& _graphicsRef;
+		
+		BufferBase _indexBuffer;
+		BufferBase _vertexBuffer;
 	};
 }

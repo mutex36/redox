@@ -25,6 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
+#include "core\string.h"
 
 namespace redox {
 	typedef std::size_t hash_type;
