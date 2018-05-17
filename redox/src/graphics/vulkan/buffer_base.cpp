@@ -28,19 +28,29 @@ SOFTWARE.
 #include "command_pool.h"
 #include "graphics.h"
 
-redox::graphics::BufferBase::BufferBase(VkDeviceSize size, const Graphics& graphicsRef, VkBufferUsageFlags usage)
-	: _size(size), _graphicsRef(graphicsRef) {
+redox::graphics::BufferBase::BufferBase(VkDeviceSize size, const Graphics& graphicsRef, 
+	VkBufferUsageFlags usage, bool useStaging)
+	: _size(size), _graphicsRef(graphicsRef), _useStaging(useStaging) {
+	
+	if (_useStaging) {
+		_init_buffer(_stagingBuffer, _stagingBufferMemory, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	_init_buffer(_stagingBuffer, _stagingBufferMemory, _size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-	_init_buffer(_handle, _memory, _size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		_init_buffer(_handle, _memory, _size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	}
+	else {
+		_init_buffer(_handle, _memory, _size, usage,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	}
 }
 
 redox::graphics::BufferBase::~BufferBase() {
-	vkDestroyBuffer(_graphicsRef.device(), _stagingBuffer, nullptr);
-	vkFreeMemory(_graphicsRef.device(), _stagingBufferMemory, nullptr);
+	if (_useStaging) {
+		vkDestroyBuffer(_graphicsRef.device(), _stagingBuffer, nullptr);
+		vkFreeMemory(_graphicsRef.device(), _stagingBufferMemory, nullptr);
+	}
+
 	vkDestroyBuffer(_graphicsRef.device(), _handle, nullptr);
 	vkFreeMemory(_graphicsRef.device(), _memory, nullptr);
 }
@@ -54,7 +64,8 @@ VkBuffer redox::graphics::BufferBase::handle() const {
 }
 
 void redox::graphics::BufferBase::transfer(const CommandPool& pool) {
-	_copy_buffer(_stagingBuffer, _handle, pool);
+	if (_useStaging)
+		_copy_buffer(_stagingBuffer, _handle, pool);
 }
 
 void redox::graphics::BufferBase::_init_buffer(VkBuffer& handle, VkDeviceMemory& memory, VkDeviceSize size,
@@ -90,32 +101,10 @@ void redox::graphics::BufferBase::_init_buffer(VkBuffer& handle, VkDeviceMemory&
 }
 
 void redox::graphics::BufferBase::_copy_buffer(VkBuffer source, VkBuffer dest, const CommandPool& pool) {
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = pool.handle();
-	allocInfo.commandBufferCount = 1;
 
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(_graphicsRef.device(), &allocInfo, &commandBuffer);
-
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-	VkBufferCopy copyRegion{};
-	copyRegion.size = _size;
-	vkCmdCopyBuffer(commandBuffer, source, dest, 1, &copyRegion);
-
-	vkEndCommandBuffer(commandBuffer);
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	vkQueueSubmit(_graphicsRef.graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(_graphicsRef.graphics_queue());
+	pool.quick_submit([this, &source, &dest](VkCommandBuffer buffer) {
+		VkBufferCopy copyRegion{};
+		copyRegion.size = _size;
+		vkCmdCopyBuffer(buffer, source, dest, 1, &copyRegion);
+	});
 }

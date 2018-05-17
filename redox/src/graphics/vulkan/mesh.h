@@ -26,41 +26,33 @@ SOFTWARE.
 #pragma once
 #include "vulkan.h"
 #include "buffer_base.h"
-#include "vertex_layout.h"
 #include "resources\factory.h"
+#include "math\math.h"
 
 #include "platform\filesystem.h"
 
 namespace redox::graphics {
 	class Graphics;
 
+	struct MeshVertex {
+		math::Vec2f pos;
+		math::Vec3f color;
+	};
+
 	class Mesh {
 	public:
-		template<class Vertex>
-		Mesh(const Buffer<Vertex>& vertices, const Buffer<uint16_t>& indices, const Graphics& graphics, const CommandPool& commandPool)
-			: _graphicsRef(graphics), _vertexCount(vertices.size()),
-			_vertexBuffer(vertices.byte_size(), graphics, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
-			_indexBuffer(indices.byte_size(), graphics, VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
-
-			_vertexBuffer.map([&vertices](void* dest) {
-				std::memcpy(dest, vertices.data(), vertices.byte_size());
-			});
-
-			_indexBuffer.map([&indices](void* dest) {
-				std::memcpy(dest, indices.data(), indices.byte_size());
-			});
-
-			_vertexBuffer.transfer(commandPool);
-			_indexBuffer.transfer(commandPool);
-		}
+		Mesh(const Buffer<MeshVertex>& vertices, const Buffer<uint16_t>& indices,
+			const Graphics& graphics, const CommandPool& commandPool);
 		~Mesh() = default;
 
+		void bind(VkCommandBuffer commandBuffer);
+
 		uint32_t vertex_count() const;
-		const BufferBase& vertex_buffer() const;
-		const BufferBase& index_buffer() const;
+		uint32_t instance_count() const;
 
 	private:
 		uint32_t _vertexCount;
+		uint32_t _instanceCount;
 		const Graphics& _graphicsRef;
 		
 		BufferBase _indexBuffer;

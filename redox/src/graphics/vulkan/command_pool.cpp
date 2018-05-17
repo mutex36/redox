@@ -26,8 +26,8 @@ SOFTWARE.
 #include "command_pool.h"
 #include "graphics.h"
 
-redox::graphics::CommandPool::CommandPool(const Graphics& graphics, VkCommandPoolCreateFlags flags)
-	: _graphicsRef(graphics) {
+redox::graphics::CommandPool::CommandPool(const Graphics& graphics, VkCommandPoolCreateFlags flags) :
+	_graphicsRef(graphics) {
 	_init(flags);
 }
 
@@ -40,7 +40,7 @@ void redox::graphics::CommandPool::free_all() {
 		_handle, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
-void redox::graphics::CommandPool::resize(std::size_t numBuffers) {
+void redox::graphics::CommandPool::allocate(std::size_t numBuffers) {
 	_commandBuffers.resize(numBuffers);
 
 	VkCommandBufferAllocateInfo allocInfo{};
@@ -51,14 +51,6 @@ void redox::graphics::CommandPool::resize(std::size_t numBuffers) {
 
 	if (vkAllocateCommandBuffers(_graphicsRef.device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
 		throw Exception("failed to create commandbuffers");
-}
-
-std::size_t redox::graphics::CommandPool::size() const {
-	return _commandBuffers.size();
-}
-
-VkCommandPool redox::graphics::CommandPool::handle() const {
-	return _handle;
 }
 
 VkCommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {

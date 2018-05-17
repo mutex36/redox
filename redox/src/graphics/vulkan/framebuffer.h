@@ -24,21 +24,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "platform\filesystem.h"
+#include "vulkan.h"
 
-namespace redox {
-	class ResourceHelper {
+namespace redox::graphics {
+	class Graphics;
+
+	class Framebuffer {
 	public:
-		ResourceHelper();
+		Framebuffer(const Graphics& graphics, VkRenderPass rp, VkImageView imageView, VkExtent2D extent);
+		~Framebuffer();
 
-		static ResourceHelper& instance() {
-			static ResourceHelper instance;
-			return instance;
-		}
-
-		io::Path resolve_path(const io::Path& file);
+		VkFramebuffer handle() const;
+		const VkExtent2D& extent() const;
 
 	private:
-		io::Path _basePath;
+		VkFramebuffer _handle;
+		VkExtent2D _extent;
+
+		const Graphics& _graphicsRef;
 	};
 }

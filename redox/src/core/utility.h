@@ -34,20 +34,16 @@ namespace redox {
 			return static_cast<C>(Size);
 		}
 
-		//We want to "reload" (i.e. destructing and constructing again) a RAII 
-		//object without introducing "two-phase" (de-)initialization. It's 
-		//probably not the cleanest way, but it's a good solution for now.
+		//template<class T, class...Args>
+		//constexpr void reconstruct(T& ref, Args&&...args) {
+		//	ref.~T();
+		//	new (&ref) T(std::forward<Args>(args)...);
+		//}
 
-		template<class T, class...Args>
-		constexpr void reconstruct(T& ref, Args&&...args) {
-			ref.~T();
-			new (&ref) T(std::forward<Args>(args)...);
-		}
-
-		template<class M, class T>
+		template<class C, class M, class T>
 		constexpr auto offset_of(M T::* p, T sample = T()) {
-			return reinterpret_cast<std::size_t>(&(sample.*p))
-				- reinterpret_cast<std::size_t>(&sample);
+			return static_cast<C>(reinterpret_cast<std::size_t>(&(sample.*p))
+				- reinterpret_cast<std::size_t>(&sample));
 		}
 
 		template<std::size_t Index, class T>

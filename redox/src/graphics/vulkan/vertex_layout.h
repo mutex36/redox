@@ -28,32 +28,27 @@ SOFTWARE.
 
 #include "math\math.h"
 #include "core\utility.h"
+#include "mesh.h"
+
+#include <array> //std::array
 
 namespace redox::graphics {
-	struct VertexLayout {
-		VkVertexInputBindingDescription bindingDesc;
-		Buffer<VkVertexInputAttributeDescription> attrDesc;
-	};
 
-	struct DefaultVertex {
-		math::Vec2f pos;
-		math::Vec3f color;
+	template<class T>
+	struct layout_traits;
 
-		static VertexLayout get_layout() {
-			VertexLayout layout{ {},{2} };
-			layout.bindingDesc.binding = 0;
-			layout.bindingDesc.stride = sizeof(DefaultVertex);
-			layout.bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-			layout.attrDesc[0].binding = 0;
-			layout.attrDesc[0].location = 0;
-			layout.attrDesc[0].format = VK_FORMAT_R32G32_SFLOAT;
-			layout.attrDesc[0].offset = static_cast<uint32_t>(util::offset_of(&DefaultVertex::pos));
-			layout.attrDesc[1].binding = 0;
-			layout.attrDesc[1].location = 1;
-			layout.attrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-			layout.attrDesc[1].offset = static_cast<uint32_t>(util::offset_of(&DefaultVertex::color));
-			return layout;
+	template<>
+	struct layout_traits<MeshVertex> {
+		constexpr VkVertexInputBindingDescription binding_desc() {
+			return { 0, sizeof(MeshVertex), VK_VERTEX_INPUT_RATE_VERTEX };
 		}
 
+		constexpr std::array<VkVertexInputAttributeDescription, 2> atr_desc() {
+			return { {
+				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, util::offset_of<uint32_t>(&MeshVertex::pos) },
+				{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, util::offset_of<uint32_t>(&MeshVertex::color) }
+			} };
+		}
 	};
+
 }

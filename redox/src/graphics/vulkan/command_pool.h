@@ -26,10 +26,9 @@ SOFTWARE.
 #pragma once
 #include "core\buffer.h"
 #include "vulkan.h"
+#include "graphics.h"
 
 namespace redox::graphics {
-	class Graphics;
-
 	class CommandPool {
 	public:
 		CommandPool(const Graphics& graphics,
@@ -37,10 +36,36 @@ namespace redox::graphics {
 		~CommandPool();
 
 		void free_all();
-		void resize(std::size_t numBuffers);
+		void allocate(std::size_t numBuffers);
 
-		std::size_t size() const;
-		VkCommandPool handle() const;
+		template<class Fn>
+		void quick_submit(Fn&& fn) const {
+
+			VkCommandBufferAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			allocInfo.commandPool = _handle;
+			allocInfo.commandBufferCount = 1;
+
+			VkCommandBuffer commandBuffer;
+			vkAllocateCommandBuffers(_graphicsRef.device(), &allocInfo, &commandBuffer);
+
+			VkCommandBufferBeginInfo beginInfo{};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+			vkBeginCommandBuffer(commandBuffer, &beginInfo);
+			fn(commandBuffer);
+			vkEndCommandBuffer(commandBuffer);
+
+			VkSubmitInfo submitInfo{};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &commandBuffer;
+
+			vkQueueSubmit(_graphicsRef.graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
+			vkQueueWaitIdle(_graphicsRef.graphics_queue());
+		}
 
 		VkCommandBuffer operator[](std::size_t index) const;
 

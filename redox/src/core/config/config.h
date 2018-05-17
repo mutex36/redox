@@ -28,7 +28,7 @@ SOFTWARE.
 #include "core\string.h"
 #include "core\string_format.h"
 
-#include "thirdparty/ini/ini.h"
+#include <thirdparty/ini/ini.h>
 
 namespace redox {
 	class Configuration {

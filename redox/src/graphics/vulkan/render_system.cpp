@@ -31,33 +31,37 @@ SOFTWARE.
 
 #include "core\profiling\profiler.h"
 
-#include "shader.h"
-
 #define RDX_LOG_TAG "RenderSystem"
 
-redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config)
-	: _graphics(window, config), _swapchain(_graphics), _configRef(config),
-	_pipeline(_graphics, _swapchain, DefaultVertex::get_layout()),
-	_commandPool(_graphics), _auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
+redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config) :
+	_graphics(window, config),
+	_swapchain(_graphics, std::bind(&RenderSystem::_swapchain_event_recreate, this)),
+	_configRef(config),
+	_mvpBuffer(sizeof(mvp_uniform), _graphics, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false),
+	_demoVs(_shaderFactory.load("shader\\vert.spv", _graphics)),
+	_demoFs(_shaderFactory.load("shader\\frag.spv", _graphics)),
+	_demoMesh(_meshFactory.load("meshes\\test.rdxmesh", _graphics, _auxCommandPool)),
+	_pipeline(_graphics, _demoVs, _demoFs),
+	_auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
 
-	_init_semaphores();
-	_commandPool.resize(_swapchain.num_images());
-
-	auto& mf = _graphics.mesh_factory();
-	_demoMesh = mf.load("meshes\\test.rdxmesh", _graphics, _auxCommandPool);
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
 	_wait_pending();
-	vkDestroySemaphore(_graphics.device(), _renderFinishedSemaphore, nullptr);
-	vkDestroySemaphore(_graphics.device(), _imageAvailableSemaphore, nullptr);
 }
 
 void redox::graphics::RenderSystem::demo_setup() {
 	_RDX_PROFILE;
-	for (std::size_t index = 0; index < _commandPool.size(); ++index) {
-		auto commandBuffer = _commandPool[index];
 
+	_mvpBuffer.map([](void* data) {
+		auto bf = reinterpret_cast<mvp_uniform*>(data);
+		bf->model = math::Mat44f::identity();
+		bf->projection = math::Mat44f::identity();
+		bf->view = math::Mat44f::identity();
+	});
+	_pipeline.register_ubo(_mvpBuffer);
+
+	_swapchain.visit([this](const Framebuffer& frameBuffer, VkCommandBuffer commandBuffer) {
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -65,110 +69,34 @@ void redox::graphics::RenderSystem::demo_setup() {
 		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
 			throw Exception("failed to begin recording of commandBuffer");
 
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = _pipeline.render_pass();
-		renderPassInfo.framebuffer = _pipeline[index];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = _swapchain.extent();
-
-		VkClearValue clearColor{ 0.0f, 0.0f, 0.0f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.handle());
-
-		const auto& vbo = _demoMesh->vertex_buffer();
-		const auto& ebo = _demoMesh->index_buffer();
-
-		VkBuffer vertexBuffers[] = { vbo.handle() };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, ebo.handle(), 0, VK_INDEX_TYPE_UINT16);
-
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(ebo.size()), 1, 0, 0, 0);
-		vkCmdEndRenderPass(commandBuffer);
+		_pipeline.bind(commandBuffer, frameBuffer);
+		_demoMesh->bind(commandBuffer);
+		vkCmdDrawIndexed(commandBuffer, _demoMesh->instance_count(), 1, 0, 0, 0);
+		_pipeline.unbind(commandBuffer);
 
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 			throw Exception("failed to end recording of commandBuffer");
-	}
+	});
 }
 
 void redox::graphics::RenderSystem::render() {
-	vkQueueWaitIdle(_graphics.present_queue());
-	auto swapChainHandle = _swapchain.handle();
+	_swapchain.present();
+}
 
-	uint32_t imageIndex;
-	vkAcquireNextImageKHR(_graphics.device(), swapChainHandle,
-		std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+void redox::graphics::RenderSystem::_swapchain_event_recreate() {
+	RDX_LOG("recreating swapchain...");
 
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	VkCommandBuffer cmdBuffers[] = { _commandPool[imageIndex] };
-	VkSemaphore waitSemaphores[] = { _imageAvailableSemaphore };
-	VkSemaphore signalSemaphores[] = { _renderFinishedSemaphore };
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.waitSemaphoreCount = util::array_size<uint32_t>(waitSemaphores);
-	submitInfo.pWaitSemaphores = waitSemaphores;
-	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = util::array_size<uint32_t>(cmdBuffers);
-	submitInfo.pCommandBuffers = cmdBuffers;
-	submitInfo.signalSemaphoreCount = util::array_size<uint32_t>(signalSemaphores);
-	submitInfo.pSignalSemaphores = signalSemaphores;
-
-	if (vkQueueSubmit(_graphics.graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
-		throw Exception("failed to submit queue");
-
-	VkPresentInfoKHR presentInfo{};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &_renderFinishedSemaphore;
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &swapChainHandle;
-	presentInfo.pImageIndices = &imageIndex;
-
-	auto result = vkQueuePresentKHR(_graphics.present_queue(), &presentInfo);
-
-	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
-		_recreate_swapchain();
+	_pipeline.set_viewport(_swapchain.extent(), _auxCommandPool);
 }
 
 void redox::graphics::RenderSystem::_wait_pending() {
 	vkDeviceWaitIdle(_graphics.device());
 }
 
-const redox::graphics::CommandPool& redox::graphics::RenderSystem::command_pool() const {
-	return _commandPool;
+redox::graphics::ShaderFactory & redox::graphics::RenderSystem::shader_factory() {
+	return _shaderFactory;
 }
 
-const redox::graphics::CommandPool& redox::graphics::RenderSystem::aux_command_pool() const {
-	return _auxCommandPool;
-}
-
-void redox::graphics::RenderSystem::_recreate_swapchain() {
-	_wait_pending();
-
-	RDX_LOG("Recreating swapchain...");
-
-	util::reconstruct(_swapchain, _graphics);
-	util::reconstruct(_pipeline, _graphics, _swapchain, DefaultVertex::get_layout());
-
-	_commandPool.free_all();
-	_commandPool.resize(_swapchain.num_images());
-
-	//TODO: demo
-	demo_setup();
-}
-
-void redox::graphics::RenderSystem::_init_semaphores() {
-	VkSemaphoreCreateInfo semaphoreInfo{};
-	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	if (vkCreateSemaphore(_graphics.device(), &semaphoreInfo, nullptr, &_imageAvailableSemaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(_graphics.device(), &semaphoreInfo, nullptr, &_renderFinishedSemaphore) != VK_SUCCESS) {
-
-		throw Exception("failed to create semaphores");
-	}
+redox::graphics::MeshFactory & redox::graphics::RenderSystem::mesh_factory() {
+	return _meshFactory;
 }

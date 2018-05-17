@@ -25,15 +25,18 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
+#include "graphics.h"
+
+#include "core\utility.h"
 #include "core\error.h"
 
 namespace redox::graphics {
-	class Graphics;
 	class CommandPool;
 
 	class BufferBase{
 	public:
-		BufferBase(VkDeviceSize size, const Graphics& graphicsRef, VkBufferUsageFlags usage);
+		BufferBase(VkDeviceSize size, const Graphics& graphicsRef, 
+			VkBufferUsageFlags usage, bool useStaging = true);
 		~BufferBase();
 
 		VkDeviceSize size() const;
@@ -42,13 +45,17 @@ namespace redox::graphics {
 
 		template<class Fn>
 		void map(Fn&& fn) const {
+			VkDeviceMemory transferMemory = 
+				_useStaging ? _stagingBufferMemory : _memory;
+
 			void* data;
-			vkMapMemory(_graphicsRef.device(), _stagingBufferMemory, 0, _size, 0, &data);
+			vkMapMemory(_graphicsRef.device(), transferMemory, 0, _size, 0, &data);
 			fn(data);
-			vkUnmapMemory(_graphicsRef.device(), _stagingBufferMemory);
+			vkUnmapMemory(_graphicsRef.device(), transferMemory);
 		}
 
-	private:
+	protected:
+		bool _useStaging;	 
 		VkBuffer _stagingBuffer;
 		VkDeviceMemory _stagingBufferMemory;
 

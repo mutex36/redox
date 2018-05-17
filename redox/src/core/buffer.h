@@ -114,6 +114,8 @@ namespace redox {
 				auto dest = Allocator::allocate(reserve);
 				for (size_type elm = 0; elm < _size; ++elm)
 					new (dest + elm) ValueType(std::move(_data[elm]));
+
+				_destruct();
 				_dealloc();
 				_data = dest;
 				_reserved = reserve;
@@ -134,6 +136,10 @@ namespace redox {
 
 		_RDX_INLINE size_type size() const {
 			return _size;
+		}
+
+		_RDX_INLINE size_type capacity() const {
+			return _reserved;
 		}
 
 		_RDX_INLINE size_type byte_size() const {

@@ -194,3 +194,14 @@ TEST(Vec, Ops) {
 	ASSERT_FLOAT_EQ(kkh.w, 4.0f);
 
 }
+
+TEST(Mat, Ops) {
+
+	auto scm = redox::math::Mat44f::scale({3,3,3});
+	auto identity = redox::math::Mat44f::identity();
+
+	auto sum = scm + identity;
+
+	auto vk = identity[2];
+
+}

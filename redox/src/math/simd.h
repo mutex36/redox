@@ -61,14 +61,15 @@ namespace redox::simd {
 
 	template<u32 Index, class Scalar, class XMM>
 	_RDX_INLINE auto set_by_index(const Scalar value, XMM xmm) {
-		//if constexpr(Index == 0)
-		//	return move_lower(xmm, set_lower(value));
-
 		return blend<(0x1 << Index)>(xmm, set_all(value));
 	}
 
 	template<u32 imm8>
 	_RDX_INLINE f32x4 blend(f32x4 lhs, f32x4 rhs) {
+		//r0 : = (mask0 == 0) ? a0 : b0
+		//r1 : = (mask1 == 0) ? a1 : b1
+		//r2 : = (mask2 == 0) ? a2 : b2
+		//r3 : = (mask3 == 0) ? a3 : b3
 		return _mm_blend_ps(lhs, rhs, imm8);
 	}
 

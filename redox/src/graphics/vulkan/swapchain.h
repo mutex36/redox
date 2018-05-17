@@ -28,30 +28,53 @@ SOFTWARE.
 #include "core\buffer.h"
 
 #include "graphics.h"
+#include "command_pool.h"
 #include "vulkan.h"
+#include "framebuffer.h"
+
+#include <functional> //std::function
 
 namespace redox::graphics {
 	class Swapchain {
 	public:
-		Swapchain(const Graphics& graphics);
+		using RecreateCallback = std::function<void()>;
+
+		Swapchain(const Graphics& graphics, RecreateCallback&& recreateCallback);
 		~Swapchain();
+
+		template<class Fn>
+		void visit(Fn&& fn) {
+			for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
+				fn(_frameBuffers[index], _commandPool[index]);
+		}
+
+		void present();
 
 		VkSwapchainKHR handle() const;
 		VkExtent2D extent() const;
-		VkImageView image(std::size_t index) const;
-		std::size_t num_images() const;
 
 	private:
 		void _init();
+		void _init_semaphores();
 		void _init_images();
-
+		void _init_fb();
 		void _destroy();
+		void _reload();
+
+		RecreateCallback _recreateCallback;
 
 		Buffer<VkImage> _images;
 		Buffer<VkImageView> _imageViews;
+		Buffer<Framebuffer> _frameBuffers;
+
+		CommandPool _commandPool;
 
 		VkSwapchainKHR _handle;
 		VkExtent2D _extent;
+		VkSurfaceFormatKHR _surfaceFormat;
+
+		VkSemaphore _imageAvailableSemaphore;
+		VkSemaphore _renderFinishedSemaphore;
 
 		const Graphics& _graphicsRef;
 	};

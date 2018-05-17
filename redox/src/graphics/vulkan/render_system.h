@@ -31,13 +31,15 @@ SOFTWARE.
 
 #include "platform\window.h"
 
-#include <type_traits> //std::forward
-
 #include "graphics.h"
 #include "swapchain.h"
 #include "pipeline.h"
 #include "command_pool.h"
-#include "resources\factory.h"
+
+#include "factory\mesh_factory.h"
+#include "factory\shader_factory.h"
+
+#include "math\math.h"
 
 namespace redox::graphics {
 	class RenderSystem {
@@ -45,28 +47,39 @@ namespace redox::graphics {
 		RenderSystem(const platform::Window& window, const Configuration& config);
 		~RenderSystem();
 
+		//@DEMO
 		void demo_setup();
 		void render();
 
-		const CommandPool& command_pool() const;
-		const CommandPool& aux_command_pool() const;
+		ShaderFactory& shader_factory();
+		MeshFactory& mesh_factory();
 
 	private:
-		Resource<Mesh> _demoMesh;
+		struct mvp_uniform {
+			math::Mat44f model;
+			math::Mat44f view;
+			math::Mat44f projection;
+		};
 
-		void _recreate_swapchain();
-		void _init_semaphores();
+		void _swapchain_event_recreate();
 		void _wait_pending();
 
 		Graphics _graphics;
 		Swapchain _swapchain;
-		Pipeline _pipeline;
-		CommandPool _commandPool;
 		CommandPool _auxCommandPool;
 
-		const Configuration& _configRef;
+		BufferBase _mvpBuffer;
 
-		VkSemaphore _imageAvailableSemaphore{ nullptr };
-		VkSemaphore _renderFinishedSemaphore{ nullptr };
+		MeshFactory _meshFactory;
+		ShaderFactory _shaderFactory;
+
+		//@DEMO
+		Resource<Mesh> _demoMesh;
+		Resource<Shader> _demoVs;
+		Resource<Shader> _demoFs;
+
+		Pipeline _pipeline;
+
+		const Configuration& _configRef;
 	};
 }

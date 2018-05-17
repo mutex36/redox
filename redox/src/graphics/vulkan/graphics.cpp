@@ -35,7 +35,6 @@ redox::graphics::Graphics::Graphics(const platform::Window& window, const Config
 }
 
 redox::graphics::Graphics::~Graphics() {
-	vkDestroyDevice(_device, nullptr);
 	vkDestroySurfaceKHR(_instance, _surface, nullptr);
 
 #ifdef RDX_VULKAN_VALIDATION
@@ -44,6 +43,7 @@ redox::graphics::Graphics::~Graphics() {
 	vkDestroyDebugReportCallbackEXT(_instance, _debugReportCallback, nullptr);
 #endif
 
+	vkDestroyDevice(_device, nullptr);
 	vkDestroyInstance(_instance, nullptr);
 }
 
@@ -119,14 +119,6 @@ VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
 	}
 
 	return formats[0];
-}
-
-redox::graphics::ShaderFactory& redox::graphics::Graphics::shader_factory() {
-	return _shaderFactory;
-}
-
-redox::graphics::MeshFactory& redox::graphics::Graphics::mesh_factory() {
-	return _meshFactory;
 }
 
 void redox::graphics::Graphics::_init_instance() {

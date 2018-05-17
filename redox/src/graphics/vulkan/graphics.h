@@ -27,12 +27,6 @@ SOFTWARE.
 #include "vulkan.h"
 #include "platform\window.h"
 #include "core\config\config.h"
-#include "shader.h"
-#include "mesh.h"
-#include "command_pool.h"
-
-#include "factory\mesh_factory.h"
-#include "factory\shader_factory.h"
 
 #include <optional> //std::optional
 
@@ -55,9 +49,6 @@ namespace redox::graphics {
 		VkPresentModeKHR pick_presentation_mode() const;
 		VkSurfaceFormatKHR pick_surface_format() const;
 
-		ShaderFactory& shader_factory();
-		MeshFactory& mesh_factory();
-
 	private:
 		void _init_instance();
 		void _init_physical_device();
@@ -66,9 +57,6 @@ namespace redox::graphics {
 
 		VkPhysicalDevice _pick_device();
 		std::optional<uint32_t> _pick_queue_family();
-
-		MeshFactory _meshFactory;
-		ShaderFactory _shaderFactory;
 
 		Buffer<VkQueueFamilyProperties> _queueFamilies;
 		uint32_t _queueFamily;

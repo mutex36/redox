@@ -27,3 +27,4 @@ SOFTWARE.
 
 #include "constants.h"
 #include "vec.h"
+#include "mat.h"

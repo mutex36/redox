@@ -46,6 +46,8 @@ namespace redox {
 #ifdef RDX_PLATFORM_WINDOWS
 	#define _RDX_INLINE __forceinline
 	#ifdef RDX_COMPILER_MSVC
+		#pragma warning(suppress:4005)
+
 		#define _RDX_DEBUG_BREAK __debugbreak
 		#if _DEBUG
 			#define RDX_DEBUG 

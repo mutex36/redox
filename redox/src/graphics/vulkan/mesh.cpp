@@ -27,14 +27,36 @@ SOFTWARE.
 #include "graphics.h"
 #include "platform\filesystem.h"
 
+redox::graphics::Mesh::Mesh(const Buffer<MeshVertex>& vertices, const Buffer<uint16_t>& indices, const Graphics & graphics, const CommandPool & commandPool) : 
+	_graphicsRef(graphics),
+	_vertexCount(vertices.size()),
+	_instanceCount(indices.size()),
+	_vertexBuffer(vertices.byte_size(), graphics, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT),
+	_indexBuffer(indices.byte_size(), graphics, VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+
+	_vertexBuffer.map([&vertices](void* dest) {
+		std::memcpy(dest, vertices.data(), vertices.byte_size());
+	});
+
+	_indexBuffer.map([&indices](void* dest) {
+		std::memcpy(dest, indices.data(), indices.byte_size());
+	});
+
+	_vertexBuffer.transfer(commandPool);
+	_indexBuffer.transfer(commandPool);
+}
+
+void redox::graphics::Mesh::bind(VkCommandBuffer commandBuffer) {
+	VkBuffer vertexBuffers[] = { _vertexBuffer.handle() };
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
+}
+
 uint32_t redox::graphics::Mesh::vertex_count() const {
 	return _vertexCount;
 }
 
-const redox::graphics::BufferBase& redox::graphics::Mesh::vertex_buffer() const {
-	return _vertexBuffer;
-}
-
-const redox::graphics::BufferBase& redox::graphics::Mesh::index_buffer() const {
-	return _indexBuffer;
+uint32_t redox::graphics::Mesh::instance_count() const {
+	return _instanceCount;
 }

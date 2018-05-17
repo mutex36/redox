@@ -23,22 +23,33 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#pragma once
-#include "platform\filesystem.h"
+#include "framebuffer.h"
+#include "graphics.h"
 
-namespace redox {
-	class ResourceHelper {
-	public:
-		ResourceHelper();
+redox::graphics::Framebuffer::Framebuffer(const Graphics& graphics, VkRenderPass rp, const VkImageView imageView, VkExtent2D extent) :
+_graphicsRef(graphics), _extent(extent) {
 
-		static ResourceHelper& instance() {
-			static ResourceHelper instance;
-			return instance;
-		}
+	VkFramebufferCreateInfo framebufferInfo{};
+	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferInfo.renderPass = rp;
+	framebufferInfo.attachmentCount = 1;
+	framebufferInfo.pAttachments = &imageView;
+	framebufferInfo.width = extent.width;
+	framebufferInfo.height = extent.height;
+	framebufferInfo.layers = 1;
 
-		io::Path resolve_path(const io::Path& file);
+	if (vkCreateFramebuffer(_graphicsRef.device(), &framebufferInfo, nullptr, &_handle) != VK_SUCCESS)
+		throw Exception("failed to create frambuffer");
+}
 
-	private:
-		io::Path _basePath;
-	};
+redox::graphics::Framebuffer::~Framebuffer() {
+	vkDestroyFramebuffer(_graphicsRef.device(), _handle, nullptr);
+}
+
+VkFramebuffer redox::graphics::Framebuffer::handle() const {
+	return _handle;
+}
+
+const VkExtent2D & redox::graphics::Framebuffer::extent() const {
+	return _extent;
 }
