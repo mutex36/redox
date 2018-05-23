@@ -55,8 +55,7 @@ namespace redox::simd {
 
 	template<u32 Index, class XMM>
 	_RDX_INLINE auto extract_by_index(XMM xmm) {
-		return extract_lower(
-			shuffle<Index, Index, Index, Index>(xmm, xmm));
+		return extract_lower(swizzle1<Index>(xmm));
 	}
 
 	template<u32 Index, class Scalar, class XMM>
@@ -110,6 +109,16 @@ namespace redox::simd {
 	template<u32 i1, u32 i2, u32 i3, u32 i4>
 	_RDX_INLINE f32x4 shuffle(f32x4 a, f32x4 b) {
 		return _mm_shuffle_ps(a, b, _MM_SHUFFLE(i1, i2, i3, i4));
+	}
+
+	template<u32 i1, u32 i2, u32 i3, u32 i4>
+	_RDX_INLINE f32x4 swizzle(f32x4 a) {
+		return shuffle<i1, i2, i3, i4>(a, a);
+	}
+
+	template<u32 i1>
+	_RDX_INLINE f32x4 swizzle1(f32x4 a) {
+		return swizzle<i1, i1, i1, i1>(a);
 	}
 
 	_RDX_INLINE f32x4 move_lower(f32x4 lhs, f32x4 rhs) {

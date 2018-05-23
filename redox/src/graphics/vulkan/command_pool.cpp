@@ -40,7 +40,7 @@ void redox::graphics::CommandPool::free_all() {
 		_handle, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
-void redox::graphics::CommandPool::allocate(std::size_t numBuffers) {
+void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 	_commandBuffers.resize(numBuffers);
 
 	VkCommandBufferAllocateInfo allocInfo{};
@@ -53,7 +53,7 @@ void redox::graphics::CommandPool::allocate(std::size_t numBuffers) {
 		throw Exception("failed to create commandbuffers");
 }
 
-VkCommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {
+redox::graphics::CommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {
 	return _commandBuffers[index];
 }
 

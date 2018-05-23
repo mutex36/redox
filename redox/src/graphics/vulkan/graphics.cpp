@@ -71,6 +71,10 @@ uint32_t redox::graphics::Graphics::queue_family() const {
 	return _queueFamily;
 }
 
+void redox::graphics::Graphics::wait_pending() const {
+	vkDeviceWaitIdle(_device);
+}
+
 std::optional<uint32_t> redox::graphics::Graphics::pick_memory_type(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memProperties);
@@ -86,7 +90,6 @@ std::optional<uint32_t> redox::graphics::Graphics::pick_memory_type(uint32_t typ
 VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 	uint32_t count;
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, nullptr);
-
 	Buffer<VkPresentModeKHR> modes(count);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, modes.data());
 
@@ -104,7 +107,6 @@ VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
 	uint32_t count;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, &count, nullptr);
-
 	Buffer<VkSurfaceFormatKHR> formats(count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, &count, formats.data());
 
@@ -175,14 +177,11 @@ void redox::graphics::Graphics::_init_instance() {
 void redox::graphics::Graphics::_init_physical_device() {
 	RDX_LOG("Choosing physical device...");
 
-	_physicalDevice = _pick_device();
-	if (_physicalDevice == VK_NULL_HANDLE)
+	auto device = _pick_device();
+	if (!device)
 		throw Exception("No suitable physical device found");
 
-	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, nullptr);
-	_queueFamilies.resize(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, _queueFamilies.data());
+	_physicalDevice = device.value();
 }
 
 void redox::graphics::Graphics::_init_surface() {
@@ -203,7 +202,6 @@ void redox::graphics::Graphics::_init_surface() {
 			throw Exception("failed to create window surface (WIN32)");
 
 #endif
-
 }
 
 void redox::graphics::Graphics::_init_device() {
@@ -221,6 +219,7 @@ void redox::graphics::Graphics::_init_device() {
 	queueInfo.pQueuePriorities = &queuePriority;
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -242,7 +241,7 @@ void redox::graphics::Graphics::_init_device() {
 	//vkGetDeviceQueue(_device, _queueIndex, 0, &_presentQueue);
 }
 
-VkPhysicalDevice redox::graphics::Graphics::_pick_device() {
+std::optional<VkPhysicalDevice> redox::graphics::Graphics::_pick_device() {
 	uint32_t num;
 	vkEnumeratePhysicalDevices(_instance, &num, nullptr);
 
@@ -262,16 +261,22 @@ VkPhysicalDevice redox::graphics::Graphics::_pick_device() {
 			return dev;
 	}
 
-	return VK_NULL_HANDLE;
+	return std::nullopt;
 }
 
 std::optional<uint32_t> redox::graphics::Graphics::_pick_queue_family() {
 
-	for (size_t queueIndex = 0; queueIndex < _queueFamilies.size(); queueIndex++) {
-		if (_queueFamilies[queueIndex].queueCount < 2)
+	Buffer<VkQueueFamilyProperties> queueFamilies;
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, nullptr);
+	queueFamilies.resize(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+	for (size_t queueIndex = 0; queueIndex < queueFamilies.size(); queueIndex++) {
+		if (queueFamilies[queueIndex].queueCount < 2)
 			continue;
 
-		if (!(_queueFamilies[queueIndex].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+		if (!(queueFamilies[queueIndex].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			continue;
 
 		VkBool32 presentSupport = false;

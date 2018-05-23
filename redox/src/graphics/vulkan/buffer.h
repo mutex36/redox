@@ -27,45 +27,39 @@ SOFTWARE.
 #include "vulkan.h"
 #include "graphics.h"
 
+#include "core\non_copyable.h"
 #include "core\utility.h"
 #include "core\error.h"
 
 namespace redox::graphics {
-	class CommandPool;
+	class CommandBuffer;
+	class Texture;
 
-	class BufferBase{
+	class Buffer : public NonCopyable {
 	public:
-		BufferBase(VkDeviceSize size, const Graphics& graphicsRef, 
-			VkBufferUsageFlags usage, bool useStaging = true);
-		~BufferBase();
+		Buffer(VkDeviceSize size, const Graphics& graphicsRef, 
+			VkBufferUsageFlags usage,
+			VkMemoryPropertyFlags memFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		~Buffer();
 
 		VkDeviceSize size() const;
 		VkBuffer handle() const;
-		void transfer(const CommandPool& pool);
 
 		template<class Fn>
 		void map(Fn&& fn) const {
-			VkDeviceMemory transferMemory = 
-				_useStaging ? _stagingBufferMemory : _memory;
-
 			void* data;
-			vkMapMemory(_graphicsRef.device(), transferMemory, 0, _size, 0, &data);
+			vkMapMemory(_graphicsRef.device(), _memory, 0, _size, 0, &data);
 			fn(data);
-			vkUnmapMemory(_graphicsRef.device(), transferMemory);
+			vkUnmapMemory(_graphicsRef.device(), _memory);
 		}
 
-	protected:
-		bool _useStaging;	 
-		VkBuffer _stagingBuffer;
-		VkDeviceMemory _stagingBufferMemory;
+		void copy_to(const Buffer& other, const CommandBuffer& commandBuffer);
+		void copy_to(const Texture& texture, const CommandBuffer& commandBuffer);
 
+	protected:
 		VkBuffer _handle;
 		VkDeviceMemory _memory;
 		VkDeviceSize _size;
-
-		void _init_buffer(VkBuffer& handle, VkDeviceMemory& memory, VkDeviceSize size,
-			VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryFlags);
-		void _copy_buffer(VkBuffer source, VkBuffer dest, const CommandPool& pool);
 
 		const Graphics& _graphicsRef;
 	};

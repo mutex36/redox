@@ -29,36 +29,40 @@ SOFTWARE.
 #include "shader.h"
 #include "swapchain.h"
 #include "command_pool.h"
+#include "command_buffer.h"
 #include "core\utility.h"
 #include "vertex_layout.h"
+#include "render_pass.h"
 
 namespace redox::graphics {
 	class Pipeline {
 	public:
-		Pipeline(const Graphics& graphics, Resource<Shader> vs, Resource<Shader> fs);
+		Pipeline(const Graphics& graphics, const RenderPass& renderPass, Resource<Shader> vs, Resource<Shader> fs);
 		~Pipeline();
 
-		void bind(VkCommandBuffer commandBuffer, const Framebuffer& frameBuffer);
-		void unbind(VkCommandBuffer commandBuffer);
+		void bind(const CommandBuffer& commandBuffer, const Framebuffer& frameBuffer);
+		void unbind(const CommandBuffer& commandBuffer);
 
-		void register_ubo(const BufferBase& ubo);
-		void set_viewport(const VkExtent2D& size, const CommandPool& pool);
+		void bind_ubo(const Buffer& ubo);
+		void set_viewport(const VkExtent2D& size);
 
 	private:
-		void _destroy();
 		void _init();
 		void _init_desriptors();
+		void _update_viewport(const CommandBuffer& commandBuffer);
 
 		VkPipeline _handle;
 		VkPipelineLayout _layout;
-		VkRenderPass _renderPass;
+		VkExtent2D _viewport;
 
 		VkDescriptorSetLayout _descriptorSetLayout;
+		VkDescriptorPool _descriptorPool;
 		VkDescriptorSet _descriptorSet;
 
 		Resource<Shader> _vs;
 		Resource<Shader> _fs;
 
 		const Graphics& _graphicsRef;
+		const RenderPass& _renderPassRef;
 	};
 }

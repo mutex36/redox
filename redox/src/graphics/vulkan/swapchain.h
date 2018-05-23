@@ -26,20 +26,22 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\buffer.h"
+#include "core\non_copyable.h"
 
+#include "vulkan.h"
 #include "graphics.h"
 #include "command_pool.h"
-#include "vulkan.h"
+#include "render_pass.h"
 #include "framebuffer.h"
 
 #include <functional> //std::function
 
 namespace redox::graphics {
-	class Swapchain {
+	class Swapchain : public NonCopyable {
 	public:
-		using RecreateCallback = std::function<void()>;
+		using CreateCallback = std::function<void()>;
 
-		Swapchain(const Graphics& graphics, RecreateCallback&& recreateCallback);
+		Swapchain(const Graphics& graphics, const RenderPass& renderPass, CreateCallback&& createCallback);
 		~Swapchain();
 
 		template<class Fn>
@@ -61,21 +63,23 @@ namespace redox::graphics {
 		void _destroy();
 		void _reload();
 
-		RecreateCallback _recreateCallback;
+		CreateCallback _createCallback;
 
-		Buffer<VkImage> _images;
-		Buffer<VkImageView> _imageViews;
-		Buffer<Framebuffer> _frameBuffers;
+		redox::Buffer<VkImage> _images;
+		redox::Buffer<VkImageView> _imageViews;
+		redox::Buffer<Framebuffer> _frameBuffers;
 
 		CommandPool _commandPool;
 
 		VkSwapchainKHR _handle;
 		VkExtent2D _extent;
 		VkSurfaceFormatKHR _surfaceFormat;
+		VkPresentModeKHR _presentMode;
 
 		VkSemaphore _imageAvailableSemaphore;
 		VkSemaphore _renderFinishedSemaphore;
 
 		const Graphics& _graphicsRef;
+		const RenderPass& _renderPassRef;
 	};
 }

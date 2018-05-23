@@ -28,7 +28,7 @@ SOFTWARE.
 #include "core\string.h"
 
 namespace redox {
-	typedef std::size_t hash_type;
+	using hash_type = std::size_t;
 
 	//http://www.cse.yorku.ca/~oz/hash.html
 	_RDX_INLINE hash_type djb2(const u8* str) {

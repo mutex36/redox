@@ -25,14 +25,12 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
-#include "buffer_base.h"
-#include "resources\factory.h"
+#include "staged_buffer.h"
 #include "math\math.h"
-
-#include "platform\filesystem.h"
 
 namespace redox::graphics {
 	class Graphics;
+	class CommandBuffer;
 
 	struct MeshVertex {
 		math::Vec2f pos;
@@ -41,11 +39,12 @@ namespace redox::graphics {
 
 	class Mesh {
 	public:
-		Mesh(const Buffer<MeshVertex>& vertices, const Buffer<uint16_t>& indices,
-			const Graphics& graphics, const CommandPool& commandPool);
+		Mesh(const redox::Buffer<MeshVertex>& vertices, 
+			const redox::Buffer<uint16_t>& indices, const Graphics& graphics);
 		~Mesh() = default;
 
-		void bind(VkCommandBuffer commandBuffer);
+		void bind(const CommandBuffer& commandBuffer);
+		void upload(const CommandBuffer& commandBuffer);
 
 		uint32_t vertex_count() const;
 		uint32_t instance_count() const;
@@ -55,7 +54,7 @@ namespace redox::graphics {
 		uint32_t _instanceCount;
 		const Graphics& _graphicsRef;
 		
-		BufferBase _indexBuffer;
-		BufferBase _vertexBuffer;
+		StagedBuffer _indexBuffer;
+		StagedBuffer _vertexBuffer;
 	};
 }

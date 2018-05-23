@@ -34,9 +34,7 @@ SOFTWARE.
 namespace redox {
 
 	template<class T>
-	_RDX_INLINE T parse(const String&) {
-		static_assert(0, "unsupported type"); 
-	}
+	_RDX_INLINE T parse(const String&) = delete;
 
 	template<>
 	_RDX_INLINE String parse(const String& expr) {

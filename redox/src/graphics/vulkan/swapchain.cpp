@@ -26,15 +26,18 @@ SOFTWARE.
 #include "swapchain.h"
 
 #include "core\profiling\profiler.h"
+#include <limits> //std::numeric_limits
 
-redox::graphics::Swapchain::Swapchain(const Graphics& graphics, RecreateCallback&& recreateCallback) :
-	_recreateCallback(std::move(recreateCallback)),
+redox::graphics::Swapchain::Swapchain(const Graphics& graphics, const RenderPass& renderPass, CreateCallback&& createCallback) :
+	_createCallback(std::move(createCallback)),
 	_graphicsRef(graphics),
-	_commandPool(_graphicsRef) {
+	_renderPassRef(renderPass),
+	_commandPool(graphics) {
 	_init();
 	_init_semaphores();
 	_init_images();
 	_init_fb();
+	_createCallback();
 }
 
 void redox::graphics::Swapchain::_destroy() {
@@ -45,7 +48,6 @@ void redox::graphics::Swapchain::_destroy() {
 	vkDestroySemaphore(_graphicsRef.device(), _renderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(_graphicsRef.device(), _imageAvailableSemaphore, nullptr);
 }
-
 
 redox::graphics::Swapchain::~Swapchain() {
 	_destroy();
@@ -59,7 +61,7 @@ void redox::graphics::Swapchain::present() {
 		std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	VkCommandBuffer cmdBuffers[] = { _commandPool[imageIndex] };
+	VkCommandBuffer cmdBuffers[] = { _commandPool[imageIndex].handle() };
 	VkSemaphore waitSemaphores[] = { _imageAvailableSemaphore };
 	VkSemaphore signalSemaphores[] = { _renderFinishedSemaphore };
 	VkSwapchainKHR swapchains[] = { _handle };
@@ -86,18 +88,19 @@ void redox::graphics::Swapchain::present() {
 	presentInfo.pImageIndices = &imageIndex;
 
 	auto result = vkQueuePresentKHR(_graphicsRef.present_queue(), &presentInfo);
-
 	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
 		_reload();
 }
 
 void redox::graphics::Swapchain::_reload() {
+	_graphicsRef.wait_pending();
+
 	_destroy();
 	_init();
 	_init_semaphores();
 	_init_images();
 	_init_fb();
-	_recreateCallback();
+	_createCallback();
 }
 
 VkSwapchainKHR redox::graphics::Swapchain::handle() const {
@@ -126,7 +129,7 @@ void redox::graphics::Swapchain::_init() {
 		_graphicsRef.physical_device(), _graphicsRef.surface(), &scp);
 
 	_surfaceFormat = _graphicsRef.pick_surface_format();
-	auto presentationMode = _graphicsRef.pick_presentation_mode();
+	_presentMode = _graphicsRef.pick_presentation_mode();
 
 	_extent.width = std::clamp(scp.currentExtent.width,
 		scp.minImageExtent.width, scp.maxImageExtent.width);
@@ -145,7 +148,7 @@ void redox::graphics::Swapchain::_init() {
 	createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	createInfo.preTransform = scp.currentTransform;
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	createInfo.presentMode = presentationMode;
+	createInfo.presentMode = _presentMode;
 	createInfo.clipped = VK_TRUE;
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -162,6 +165,8 @@ void redox::graphics::Swapchain::_init_images() {
 	vkGetSwapchainImagesKHR(_graphicsRef.device(), _handle, &imageCount, _images.data());
 
 	_imageViews.resize(imageCount);
+
+	_commandPool.free_all();
 	_commandPool.allocate(imageCount);
 
 	for (std::size_t i = 0; i < _images.size(); ++i) {
@@ -187,10 +192,9 @@ void redox::graphics::Swapchain::_init_images() {
 
 void redox::graphics::Swapchain::_init_fb() {
 	_RDX_PROFILE;
-
 	_frameBuffers.clear();
 	_frameBuffers.reserve(_imageViews.size());
 
 	for (size_t i = 0; i < _frameBuffers.capacity(); i++)
-		_frameBuffers.emplace(_graphicsRef, _renderPass, _imageViews[i], _extent);
+		_frameBuffers.emplace(_graphicsRef, _renderPassRef.handle(), _imageViews[i], _extent);
 }

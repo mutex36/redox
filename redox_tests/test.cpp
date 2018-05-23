@@ -50,6 +50,9 @@ TEST(String, CopyMove) {
 	redox::String empty2;
 	empty2 = empty;
 	ASSERT_EQ(empty, empty2);
+
+	ASSERT_EQ(std::strlen(empty.cstr()), 0);
+
 }
 
 TEST(String, Format) {
@@ -116,7 +119,7 @@ struct Foo {
 };
 
 TEST(SmartPtr, Construct) {
-	auto original = redox::make_smart_ptr<Foo>(12, 44);
+	redox::SmartPtr<Foo> original(redox::construct_tag{}, 12, 44);
 
 	ASSERT_EQ(original->a, 12);
 	ASSERT_EQ(original->b, 44);
@@ -128,9 +131,9 @@ TEST(SmartPtr, Construct) {
 }
 
 TEST(RefCounted, Construct) {
-	auto original = redox::make_ref_counted<Foo>(12, 44);
+	redox::RefCounted<Foo> dd(redox::construct_tag{}, 12, 44);
 
-	auto copy1 = original;
+	auto copy1 = dd;
 	ASSERT_EQ(copy1.ref_count(), 2);
 
 	auto copy2(std::move(copy1));
@@ -147,9 +150,7 @@ TEST(RefCounted, Construct) {
 	ASSERT_EQ(copy3->b, 44);
 }
 
-
 TEST(Vec, Ops) {
-
 	redox::math::Vec3f a(3.0f, 3.0f, 3.0f);
 	redox::math::Vec3f b(3.0f, 3.0f, 3.0f);
 
@@ -168,15 +169,15 @@ TEST(Vec, Ops) {
 	ASSERT_FLOAT_EQ(e.y, 36.0f);
 	ASSERT_FLOAT_EQ(e.z, 36.0f);
 
-	auto le = e.Length();
+	auto le = e.length();
 	ASSERT_FLOAT_EQ(le, 62.353829072479584f);
 
-	auto adb = a.Dot(b);
+	auto adb = a.dot(b);
 	ASSERT_FLOAT_EQ(adb, 27.0f);
 
 	redox::math::Vec3f ax(1,2,3);
 	redox::math::Vec3f ay(1,5,7);
-	auto crs = ax.Cross(ay);
+	auto crs = ax.cross(ay);
 
 	ASSERT_FLOAT_EQ(crs.x, -1.0f);
 	ASSERT_FLOAT_EQ(crs.y, -4.0f);
@@ -198,10 +199,30 @@ TEST(Vec, Ops) {
 TEST(Mat, Ops) {
 
 	auto scm = redox::math::Mat44f::scale({3,3,3});
+	ASSERT_FLOAT_EQ(scm[0].x, 3);
+	ASSERT_FLOAT_EQ(scm[1].y, 3);
+	ASSERT_FLOAT_EQ(scm[2].z, 3);
+	ASSERT_FLOAT_EQ(scm[3].w, 1);
+
 	auto identity = redox::math::Mat44f::identity();
+	ASSERT_FLOAT_EQ(identity[0].x, 1);
+	ASSERT_FLOAT_EQ(identity[1].y, 1);
+	ASSERT_FLOAT_EQ(identity[2].z, 1);
+	ASSERT_FLOAT_EQ(identity[3].w, 1);
 
 	auto sum = scm + identity;
+	ASSERT_FLOAT_EQ(sum[0].x, 4);
+	ASSERT_FLOAT_EQ(sum[1].y, 4);
+	ASSERT_FLOAT_EQ(sum[2].z, 4);
+	ASSERT_FLOAT_EQ(sum[3].w, 2);
 
-	auto vk = identity[2];
+	redox::math::Mat44f ima({
+		1,0,0,1,
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	});
+	
+	//auto ivma = ima.inverse();
 
 }

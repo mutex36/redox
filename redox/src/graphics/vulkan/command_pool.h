@@ -27,6 +27,7 @@ SOFTWARE.
 #include "core\buffer.h"
 #include "vulkan.h"
 #include "graphics.h"
+#include "command_buffer.h"
 
 namespace redox::graphics {
 	class CommandPool {
@@ -36,11 +37,10 @@ namespace redox::graphics {
 		~CommandPool();
 
 		void free_all();
-		void allocate(std::size_t numBuffers);
+		void allocate(uint32_t numBuffers);
 
 		template<class Fn>
 		void quick_submit(Fn&& fn) const {
-
 			VkCommandBufferAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -55,7 +55,7 @@ namespace redox::graphics {
 			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 			vkBeginCommandBuffer(commandBuffer, &beginInfo);
-			fn(commandBuffer);
+			fn(CommandBuffer{ commandBuffer });
 			vkEndCommandBuffer(commandBuffer);
 
 			VkSubmitInfo submitInfo{};
@@ -67,13 +67,13 @@ namespace redox::graphics {
 			vkQueueWaitIdle(_graphicsRef.graphics_queue());
 		}
 
-		VkCommandBuffer operator[](std::size_t index) const;
+		CommandBuffer operator[](std::size_t index) const;
 
 	private:
 		void _init(VkCommandPoolCreateFlags flags);
-		const Graphics& _graphicsRef;
-
 		VkCommandPool _handle;
-		Buffer<VkCommandBuffer> _commandBuffers;
+		redox::Buffer<VkCommandBuffer> _commandBuffers;
+
+		const Graphics& _graphicsRef;
 	};
 }

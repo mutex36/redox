@@ -34,12 +34,6 @@ namespace redox {
 			return static_cast<C>(Size);
 		}
 
-		//template<class T, class...Args>
-		//constexpr void reconstruct(T& ref, Args&&...args) {
-		//	ref.~T();
-		//	new (&ref) T(std::forward<Args>(args)...);
-		//}
-
 		template<class C, class M, class T>
 		constexpr auto offset_of(M T::* p, T sample = T()) {
 			return static_cast<C>(reinterpret_cast<std::size_t>(&(sample.*p))

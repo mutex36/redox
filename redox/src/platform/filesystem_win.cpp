@@ -33,8 +33,8 @@ struct redox::io::File::internal {
 	HANDLE handle;
 };
 
-redox::io::File::File(const redox::io::Path& file, const Mode mode) {
-	_internal = make_smart_ptr<internal>();
+redox::io::File::File(const redox::io::Path& file, const Mode mode) :
+	_internal(construct_tag{}) {
 
 	DWORD access{ 0 };
 	if ((mode & Mode::READ) == Mode::READ)

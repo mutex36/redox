@@ -43,6 +43,8 @@ namespace redox::graphics {
 		VkQueue present_queue() const;
 		uint32_t queue_family() const;
 
+		void wait_pending() const;
+
 		std::optional<uint32_t> pick_memory_type(
 			uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
@@ -55,10 +57,9 @@ namespace redox::graphics {
 		void _init_surface();
 		void _init_device();
 
-		VkPhysicalDevice _pick_device();
+		std::optional<VkPhysicalDevice> _pick_device();
 		std::optional<uint32_t> _pick_queue_family();
 
-		Buffer<VkQueueFamilyProperties> _queueFamilies;
 		uint32_t _queueFamily;
 		VkQueue _graphicsQueue;
 

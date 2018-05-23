@@ -35,68 +35,75 @@ SOFTWARE.
 
 redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config) :
 	_graphics(window, config),
-	_swapchain(_graphics, std::bind(&RenderSystem::_swapchain_event_recreate, this)),
+	_renderPass(_graphics),
+	_swapchain(_graphics, _renderPass, std::bind(&RenderSystem::_swapchain_event_create, this)),
 	_configRef(config),
-	_mvpBuffer(sizeof(mvp_uniform), _graphics, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false),
+	_mvpBuffer(sizeof(mvp_uniform), _graphics, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
 	_demoVs(_shaderFactory.load("shader\\vert.spv", _graphics)),
 	_demoFs(_shaderFactory.load("shader\\frag.spv", _graphics)),
-	_demoMesh(_meshFactory.load("meshes\\test.rdxmesh", _graphics, _auxCommandPool)),
-	_pipeline(_graphics, _demoVs, _demoFs),
+	_demoMesh(_meshFactory.load("meshes\\test.rdxmesh", _graphics)),
+	_demoTexture(_textureFactory.load("textures\\uvchecker.jpg", _graphics)),
+	_pipeline(_graphics, _renderPass, _demoVs, _demoFs),
 	_auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
 
+	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo){
+
+		//upload assets
+		_demoMesh->upload(cbo);
+		_demoTexture->upload(cbo);
+	});
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
-	_wait_pending();
+	_graphics.wait_pending();
 }
 
-void redox::graphics::RenderSystem::demo_setup() {
+void redox::graphics::RenderSystem::_demo_setup() {
 	_RDX_PROFILE;
+	_pipeline.bind_ubo(_mvpBuffer.main_buffer());
 
-	_mvpBuffer.map([](void* data) {
-		auto bf = reinterpret_cast<mvp_uniform*>(data);
-		bf->model = math::Mat44f::identity();
-		bf->projection = math::Mat44f::identity();
-		bf->view = math::Mat44f::identity();
-	});
-	_pipeline.register_ubo(_mvpBuffer);
+	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
+		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
+			_pipeline.bind(commandBuffer, frameBuffer);
+			_demoMesh->bind(commandBuffer);
+		
+			IndexedDraw drawCmd{ _demoMesh };
+			commandBuffer.submit(drawCmd);
 
-	_swapchain.visit([this](const Framebuffer& frameBuffer, VkCommandBuffer commandBuffer) {
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-			throw Exception("failed to begin recording of commandBuffer");
-
-		_pipeline.bind(commandBuffer, frameBuffer);
-		_demoMesh->bind(commandBuffer);
-		vkCmdDrawIndexed(commandBuffer, _demoMesh->instance_count(), 1, 0, 0, 0);
-		_pipeline.unbind(commandBuffer);
-
-		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-			throw Exception("failed to end recording of commandBuffer");
+			_pipeline.unbind(commandBuffer);
+		});
 	});
 }
 
 void redox::graphics::RenderSystem::render() {
+
+	_mvpBuffer.map([this](void* data) {
+		auto extent = _swapchain.extent();
+		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
+
+		auto bf = reinterpret_cast<mvp_uniform*>(data);
+		bf->model = math::Mat44f::identity();
+		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 10.f);
+		bf->view = math::Mat44f::translate({0,0,-2});
+	});
+
+	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
+		//update buffers
+		_mvpBuffer.upload(cbo);
+	});
+
 	_swapchain.present();
 }
 
-void redox::graphics::RenderSystem::_swapchain_event_recreate() {
-	RDX_LOG("recreating swapchain...");
-
-	_pipeline.set_viewport(_swapchain.extent(), _auxCommandPool);
-}
-
-void redox::graphics::RenderSystem::_wait_pending() {
-	vkDeviceWaitIdle(_graphics.device());
-}
-
-redox::graphics::ShaderFactory & redox::graphics::RenderSystem::shader_factory() {
+redox::graphics::ShaderFactory& redox::graphics::RenderSystem::shader_factory() {
 	return _shaderFactory;
 }
 
-redox::graphics::MeshFactory & redox::graphics::RenderSystem::mesh_factory() {
+redox::graphics::MeshFactory& redox::graphics::RenderSystem::mesh_factory() {
 	return _meshFactory;
+}
+
+void redox::graphics::RenderSystem::_swapchain_event_create() {
+	_pipeline.set_viewport(_swapchain.extent());
+	_demo_setup();
 }

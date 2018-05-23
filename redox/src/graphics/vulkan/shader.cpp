@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "platform\filesystem.h"
 
-redox::graphics::Shader::Shader(const Buffer<i8>& buffer, const Graphics& graphics)
+redox::graphics::Shader::Shader(const redox::Buffer<i8>& buffer, const Graphics& graphics)
 	: _graphicsRef(graphics) {
 
 	VkShaderModuleCreateInfo createInfo{};

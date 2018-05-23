@@ -33,9 +33,7 @@ SOFTWARE.
 
 #define RDX_INPUT_HIGH_DPI
 
-namespace redox {
-	class Configuration;
-}
+namespace redox { class Configuration; }
 
 namespace redox::input {
 	enum class KeyState {

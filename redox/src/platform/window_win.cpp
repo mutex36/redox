@@ -75,8 +75,9 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 }
 
 redox::platform::Window::Window(const String& title,
-	const Bounds& bounds, const Appearance& appearance) : _bounds(bounds) {
-	_internal = make_smart_ptr<internal>();
+	const Bounds& bounds, const Appearance& appearance) :
+	_bounds(bounds), _internal(construct_tag{}) {
+
 	_internal->instance = GetModuleHandle(0);
 	_internal->classname = "redox_window";
 

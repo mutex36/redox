@@ -35,25 +35,21 @@ SOFTWARE.
 #include <type_traits> //std::forward
 
 namespace redox {
-	template<class T, class Allocator = allocation::DefaultAllocator<T>>
-	using Resource = RefCounted<T, Allocator>;
+	template<class T>
+	using Resource = RefCounted<T>;
 
-	template<class T, class Allocator = allocation::DefaultAllocator<T>, class...Args>
-	Resource<T, Allocator> make_resource(Args&&...args) {
-		return make_ref_counted<T, Allocator>(std::forward<Args>(args)...);
-	}
-
-	template<class CRTP_Derived, class ResourceType>
+	template<class Derived, class ResourceType>
 	class ResourceFactory {
 	public:
 		template<class...Args>
 		Resource<ResourceType> load(const io::Path& file, Args&&...args) {
 			auto lookup = _cache.get(file);
-			if (lookup) return lookup.value();
+			if (lookup) 
+				return lookup.value();
 
 			auto path = ResourceHelper::instance().resolve_path(file);
-			auto rx = static_cast<CRTP_Derived*>(this)->internal_load(
-				path, std::forward<Args>(args)...);
+			auto instance = static_cast<Derived*>(this);
+			auto rx = instance->load_impl(path, std::forward<Args>(args)...);
 
 			_cache.push(file, rx);
 			return rx;

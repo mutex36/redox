@@ -38,7 +38,7 @@ namespace redox::graphics {
 	class Shader
 	{
 	public:
-		Shader(const Buffer<i8>& buffer, const Graphics& graphics);
+		Shader(const redox::Buffer<i8>& buffer, const Graphics& graphics);
 		~Shader();
 
 		VkShaderModule handle() const;

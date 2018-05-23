@@ -25,14 +25,18 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
+#include "core\non_copyable.h"
 
 namespace redox::graphics {
 	class Graphics;
 
-	class Framebuffer {
+	class Framebuffer : public NonCopyable {
 	public:
 		Framebuffer(const Graphics& graphics, VkRenderPass rp, VkImageView imageView, VkExtent2D extent);
 		~Framebuffer();
+
+		Framebuffer(Framebuffer&&);
+		Framebuffer& operator=(Framebuffer&&) = delete;
 
 		VkFramebuffer handle() const;
 		const VkExtent2D& extent() const;

@@ -28,17 +28,18 @@ SOFTWARE.
 #include "graphics\vulkan\shader.h"
 
 namespace redox::graphics {
-	struct ShaderFactory : public ResourceFactory<ShaderFactory, Shader> {
+	class Graphics;
+
+	class ShaderFactory : public ResourceFactory<ShaderFactory, Shader> {
 		friend class ResourceFactory<ShaderFactory, Shader>;
 
-	protected:
 		template<class...Args>
-		Resource<Shader> internal_load(const io::Path& path, Args&&...args) {
+		Resource<Shader> load_impl(const io::Path& path, const Graphics& graphics) {
 
 			io::File fstream(path, io::File::Mode::READ);
 			auto buffer = fstream.read();
 
-			return make_resource<Shader>(std::move(buffer), std::forward<Args>(args)...);
+			return { construct_tag{}, std::move(buffer), graphics };
 		}
 	};
 }

@@ -26,43 +26,38 @@ SOFTWARE.
 #include "pipeline.h"
 #include "core\utility.h"
 
-redox::graphics::Pipeline::Pipeline(const Graphics& graphics, Resource<Shader> vs, Resource<Shader> fs) :
+redox::graphics::Pipeline::Pipeline(const Graphics& graphics, const RenderPass& renderPass, Resource<Shader> vs, Resource<Shader> fs) :
 	_vs(std::move(vs)),
 	_fs(std::move(fs)),
-	_graphicsRef(graphics) {
+	_graphicsRef(graphics),
+	_renderPassRef(renderPass) {
 
 	_init_desriptors();
 	_init();
 }
 
 redox::graphics::Pipeline::~Pipeline() {
-	_destroy();
+	vkDestroyDescriptorSetLayout(_graphicsRef.device(), _descriptorSetLayout, nullptr);
+	vkDestroyDescriptorPool(_graphicsRef.device(), _descriptorPool, nullptr);
+	vkDestroyPipeline(_graphicsRef.device(), _handle, nullptr);
+	vkDestroyPipelineLayout(_graphicsRef.device(), _layout, nullptr);
 }
 
-void redox::graphics::Pipeline::bind(VkCommandBuffer commandBuffer, const Framebuffer& frameBuffer) {
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = _renderPass;
-	renderPassInfo.framebuffer = frameBuffer.handle();
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = frameBuffer.extent();
+void redox::graphics::Pipeline::bind(const CommandBuffer& commandBuffer, const Framebuffer& frameBuffer) {
+	_renderPassRef.begin(frameBuffer, commandBuffer);
 
-	VkClearValue clearColor{ 1.0f, 0.0f, 0.0f, 1.0f };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
-
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _handle);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+	vkCmdBindPipeline(commandBuffer.handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, _handle);
+	vkCmdBindDescriptorSets(commandBuffer.handle(), VK_PIPELINE_BIND_POINT_GRAPHICS,
 		_layout, 0, 1, &_descriptorSet, 0, nullptr);
+
+	_update_viewport(commandBuffer);
 }
 
-void redox::graphics::Pipeline::unbind(VkCommandBuffer commandBuffer) {
-	vkCmdEndRenderPass(commandBuffer);
+void redox::graphics::Pipeline::unbind(const CommandBuffer& commandBuffer) {
+	_renderPassRef.end(commandBuffer);
 }
 
-void redox::graphics::Pipeline::register_ubo(const BufferBase& ubo) {
+void redox::graphics::Pipeline::bind_ubo(const Buffer& ubo) {
 
 	VkDescriptorBufferInfo bufferInfo{};
 	bufferInfo.buffer = ubo.handle();
@@ -83,30 +78,8 @@ void redox::graphics::Pipeline::register_ubo(const BufferBase& ubo) {
 	vkUpdateDescriptorSets(_graphicsRef.device(), 1, &descriptorWrite, 0, nullptr);
 }
 
-void redox::graphics::Pipeline::set_viewport(const VkExtent2D& size, const CommandPool& pool) {
-
-	pool.quick_submit([&size](VkCommandBuffer commandBuffer) {
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(size.width);
-		viewport.height = static_cast<float>(size.height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(NULL, 0, 1, &viewport);
-
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = size;
-		vkCmdSetScissor(NULL, 0, 1, &scissor);
-	});
-}
-
-void redox::graphics::Pipeline::_destroy() {
-	vkDestroyDescriptorSetLayout(_graphicsRef.device(), _descriptorSetLayout, nullptr);
-	vkDestroyPipeline(_graphicsRef.device(), _handle, nullptr);
-	vkDestroyPipelineLayout(_graphicsRef.device(), _layout, nullptr);
-	vkDestroyRenderPass(_graphicsRef.device(), _renderPass, nullptr);
+void redox::graphics::Pipeline::set_viewport(const VkExtent2D& size) {
+	_viewport = size;
 }
 
 void redox::graphics::Pipeline::_init() {
@@ -135,9 +108,9 @@ void redox::graphics::Pipeline::_init() {
 	//Note: viewport state will be set dynamically upon swapchain creation
 	VkPipelineViewportStateCreateInfo viewportState{};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 0;
+	viewportState.viewportCount = 1;
 	viewportState.pViewports = nullptr;
-	viewportState.scissorCount = 0;
+	viewportState.scissorCount = 1;
 	viewportState.pScissors = nullptr;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer{};
@@ -147,7 +120,7 @@ void redox::graphics::Pipeline::_init() {
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
@@ -175,45 +148,6 @@ void redox::graphics::Pipeline::_init() {
 
 	if (vkCreatePipelineLayout(_graphicsRef.device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS)
 		throw Exception("failed to create pipeline layout");
-
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = VK_FORMAT_B8G8R8A8_UNORM;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(_graphicsRef.device(), &renderPassInfo, nullptr, &_renderPass) != VK_SUCCESS)
-		throw Exception("failed to create render pass");
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -247,9 +181,9 @@ void redox::graphics::Pipeline::_init() {
 	pipelineInfo.pMultisampleState = &multisampleState;
 	pipelineInfo.pDepthStencilState = nullptr;
 	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr;
+	pipelineInfo.pDynamicState = &dynamicStateInfo;
 	pipelineInfo.layout = _layout;
-	pipelineInfo.renderPass = _renderPass;
+	pipelineInfo.renderPass = _renderPassRef.handle();
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(
@@ -258,17 +192,14 @@ void redox::graphics::Pipeline::_init() {
 }
 
 void redox::graphics::Pipeline::_init_desriptors() {
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
+	VkDescriptorSetLayoutBinding bindings[] = {
+		FAIL();
+	};
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 1;
-	layoutInfo.pBindings = &uboLayoutBinding;
+	layoutInfo.bindingCount = util::array_size<uint32_t>(bindings);
+	layoutInfo.pBindings = bindings;
 
 	if (vkCreateDescriptorSetLayout(_graphicsRef.device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
 		throw Exception("failed to create descriptor set layout");
@@ -277,23 +208,42 @@ void redox::graphics::Pipeline::_init_desriptors() {
 	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSize.descriptorCount = 1;
 
+	VkDescriptorPoolSize poolSize{};
+	poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSize.descriptorCount = 1;
+
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 1;
 	poolInfo.pPoolSizes = &poolSize;
 	poolInfo.maxSets = 1;
 
-	VkDescriptorPool pool;
-	if (vkCreateDescriptorPool(_graphicsRef.device(), &poolInfo, nullptr, &pool) != VK_SUCCESS)
+	if (vkCreateDescriptorPool(_graphicsRef.device(), &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
 		throw Exception("failed to create descriptor pool");
 
 	VkDescriptorSetLayout layouts[] = { _descriptorSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = pool;
+	allocInfo.descriptorPool = _descriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = layouts;
 
 	if (vkAllocateDescriptorSets(_graphicsRef.device(), &allocInfo, &_descriptorSet) != VK_SUCCESS)
 		throw Exception("failed to allocate descriptor set");
+}
+
+void redox::graphics::Pipeline::_update_viewport(const CommandBuffer& commandBuffer) {
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = static_cast<float>(_viewport.width);
+	viewport.height = static_cast<float>(_viewport.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(commandBuffer.handle(), 0, 1, &viewport);
+
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = _viewport;
+	vkCmdSetScissor(commandBuffer.handle(), 0, 1, &scissor);
 }

@@ -30,17 +30,12 @@ SOFTWARE.
 
 #define RDX_LOG_TAG "Application"
 
-#include <iostream>
-#include <thread>
-
 redox::Application::Application() 
 	: _config(R"(C:\Users\luis9\Desktop\redox\redox\config\settings.ini)"),
 	  _window("redox engine", 
 		  { _config.get("Engine", "resolution_x"), _config.get("Engine", "resolution_y") },
 		  { _config.get("Surface", "icon"), _config.get("Surface", "fullscreen") }),
 	  _renderSystem(_window, _config), _inputSystem(_window) {
-
-	_renderSystem.demo_setup();
 
 	_window.set_callback([this](platform::Window::Event event) {
 		switch (event) {

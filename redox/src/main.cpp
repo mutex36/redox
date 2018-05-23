@@ -29,6 +29,5 @@ int main() {
 
 	auto& myApp = redox::Application::instance();
 	myApp.run();
-
 	return 0;
 }

@@ -28,94 +28,92 @@ SOFTWARE.
 #include "core\allocation\default_allocator.h"
 
 namespace redox {
-	namespace detail { using refcount_t = std::size_t; }
+	namespace detail { 
+		using refcount_type = std::size_t; 
 
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>,
-		class RefCountAllocator = typename Allocator::template rebind<detail::refcount_t>>
+		template<class T, class RefCountType>
+		struct control_block {
+			RefCountType refcount;
+			T data;
+		};
+	}
+
+#ifndef RDX_DECL_CONSTRUCT_TAG
+#define RDX_DECL_CONSTRUCT_TAG
+	struct construct_tag {};
+#endif
+
+	template<class T, 
+		class Allocator = allocation::DefaultAllocator<
+		detail::control_block<T, detail::refcount_type>>>
 	class RefCounted {
 	public:
-		using ptr_type = T*;
+		using control_block_type = detail::control_block<T, detail::refcount_type>;
 
-		RefCounted() : _data(nullptr), _refcount(nullptr) {
-		}
+		RefCounted() : _cb(nullptr) {}
 
-		_RDX_INLINE RefCounted(ptr_type ptr) : _data(ptr) {
+		template<class...Args>
+		_RDX_INLINE RefCounted(construct_tag, Args&&...args) : _cb(Allocator::allocate()) {
+			new (get()) T(std::forward<Args>(args)...);
 			_init_ref_count();
 		}
 
 		_RDX_INLINE ~RefCounted() {
-			if (_refcount && _dec_ref_count() == 0) {
-				Allocator::deallocate(_data);
-				RefCountAllocator::deallocate(_refcount);
+			if (_cb && _dec_ref_count() == 0) {
+				_cb->data.~T();
+				Allocator::deallocate(_cb);
 			}
 		}
 
-		_RDX_INLINE RefCounted(const RefCounted& ref) : _data(ref._data), _refcount(ref._refcount) {
+		_RDX_INLINE RefCounted(const RefCounted& ref) : _cb(ref._cb) {
 			_inc_ref_count();
 		}
 
-		RefCounted(RefCounted&& ref) : _data(ref._data), _refcount(ref._refcount) {
-			ref._data = nullptr;
-			ref._refcount = nullptr;
+		RefCounted(RefCounted&& ref) : _cb(ref._cb) {
+			ref._cb = nullptr;
 		}
 
 		_RDX_INLINE RefCounted& operator=(const RefCounted& ref) {
-			_data = ref._data;
-			_refcount = ref._refcount;
+			_cb = ref._cb;
 			_inc_ref_count();
 			return *this;
 		}
 
 		_RDX_INLINE RefCounted& operator=(RefCounted&& ref) {
-			_data = ref._data;
-			_refcount = ref._refcount;
-			ref._data = nullptr;
-			ref._refcount = nullptr;
+			_cb = ref._cb;
+			ref._cb = nullptr;
 			return *this;
 		}
 
-		_RDX_INLINE ptr_type operator->() const {
-			return _data;
+		_RDX_INLINE auto operator->() const{
+			return get();
 		}
 
-		_RDX_INLINE T& operator*() const {
-			return *_data;
+		_RDX_INLINE auto operator*() const {
+			return _cb->data;
 		}
 
-		_RDX_INLINE ptr_type get() const {
-			return _data;
+		_RDX_INLINE auto get() const {
+			return std::addressof(_cb->data);
 		}
 
-		_RDX_INLINE detail::refcount_t ref_count() const {
-			return *_refcount;
+		_RDX_INLINE auto ref_count() const {
+			return _cb->refcount;
 		}
 
 	protected:
 		_RDX_INLINE auto _dec_ref_count() {
-			//returns new ref_count
-			return --(*_refcount);
+			return --(_cb->refcount);
 		}
 
 		_RDX_INLINE void _inc_ref_count() {
-			(*_refcount)++;
+			(_cb->refcount)++;
 		}
 
 		_RDX_INLINE void _init_ref_count() {
-			_refcount = RefCountAllocator::allocate();
-			*_refcount = 1;
+			_cb->refcount = 1;
 		}
 
-		ptr_type _data;
-		detail::refcount_t* _refcount;
+		control_block_type* _cb;
 	};
-
-	//TODO: combined data and control block allocation
-
-	template<class T,
-		class Allocator = allocation::DefaultAllocator<T>,
-		class RefCountAllocator = typename Allocator::template rebind<detail::refcount_t>, class...Args>
-	_RDX_INLINE RefCounted<T, Allocator, RefCountAllocator> make_ref_counted(Args&&...args) {
-		return new (Allocator::allocate()) T(std::forward<Args>(args)...);
-	}
 }

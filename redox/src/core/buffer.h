@@ -29,10 +29,10 @@ SOFTWARE.
 #include "core\allocation\default_allocator.h"
 #include "core\allocation\growth_policy.h"
 
-#include <initializer_list>
+#include <initializer_list> //std::initializer_list
 #include <type_traits> //std::move
 #include <new> //placement-new
-#include <algorithm> //std::max
+#include <string.h> //std::memcpy
 
 namespace redox {
 	template<class ValueType, 
@@ -42,11 +42,16 @@ namespace redox {
 	public:
 		using size_type = std::size_t;
 
-		Buffer() : _data(nullptr), _reserved(0), _size(0) {
-		}
+		Buffer() : _data(nullptr), _reserved(0), _size(0) {}
 
 		_RDX_INLINE Buffer(size_type size) : Buffer() {
 			resize(size);
+		}
+
+		_RDX_INLINE Buffer(const ValueType* start, const size_type length) : Buffer() {
+			reserve(length);
+			std::memcpy(_data, start, length);
+			_size = length;
 		}
 
 		_RDX_INLINE Buffer(std::initializer_list<ValueType> values) : Buffer() {
@@ -59,7 +64,10 @@ namespace redox {
 				_push_no_checks(v);
 		}
 
-		_RDX_INLINE Buffer(Buffer&& ref) : _data(ref._data), _reserved(ref._reserved), _size(ref._size) {
+		_RDX_INLINE Buffer(Buffer&& ref) :
+			_data(ref._data),
+			_reserved(ref._reserved),
+			_size(ref._size) {
 			ref._data = nullptr;
 			ref._size = 0;
 			ref._reserved = 0;
@@ -98,35 +106,35 @@ namespace redox {
 		}
 
 		_RDX_INLINE ValueType& operator[](size_type index) {
+#ifdef RDX_DEBUG
 			if (index >= _size)
 				throw Exception("index out of bounds");
+#endif
 			return _data[index];
 		}
 
 		_RDX_INLINE const ValueType& operator[](size_type index) const {
+#ifdef RDX_DEBUG
 			if (index >= _size)
 				throw Exception("index out of bounds");
+#endif
 			return _data[index];
 		}
 
-		void reserve(size_type reserve) {
+		_RDX_INLINE void reserve(size_type reserve) {
 			if (reserve > _reserved) {
-				auto dest = Allocator::allocate(reserve);
-				for (size_type elm = 0; elm < _size; ++elm)
-					new (dest + elm) ValueType(std::move(_data[elm]));
-
-				_destruct();
-				_dealloc();
-				_data = dest;
+				_data = _realloc(reserve);
 				_reserved = reserve;
 			}
 		}
 
-		void resize(size_type size) {
-			static_assert(std::is_default_constructible_v<ValueType>);
+		_RDX_INLINE void resize(size_type size) {
 			reserve(size);
+
+			static_assert(std::is_default_constructible_v<ValueType>);
 			for (size_type elm = _size; elm < size; ++elm)
 				new (_data + elm) ValueType();
+
 			_size = size;
 		}
 
@@ -159,22 +167,32 @@ namespace redox {
 		}
 
 	private:
+		_RDX_INLINE auto _realloc(size_type reserve) {
+			static_assert(std::is_move_constructible_v<ValueType>);
+			auto dest = Allocator::allocate(reserve);
+
+			//we need to copy/move the old data to the
+			//newly allocated buffer.
+			for (size_type elm = 0; elm < _size; ++elm)
+				new (dest + elm) ValueType(std::move(_data[elm]));
+
+			_destruct();
+			_dealloc();
+			return dest;
+		}
+
 		_RDX_INLINE void _grow_if_needed() {
 			if (_size == _reserved) {
-				//It makes little sense to grow the vector by just one element
-				//Doubling (GrowthPolicy) the size is likely more efficient
-				//as it reduces expensive reallocations/copies
 				GrowthPolicy fn;
 				reserve(fn(_size));
 			}
 		}
 
 		_RDX_INLINE void _destruct() {
-			if constexpr(std::is_trivially_destructible_v<ValueType>)
-				return; //no need to destruct trivially destructible types
-
-			for (auto& c : *this)
-				c.~ValueType();
+			if constexpr(!std::is_trivially_destructible_v<ValueType>) {
+				for (auto& c : *this)
+					c.~ValueType();
+			}
 		}
 
 		template<class T>
