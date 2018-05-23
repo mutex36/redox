@@ -153,7 +153,7 @@ namespace redox {
 			return std::nullopt;
 		}
 
-		DynBitset _slotOccupation;
+		Bitset _slotOccupation;
 		Buffer<node_type, Allocator> _slots;
 	};
 }
