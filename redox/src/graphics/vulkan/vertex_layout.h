@@ -30,25 +30,34 @@ SOFTWARE.
 #include "core\utility.h"
 #include "mesh.h"
 
-#include <array> //std::array
-
 namespace redox::graphics {
 
-	template<class T>
-	struct layout_traits;
-
-	template<>
-	struct layout_traits<MeshVertex> {
-		constexpr VkVertexInputBindingDescription binding_desc() {
-			return { 0, sizeof(MeshVertex), VK_VERTEX_INPUT_RATE_VERTEX };
-		}
-
-		constexpr std::array<VkVertexInputAttributeDescription, 2> atr_desc() {
-			return { {
-				{ 0, 0, VK_FORMAT_R32G32_SFLOAT, util::offset_of<uint32_t>(&MeshVertex::pos) },
-				{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, util::offset_of<uint32_t>(&MeshVertex::color) }
-			} };
-		}
+	struct VertexLayout {
+		VkVertexInputBindingDescription binding;
+		redox::Buffer<VkVertexInputAttributeDescription> attribs;
 	};
 
+	template<class Vertex>
+	VertexLayout get_layout() = delete;
+
+	template<>
+	_RDX_INLINE VertexLayout get_layout<MeshVertex>() {
+		VertexLayout out;
+		out.binding.binding = 0;
+		out.binding.stride = sizeof(MeshVertex);
+		out.binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		out.attribs.resize(2);
+		out.attribs[0].binding = 0;
+		out.attribs[0].location = 0;
+		out.attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		out.attribs[0].offset = util::offset_of<uint32_t>(&MeshVertex::pos);
+
+		out.attribs[1].binding = 0;
+		out.attribs[1].location = 1;
+		out.attribs[1].format = VK_FORMAT_R32G32_SFLOAT;
+		out.attribs[1].offset = util::offset_of<uint32_t>(&MeshVertex::uv);
+
+		return out;
+	}
 }

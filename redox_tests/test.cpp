@@ -2,7 +2,7 @@
 
 TEST(Buffer, Push) {
 	constexpr auto runs = 10000;
-	redox::Buffer<int> buffer;
+	redox::Buffer<size_t> buffer;
 	for (size_t i = 0; i < runs; i++)
 		buffer.push(i);
 	ASSERT_EQ(buffer.size(), runs);
@@ -59,14 +59,14 @@ TEST(String, Format) {
 	auto fmt = redox::format("1234{0}#{1}{0}", 5, "1234");
 	ASSERT_STREQ(fmt.cstr(), "12345#12345");
 
-	auto fmt2 = redox::format("{0}", redox::binary((uint8_t)0x80));
+	auto fmt2 = redox::format("{0}", redox::binary<uint8_t>{ 0x80 });
 	ASSERT_STREQ(fmt2.cstr(), "00000001");
 }
 
 TEST(Bitset, SetGet) {
 
 	constexpr auto res = 4194857;
-	redox::DynBitset bitset(50);
+	redox::Bitset bitset(50);
 
 	bitset.set(0);
 	bitset.set(3);
@@ -90,7 +90,7 @@ TEST(Bitset, SetGet) {
 	ASSERT_EQ(j, res);
 
 
-	redox::DynBitset bitset2(12);
+	redox::Bitset bitset2(12);
 	for (size_t i = 0; i < bitset2.size(); i++)
 		bitset2.set(i);
 
@@ -108,13 +108,11 @@ TEST(Hashmap, SetGet) {
 		hm.push(i, i);
 
 	for (size_t i = 0; i < 1000; i++)
-		ASSERT_EQ(hm.get(i).value(), i);
-
+		ASSERT_EQ(*hm.get(i), i);
 }
 
 struct Foo {
-	Foo(int _a, int _b) : a(_a), b(_b) {
-	}
+	Foo(int _a, int _b) : a(_a), b(_b) {}
 	int a, b;
 };
 

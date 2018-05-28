@@ -18,6 +18,7 @@ namespace redox::graphics {
 
 		VkImage handle() const;
 		VkSampler sampler() const;
+		VkImageView view() const;
 
 		const Dimension& dimension() const;
 		void upload(const CommandBuffer& commandBuffer);

@@ -27,37 +27,13 @@ SOFTWARE.
 #include "core\core.h"
 #include <type_traits>
 
+#define RDX_ENABLE_ENUM_FLAGS(en) 								\
+	template<>													\
+	struct ::redox::enable_bit_flags<en> : std::true_type {};	\
+
 namespace redox {
-	namespace util {
-		template<class C, class T, std::size_t Size >
-		constexpr auto array_size(const T(&array)[Size]) noexcept {
-			return static_cast<C>(Size);
-		}
-
-		template<class C, class M, class T>
-		constexpr auto offset_of(M T::* p, T sample = T()) {
-			return static_cast<C>(reinterpret_cast<std::size_t>(&(sample.*p))
-				- reinterpret_cast<std::size_t>(&sample));
-		}
-
-		template<std::size_t Index, class T>
-		constexpr auto check_bit(T expr) noexcept {
-			return static_cast<bool>((expr >> Index) & 0x1);
-		}
-	}
-
-	//Define bit flag operations for any POW2-indexed strongly-typed enum
-	//the global bit ops need to be present in ::redox namespace
-
-#define RDX_ENABLE_ENUM_FLAGS(en) 						\
-	template<>											\
-	struct enable_bit_flags<en> : std::true_type {};	\
-
-	//---
-
 	template<class Enum>
-	struct enable_bit_flags : std::false_type {
-	};
+	struct enable_bit_flags : std::false_type {};
 
 	template<typename Enum>
 	constexpr std::enable_if_t<enable_bit_flags<Enum>::value, Enum> operator| (Enum a, Enum b) {
@@ -69,5 +45,25 @@ namespace redox {
 	constexpr std::enable_if_t<enable_bit_flags<Enum>::value, Enum> operator& (Enum a, Enum b) {
 		using ut = typename std::underlying_type_t<Enum>;
 		return static_cast<Enum>(static_cast<ut>(a) & static_cast<ut>(b));
+	}
+}
+
+//####UTIL####
+
+namespace redox::util {
+	template<class C, class T, std::size_t Size >
+	constexpr auto array_size(const T(&array)[Size]) noexcept {
+		return static_cast<C>(Size);
+	}
+
+	template<class C, class M, class T>
+	constexpr auto offset_of(M T::* p, T sample = T()) {
+		return static_cast<C>(reinterpret_cast<std::size_t>(&(sample.*p))
+			- reinterpret_cast<std::size_t>(&sample));
+	}
+
+	template<std::size_t Index, class T>
+	constexpr auto check_bit(T expr) noexcept {
+		return static_cast<bool>((expr >> Index) & 0x1);
 	}
 }

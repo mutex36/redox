@@ -25,33 +25,28 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\string.h"
 #include "core\hashmap.h"
-#include "platform\filesystem.h"
-#include "core\ref_counted.h"
 
-#include "helper.h"
+#include "resource.h"
 
 #include <type_traits> //std::forward
 
 namespace redox {
-	template<class T>
-	using Resource = RefCounted<T>;
 
 	template<class Derived, class ResourceType>
 	class ResourceFactory {
 	public:
-		template<class...Args>
-		Resource<ResourceType> load(const io::Path& file, Args&&...args) {
+		template<class...Params>
+		Resource<ResourceType> load(const String& file, Params&&...params) {
 			auto lookup = _cache.get(file);
-			if (lookup) 
-				return lookup.value();
+			if (lookup)
+				return *lookup;
 
-			auto path = ResourceHelper::instance().resolve_path(file);
 			auto instance = static_cast<Derived*>(this);
-			auto rx = instance->load_impl(path, std::forward<Args>(args)...);
+			auto rx = instance->load_impl(file,
+				std::forward<Params>(params)...);
 
-			_cache.push(file, rx);
+			_cache.push(std::move(file), std::move(rx));
 			return rx;
 		}
 

@@ -33,20 +33,6 @@ namespace redox::graphics {
 	class MeshFactory : public ResourceFactory<MeshFactory, Mesh> {
 		friend class ResourceFactory<MeshFactory, Mesh>;
 
-		template<class...Args>
-		Resource<Mesh> load_impl(const io::Path& path, const Graphics& graphics) {
-
-			const redox::Buffer<MeshVertex> vertices = {
-				{ { -0.5f, -0.5f },{ 1.0f, 0.0f, 0.0f } },
-				{ { 0.5f, -0.5f },{ 0.0f, 1.0f, 0.0f } },
-				{ { 0.5f, 0.5f },{ 0.0f, 0.0f, 1.0f } },
-				{ { -0.5f, 0.5f },{ 1.0f, 1.0f, 1.0f } }
-			};
-			const redox::Buffer<uint16_t> indices = {
-				0, 1, 2, 2, 3, 0
-			};
-
-			return { construct_tag{}, vertices, indices, graphics };
-		}
+		Resource<Mesh> load_impl(const String& path, const Graphics& graphics);
 	};
 }

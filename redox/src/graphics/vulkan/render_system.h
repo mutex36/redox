@@ -67,7 +67,7 @@ namespace redox::graphics {
 		Graphics _graphics;
 		CommandPool _auxCommandPool;
 
-		StagedBuffer _mvpBuffer;
+		UniformBuffer _mvpBuffer;
 		MeshFactory _meshFactory;
 		ShaderFactory _shaderFactory;
 		TextureFactory _textureFactory;

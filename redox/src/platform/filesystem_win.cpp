@@ -33,7 +33,7 @@ struct redox::io::File::internal {
 	HANDLE handle;
 };
 
-redox::io::File::File(const redox::io::Path& file, const Mode mode) :
+redox::io::File::File(const redox::String& file, const Mode mode) :
 	_internal(construct_tag{}) {
 
 	DWORD access{ 0 };
@@ -45,6 +45,9 @@ redox::io::File::File(const redox::io::Path& file, const Mode mode) :
 
 	_internal->handle = CreateFile(file.cstr(), access, 0, NULL,
 		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (_internal->handle == INVALID_HANDLE_VALUE)
+		throw Exception("failed to open file");
 }
 
 redox::io::File::~File() {

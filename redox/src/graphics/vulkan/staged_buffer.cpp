@@ -11,10 +11,6 @@ void redox::graphics::StagedBuffer::upload(const CommandBuffer& commandBuffer) {
 	_stagingBuffer.copy_to(_buffer, commandBuffer);
 }
 
-const redox::graphics::Buffer& redox::graphics::StagedBuffer::main_buffer() const {
-	return _buffer;
-}
-
-const redox::graphics::Buffer& redox::graphics::StagedBuffer::staging_buffer() const {
-	return _stagingBuffer;
+VkBuffer redox::graphics::StagedBuffer::handle() const {
+	return _buffer.handle();
 }

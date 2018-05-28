@@ -67,6 +67,10 @@ VkSampler redox::graphics::Texture::sampler() const {
 	return _sampler;
 }
 
+VkImageView redox::graphics::Texture::view() const {
+	return _view;
+}
+
 const redox::graphics::Texture::Dimension& redox::graphics::Texture::dimension() const {
 	return _dimensions;
 }

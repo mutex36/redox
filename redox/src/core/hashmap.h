@@ -34,30 +34,40 @@ SOFTWARE.
 #include <optional> //std::optional
 
 namespace redox {
-
-	struct LinearProbing {
-		std::size_t operator()(std::size_t slot, std::size_t index, std::size_t n) {
-			return (slot + index) % n;
-		}
-	};
-
 	namespace detail {
 		template<class Key, class Value>
 		struct node {
 			Key key; Value value;
+		};
+
+		template<std::size_t c1, std::size_t c2>
+		struct QuadraticProbing {
+			std::size_t operator()(std::size_t slot, std::size_t index, std::size_t n) {
+				auto cx1 = c1 * index;
+				auto cx2 = c2 * index * index;
+
+				return (slot + cx1 + cx2) % n;
+			}
+		};
+
+		struct LinearProbing {
+			std::size_t operator()(std::size_t slot, std::size_t index, std::size_t n) {
+				return (slot + index) % n;
+			}
 		};
 	}
 
 	template<class Key, class Value,
 	class Allocator = allocation::DefaultAllocator<detail::node<Key, Value>>,
 	class GrowthPolicy = allocation::ExponentialGrowth,
-	class ProbingPolicy = LinearProbing>
+	class ProbingPolicy = detail::LinearProbing>
 	class Hashmap {
 	public:
 		using node_type = detail::node<Key, Value>;
 
 		Hashmap() = default;
-		Hashmap(std::initializer_list<node_type> values) {
+
+		_RDX_INLINE Hashmap(std::initializer_list<node_type> values) {
 			resize(values.size());
 			for (const auto& v : values)
 				_push_no_checks(v.key, v.value);
@@ -69,21 +79,13 @@ namespace redox {
 			_push_no_checks(std::forward<_Key>(key), std::forward<_Value>(value));
 		}
 
-		std::optional<Value> get(const Key& key) const {
-			if (empty())
-				return std::nullopt;
-
-			auto slot = _compute_slot(key);
-			if (_slotOccupation.get(slot)) {
-				if (_slots[slot].key == key)
-					return _slots[slot].value;
-
-				//Different key resides at computed slot,
-				//target key probably collided earlier.
-				if (auto result = _find_collided_key(slot, key); result)
-					return _slots[result.value()].value;
+		_RDX_INLINE const Value* get(const Key& key) const {
+			auto slot = _find_key(key);
+			if (slot) {
+				const auto& entry = _slots[slot.value()];
+				return std::addressof(entry.value);
 			}
-			return std::nullopt;
+			return nullptr;
 		}
 
 		_RDX_INLINE void resize(std::size_t size) {
@@ -120,20 +122,37 @@ namespace redox {
 			_slots[slot].value = std::forward<_Value>(value);
 		}
 
+		_RDX_INLINE std::optional<std::size_t> _find_key(const Key& key) const {
+			if (empty())
+				return std::nullopt;
+
+			auto slot = _compute_slot(key);
+			if (_slotOccupation.get(slot)) {
+				if (_slots[slot].key == key)
+					return slot;
+
+				//Different key resides at computed slot,
+				//target key probably collided earlier.
+				return _find_collided_key(slot, key);
+			}
+
+			return std::nullopt;
+		}
+
 		_RDX_INLINE auto _compute_slot(const Key& key) const {
 			Hash<Key> fn;
 			auto hash = fn(key);
 			return hash % _slots.size();
 		}
 
-		void _grow_if_needed() {
+		_RDX_INLINE void _grow_if_needed() {
 			if (empty() || _slotOccupation.all()) {
 				GrowthPolicy policyFn;
 				resize(policyFn(_slots.size()));
 			}
 		}
 
-		std::optional<std::size_t> _find_collided_key(std::size_t slot, const Key& key) const {
+		_RDX_INLINE std::optional<std::size_t> _find_collided_key(std::size_t slot, const Key& key) const {
 			ProbingPolicy probing;
 			for (std::size_t index = 1; index < _slots.size(); ++index) {
 				auto nextslot = probing(slot, index, _slots.size());
@@ -143,7 +162,7 @@ namespace redox {
 			return std::nullopt;
 		}
 
-		std::optional<std::size_t> _resolve_collision(std::size_t slot) const {
+		_RDX_INLINE std::optional<std::size_t> _resolve_collision(std::size_t slot) const {
 			ProbingPolicy probing;
 			for (std::size_t index = 1; index < _slots.size(); ++index) {
 				auto nextslot = probing(slot, index, _slots.size());

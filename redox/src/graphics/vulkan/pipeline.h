@@ -27,27 +27,35 @@ SOFTWARE.
 #include "vulkan.h"
 #include "graphics.h"
 #include "shader.h"
-#include "swapchain.h"
-#include "command_pool.h"
-#include "command_buffer.h"
-#include "core\utility.h"
+#include "texture.h"
+
 #include "vertex_layout.h"
 #include "render_pass.h"
 
+#include "core\utility.h"
+#include <functional> //std::function
+
 namespace redox::graphics {
+	class CommandPool;
+	class CommandBuffer;
+
 	class Pipeline {
 	public:
-		Pipeline(const Graphics& graphics, const RenderPass& renderPass, Resource<Shader> vs, Resource<Shader> fs);
+		Pipeline(const Graphics& graphics, 
+			const RenderPass& renderPass, const VertexLayout& vLayout,
+			Resource<Shader> vs, Resource<Shader> fs);
 		~Pipeline();
 
 		void bind(const CommandBuffer& commandBuffer, const Framebuffer& frameBuffer);
 		void unbind(const CommandBuffer& commandBuffer);
 
-		void bind_ubo(const Buffer& ubo);
 		void set_viewport(const VkExtent2D& size);
 
+		void bind_resource(const Texture& texture, uint32_t bindingPoint);
+		void bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint);
+
 	private:
-		void _init();
+		void _init(const VertexLayout& vLayout);
 		void _init_desriptors();
 		void _update_viewport(const CommandBuffer& commandBuffer);
 

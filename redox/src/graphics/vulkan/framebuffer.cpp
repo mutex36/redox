@@ -25,13 +25,14 @@ SOFTWARE.
 */
 #include "framebuffer.h"
 #include "graphics.h"
+#include "render_pass.h"
 
-redox::graphics::Framebuffer::Framebuffer(const Graphics& graphics, VkRenderPass rp, const VkImageView imageView, VkExtent2D extent) :
+redox::graphics::Framebuffer::Framebuffer(const Graphics& graphics, const RenderPass& rp, VkImageView imageView, VkExtent2D extent) :
 _graphicsRef(graphics), _extent(extent) {
 
 	VkFramebufferCreateInfo framebufferInfo{};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = rp;
+	framebufferInfo.renderPass = rp.handle();
 	framebufferInfo.attachmentCount = 1;
 	framebufferInfo.pAttachments = &imageView;
 	framebufferInfo.width = extent.width;

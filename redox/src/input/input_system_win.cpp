@@ -34,7 +34,8 @@ SOFTWARE.
 
 #define RDX_LOG_TAG "InputSystem"
 
-redox::input::InputSystem::InputSystem(const platform::Window& window) : _windowRef(window) {
+redox::input::InputSystem::InputSystem(const platform::Window& window) : 
+	_windowRef(window) {
 	RDX_LOG("Registering input devices...");
 
 #ifdef RDX_INPUT_HIGH_DPI
@@ -86,10 +87,10 @@ void redox::input::InputSystem::poll() {
 
 				switch (kbData.Flags) {
 				case RI_KEY_MAKE:
-					_keyStates.push(mapping.value(), KeyState::PRESSED);
+					_keyStates.push(*mapping, KeyState::PRESSED);
 					break;
 				case RI_KEY_BREAK: {
-					_keyStates.push(mapping.value(), KeyState::RELEASED);
+					_keyStates.push(*mapping, KeyState::RELEASED);
 					break;
 				}}
 				break;
@@ -107,9 +108,9 @@ void redox::input::InputSystem::poll() {
 		}
 			
 		if (msg.message == WM_KEYDOWN)
-			_keyStates.push(mapping.value(), KeyState::PRESSED);
+			_keyStates.push(*mapping, KeyState::PRESSED);
 		else if (msg.message == WM_KEYUP)
-			_keyStates.push(mapping.value(), KeyState::RELEASED);
+			_keyStates.push(*mapping, KeyState::RELEASED);
 	}
 
 #endif
@@ -117,6 +118,9 @@ void redox::input::InputSystem::poll() {
 
 redox::input::KeyState redox::input::InputSystem::key_state(Keys key) {
 	auto state = _keyStates.get(key);
-	return state.value_or(KeyState::NORMAL);
+	if (state)
+		return *state;
+
+	return KeyState::NORMAL;
 }
 #endif

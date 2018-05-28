@@ -33,13 +33,6 @@ namespace redox::graphics {
 	class ShaderFactory : public ResourceFactory<ShaderFactory, Shader> {
 		friend class ResourceFactory<ShaderFactory, Shader>;
 
-		template<class...Args>
-		Resource<Shader> load_impl(const io::Path& path, const Graphics& graphics) {
-
-			io::File fstream(path, io::File::Mode::READ);
-			auto buffer = fstream.read();
-
-			return { construct_tag{}, std::move(buffer), graphics };
-		}
+		Resource<Shader> load_impl(const String& path, const Graphics& graphics);
 	};
 }

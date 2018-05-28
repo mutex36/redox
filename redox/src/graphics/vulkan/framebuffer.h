@@ -29,10 +29,11 @@ SOFTWARE.
 
 namespace redox::graphics {
 	class Graphics;
+	class RenderPass;
 
 	class Framebuffer : public NonCopyable {
 	public:
-		Framebuffer(const Graphics& graphics, VkRenderPass rp, VkImageView imageView, VkExtent2D extent);
+		Framebuffer(const Graphics& graphics, const RenderPass& rp, VkImageView imageView, VkExtent2D extent);
 		~Framebuffer();
 
 		Framebuffer(Framebuffer&&);

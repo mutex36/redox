@@ -89,7 +89,7 @@ namespace redox {
 			return get();
 		}
 
-		_RDX_INLINE auto operator*() const {
+		_RDX_INLINE auto& operator*() const {
 			return _cb->data;
 		}
 

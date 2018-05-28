@@ -29,7 +29,7 @@ SOFTWARE.
 #include "window.h"
 #include "core\logging\log.h"
 #include "platform\windows.h"
-#include "resources\helper.h"
+#include "resources\resource.h"
 
 #define RDX_LOG_TAG "WindowSystem"
 
@@ -74,16 +74,15 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-redox::platform::Window::Window(const String& title,
-	const Bounds& bounds, const Appearance& appearance) :
-	_bounds(bounds), _internal(construct_tag{}) {
+redox::platform::Window::Window(const String& title, const Configuration& config) : 
+	_internal(construct_tag{}) {
 
 	_internal->instance = GetModuleHandle(0);
 	_internal->classname = "redox_window";
 
 	DWORD dwStyle = WS_SYSMENU | WS_MINIMIZEBOX;
 
-	auto iconFile = ResourceHelper::instance().resolve_path(appearance.icon);
+	auto iconFile = RDX_ASSET(config.get("Surface", "icon"));
 	auto icon = (HICON)LoadImage(NULL, iconFile.cstr(), IMAGE_ICON,
 		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
 
@@ -99,13 +98,13 @@ redox::platform::Window::Window(const String& title,
 	RegisterClass(&wndClass);
 
 	RECT windowRect{ 0,0 };
-	if (appearance.fullscreen) {
+	if (config.get("Surface", "fullscreen")) {
 		windowRect.right = GetSystemMetrics(SM_CXSCREEN);
 		windowRect.bottom = GetSystemMetrics(SM_CYSCREEN);
 		dwStyle |= WS_POPUP;
 	} else {
-		windowRect.right = _bounds.width;
-		windowRect.bottom = _bounds.height;
+		windowRect.right = config.get("Engine", "resolution_x");
+		windowRect.bottom = config.get("Engine", "resolution_y");
 		AdjustWindowRect(&windowRect, dwStyle, FALSE);
 		dwStyle |= WS_OVERLAPPEDWINDOW | WS_CAPTION;
 	}
@@ -157,10 +156,6 @@ void redox::platform::Window::set_callback(EventFn && fn) {
 
 bool redox::platform::Window::is_minimized() const {
 	return IsIconic(_internal->handle);
-}
-
-redox::platform::Window::Bounds redox::platform::Window::bounds() const {
-	return _bounds;
 }
 
 void* redox::platform::Window::native_handle() const {

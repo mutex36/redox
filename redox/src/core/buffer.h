@@ -83,10 +83,14 @@ namespace redox {
 			return *this;
 		}
 
-		template<class T>
-		_RDX_INLINE void push(T&& element) {
+		_RDX_INLINE void push(const ValueType& element) {
 			_grow_if_needed();
-			_push_no_checks(std::forward<T>(element));
+			_push_no_checks(element);
+		}
+
+		_RDX_INLINE void push(ValueType&& element) {
+			_grow_if_needed();
+			_push_no_checks(std::move(element));
 		}
 
 		template<class...Args>

@@ -32,7 +32,6 @@ SOFTWARE.
 #include "core\utility.h"
 
 namespace redox::io {
-	using Path = redox::String;
 
 	class File {
 	public:
@@ -41,7 +40,7 @@ namespace redox::io {
 			WRITE = 1 << 1
 		};
 
-		File(const Path& file, const Mode mode);
+		File(const String& file, const Mode mode);
 		~File();
 
 		std::size_t size() const;
@@ -53,6 +52,4 @@ namespace redox::io {
 	};
 }
 
-namespace redox {
-	RDX_ENABLE_ENUM_FLAGS(::redox::io::File::Mode);
-}
+RDX_ENABLE_ENUM_FLAGS(::redox::io::File::Mode);

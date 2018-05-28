@@ -38,17 +38,15 @@ redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, cons
 	_renderPass(_graphics),
 	_swapchain(_graphics, _renderPass, std::bind(&RenderSystem::_swapchain_event_create, this)),
 	_configRef(config),
-	_mvpBuffer(sizeof(mvp_uniform), _graphics, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
-	_demoVs(_shaderFactory.load("shader\\vert.spv", _graphics)),
-	_demoFs(_shaderFactory.load("shader\\frag.spv", _graphics)),
-	_demoMesh(_meshFactory.load("meshes\\test.rdxmesh", _graphics)),
+	_mvpBuffer(sizeof(mvp_uniform), _graphics),
+	_demoVs(_shaderFactory.load(RDX_ASSET("shader\\vert.spv"), _graphics)),
+	_demoFs(_shaderFactory.load(RDX_ASSET("shader\\frag.spv"), _graphics)),
+	_demoMesh(_meshFactory.load(RDX_ASSET("meshes\\box.gltf"), _graphics)),
 	_demoTexture(_textureFactory.load("textures\\uvchecker.jpg", _graphics)),
-	_pipeline(_graphics, _renderPass, _demoVs, _demoFs),
+	_pipeline(_graphics, _renderPass, get_layout<MeshVertex>(), _demoVs, _demoFs),
 	_auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
 
 	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo){
-
-		//upload assets
 		_demoMesh->upload(cbo);
 		_demoTexture->upload(cbo);
 	});
@@ -60,13 +58,14 @@ redox::graphics::RenderSystem::~RenderSystem() {
 
 void redox::graphics::RenderSystem::_demo_setup() {
 	_RDX_PROFILE;
-	_pipeline.bind_ubo(_mvpBuffer.main_buffer());
+
+	_pipeline.bind_resource(_mvpBuffer, 0);
+	_pipeline.bind_resource(*_demoTexture, 1);
 
 	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
 			_pipeline.bind(commandBuffer, frameBuffer);
-			_demoMesh->bind(commandBuffer);
-		
+
 			IndexedDraw drawCmd{ _demoMesh };
 			commandBuffer.submit(drawCmd);
 

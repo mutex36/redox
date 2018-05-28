@@ -59,6 +59,7 @@ namespace redox {
 		}
 
 		_RDX_INLINE ~SmartPtr() {
+			_raw->~T();
 			Allocator::deallocate(_raw);
 		}
 

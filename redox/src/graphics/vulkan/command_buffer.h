@@ -15,11 +15,7 @@ namespace redox::graphics {
 		CommandBuffer(VkCommandBuffer handle);
 		~CommandBuffer() = default;
 
-		template<class Command>
-		void submit(const Command& command) const = delete;
-
-		template<>
-		void submit<IndexedDraw>(const IndexedDraw& command) const {
+		void submit(const IndexedDraw& command) const {
 			command.mesh->bind(_handle);
 			vkCmdDrawIndexed(_handle, command.mesh->instance_count(), 1, 0, 0, 0);
 		}

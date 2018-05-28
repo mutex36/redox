@@ -28,6 +28,7 @@ SOFTWARE.
 #include "core\string.h"
 #include "core\smart_ptr.h"
 #include "core\utility.h"
+#include "core\config\config.h"
 
 #include "filesystem.h"
 
@@ -36,23 +37,13 @@ SOFTWARE.
 namespace redox::platform {
 	class Window {
 	public:
-		struct Bounds {
-			i32 width, height;
-		};
-
-		struct Appearance {
-			io::Path icon;
-			bool fullscreen;
-		};
-
 		enum class Event {
 			CLOSE, MINIMIZE, LOSTFOCUS, GAINFOCUS
 		};
 
 		using EventFn = std::function<void(Event)>;
 
-		Window(const String& name, 
-			const Bounds& bounds, const Appearance& appearance);
+		Window(const String& name, const Configuration& config);
 		~Window();
 
 		void show() const;
@@ -61,7 +52,6 @@ namespace redox::platform {
 		void set_title(const String& title);
 		void set_callback(EventFn&& fn);
 		bool is_minimized() const;
-		Bounds bounds() const;
 		void* native_handle() const;
 
 		//internal
@@ -69,7 +59,6 @@ namespace redox::platform {
 
 	private:
 		EventFn _eventfn;
-		Bounds _bounds;
 
 		struct internal;
 		SmartPtr<internal> _internal;

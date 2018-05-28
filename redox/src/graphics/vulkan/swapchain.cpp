@@ -196,5 +196,5 @@ void redox::graphics::Swapchain::_init_fb() {
 	_frameBuffers.reserve(_imageViews.size());
 
 	for (size_t i = 0; i < _frameBuffers.capacity(); i++)
-		_frameBuffers.emplace(_graphicsRef, _renderPassRef.handle(), _imageViews[i], _extent);
+		_frameBuffers.emplace(_graphicsRef, _renderPassRef, _imageViews[i], _extent);
 }

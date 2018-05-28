@@ -33,8 +33,8 @@ namespace redox::allocation {
 		using value_type = T;
 		using ptr_type = T*;
 
-		template<class _T>
-		using rebind = DefaultAllocator<_T>;
+		template<class Other>
+		using rebind = DefaultAllocator<Other>;
 
 		//So {::operator new} seems to be the only portable
 		//option for aligned, uninitialized memory allocation.

@@ -162,6 +162,9 @@
     <ClCompile Include="src\core\config\config.cpp" />
     <ClCompile Include="src\graphics\vulkan\buffer.cpp" />
     <ClCompile Include="src\graphics\vulkan\command_buffer.cpp" />
+    <ClCompile Include="src\graphics\vulkan\factory\mesh_factory.cpp" />
+    <ClCompile Include="src\graphics\vulkan\factory\shader_factory.cpp" />
+    <ClCompile Include="src\graphics\vulkan\factory\texture_factory.cpp" />
     <ClCompile Include="src\graphics\vulkan\framebuffer.cpp" />
     <ClCompile Include="src\graphics\vulkan\mesh.cpp" />
     <ClCompile Include="src\graphics\vulkan\render_pass.cpp" />
@@ -179,13 +182,15 @@
     <ClCompile Include="src\graphics\vulkan\swapchain.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\platform\window_win.cpp" />
-    <ClCompile Include="src\resources\helper.cpp" />
+    <ClCompile Include="src\resources\importer\gltf_importer.cpp" />
+    <ClCompile Include="thirdparty\gltf\cgltf_stub.c" />
     <ClCompile Include="thirdparty\ini\ini.cpp" />
-    <ClCompile Include="thirdparty\stbimage\stb_image_stub.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\config\config.h" />
     <ClInclude Include="src\core\hash.h" />
+    <ClInclude Include="src\core\meta\reflection.h" />
+    <ClInclude Include="src\core\meta\type_hash.h" />
     <ClInclude Include="src\core\ref_counted.h" />
     <ClInclude Include="src\graphics\vulkan\buffer.h" />
     <ClInclude Include="src\graphics\vulkan\command_buffer.h" />
@@ -236,8 +241,9 @@
     <ClInclude Include="src\math\vec.h" />
     <ClInclude Include="src\redox.h" />
     <ClInclude Include="src\platform\window.h" />
-    <ClInclude Include="src\resources\helper.h" />
     <ClInclude Include="src\resources\factory.h" />
+    <ClInclude Include="src\resources\importer\gltf_importer.h" />
+    <ClInclude Include="src\resources\resource.h" />
     <ClInclude Include="thirdparty\ini\ini.h" />
   </ItemGroup>
   <ItemGroup>

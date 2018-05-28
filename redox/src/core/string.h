@@ -32,30 +32,90 @@ SOFTWARE.
 
 namespace redox {
 
-	template<class CharType, class Allocator>
+	class StringView {
+	public:
+		using size_type = std::size_t;
+		using char_type = char;
+
+		StringView() : _data(nullptr), _size(0) {}
+
+		//template<size_type Length>
+		//StringView(const char_type(&literal)[Length]) :
+		//	_data(literal), _size(Length - 1) {}
+
+		StringView(const char_type* str) :
+			_data(str), _size(std::strlen(str)) {}
+
+		StringView(const char_type* data, size_type size) :
+			_data(data), _size(size) {}
+
+		_RDX_INLINE size_type size() const {
+			return _size;
+		}
+
+		_RDX_INLINE const char_type* cstr() const {
+			return _data;
+		}
+
+		_RDX_INLINE const char_type* data() const {
+			return _data;
+		}
+
+		_RDX_INLINE bool empty() const {
+			return _size == 0;
+		}
+
+		_RDX_INLINE const char_type& operator[](size_type index) const {
+			return _data[index];
+		}
+
+		_RDX_INLINE bool operator==(const StringView& ref) const {
+			if (_size != ref._size)
+				return false;
+			return std::memcmp(_data, ref._data, _size) == 0;
+		}
+
+		_RDX_INLINE StringView substr(size_type off, size_type size) const {
+			return { _data + off, size };
+		}
+
+		_RDX_INLINE StringView substr(size_type off) const {
+			return { _data + off, _size - off };
+		}
+
+	private:
+		const size_type  _size;
+		const char_type* _data;
+	};
+
+	template<class Allocator>
 	class BaseString {
 	public:
 		using size_type = std::size_t;
-		static constexpr CharType zero_terminator = '\0';
+		using char_type = char;
+		static constexpr char_type zero_terminator = '\0';
 
 		BaseString() : _size(0), _reserved(0), _data(nullptr) {}
 
-		_RDX_INLINE BaseString(const CharType* str, size_type length) : BaseString() {
-			_reserve_checks<copy_policy::no_copy>(length);
-			_append_no_checks(str, length);
+		_RDX_INLINE BaseString(const char_type* str, size_type length) : BaseString() {
+			_reserve<copy_policy::no_copy>(length);
+			_append(str, length);
 			_zero_terminate();
 		}
+
+		_RDX_INLINE BaseString(const StringView& view) 
+			: BaseString(view.cstr(), view.size()) {}
 
 		_RDX_INLINE explicit BaseString(size_type reserve) : BaseString() {
-			_reserve_checks<copy_policy::no_copy>(reserve);
+			_reserve<copy_policy::no_copy>(reserve);
 			_zero_terminate();
 		}
 
-		template<size_type Length>
-		BaseString(const CharType(&literal)[Length]) :
-			BaseString(literal, Length) {}
+		//template<size_type Length>
+		//BaseString(const char_type(&literal)[Length]) :
+		//	BaseString(literal, Length - 1) {}
 
-		BaseString(const CharType* str) :
+		BaseString(const char_type* str) :
 			BaseString(str, std::strlen(str)) {}
 
 		BaseString(const BaseString& ref) :
@@ -86,27 +146,27 @@ namespace redox {
 		}
 
 		_RDX_INLINE void reserve(size_type reserve) {
-			_reserve_checks<copy_policy::copy>(reserve);
+			_reserve<copy_policy::copy>(reserve);
 		}
 
 		_RDX_INLINE BaseString& operator=(const BaseString& ref) {
-			_reserve_checks<copy_policy::no_copy>(ref._size);
-			_append_no_checks(ref._data, ref._size);
+			_reserve<copy_policy::no_copy>(ref._size);
+			_append(ref._data, ref._size);
 			_zero_terminate();
 			return *this;
 		}
 
-		_RDX_INLINE BaseString& operator+=(const BaseString& ref) {
-			_reserve_checks<copy_policy::copy>(_size + ref._size);
-			_append_no_checks(ref._data, ref._size);
+		_RDX_INLINE BaseString& operator+=(const StringView& ref) {
+			_reserve<copy_policy::copy>(_size + ref.size());
+			_append(ref.data(), ref.size());
 			_zero_terminate();
 			return *this;
 		}
 
-		BaseString operator+(const BaseString& ref) const {
-			BaseString out(_size + ref._size);
-			out._append_no_checks(_data, _size);
-			out._append_no_checks(ref._data, ref._size);
+		_RDX_INLINE BaseString operator+(const StringView& ref) const {
+			BaseString out(_size + ref.size());
+			out._append(_data, _size);
+			out._append(ref.data(), ref.size());
 			out._zero_terminate();
 			return out;
 		}
@@ -117,21 +177,25 @@ namespace redox {
 			return std::memcmp(_data, ref._data, _size) == 0;
 		}
 
-		_RDX_INLINE BaseString substr(size_type off, size_type size) const {
+		_RDX_INLINE operator StringView() const {
+			return { _data, _size };
+		}
+
+		_RDX_INLINE StringView substr(size_type off, size_type size) const {
 			return { _data + off, size };
 		}
 
-		_RDX_INLINE BaseString substr(size_type off) const {
+		_RDX_INLINE StringView substr(size_type off) const {
 			return { _data + off, _size - off };
 		}
 
-		_RDX_INLINE CharType& operator[](size_type index) {
+		_RDX_INLINE char_type& operator[](size_type index) {
 			if (index >= _size)
 				throw Exception("index out of bounds");
 			return _data[index];
 		}
 
-		_RDX_INLINE const CharType& operator[](size_type index) const {
+		_RDX_INLINE const char_type& operator[](size_type index) const {
 			if (index >= _size)
 				throw Exception("index out of bounds");
 			return _data[index];
@@ -153,16 +217,25 @@ namespace redox {
 			return _size == 0;
 		}
 
-		_RDX_INLINE const CharType* cstr() const {
+		_RDX_INLINE const char_type* cstr() const {
 			if (_data == nullptr) 
 				return &zero_terminator;
 			return _data;
 		}
 
 	private:
-		_RDX_INLINE void _append_no_checks(const CharType* str, size_type length) {
+		_RDX_INLINE void _append(const char_type* str, size_type length) {
 			std::memcpy(_data + _size, str, length);
 			_size += length;
+		}
+
+		_RDX_INLINE void _dealloc() const {
+			Allocator::deallocate(_data);
+		}
+
+		_RDX_INLINE void _zero_terminate() {
+			if (_size > 0)
+				_data[_size] = zero_terminator;
 		}
 
 		struct copy_policy {
@@ -171,47 +244,24 @@ namespace redox {
 		};
 
 		template<class Copy>
-		_RDX_INLINE void _reserve_checks(size_type reserve) {
-			if (reserve > _reserved)
-				_reserve_no_checks<Copy>(reserve);
-		}
+		void _reserve(size_type reserve) {
+			if (reserve <= _reserved)
+				return;
 
-		template<class Copy>
-		void _reserve_no_checks(size_type reserve) {
-			auto buffer = _alloc(reserve);
-
-			//Sometimes it's not needed to transfer old string data
-			//into reallocated buffer
-			if constexpr(std::is_same_v<Copy, copy_policy::copy>) {
-				//transfer data into allocated buffer
+			auto buffer = Allocator::allocate(reserve + 1); //+1 null-term
+			if constexpr(std::is_same_v<Copy, copy_policy::copy>)
 				std::memcpy(buffer, _data, _size);
-			} else {
-				//we did not transfer data, the string is now empty
-				_size = 0; 
-			}
+			else _size = 0;
 
 			_dealloc();
 			_data = buffer;
 			_reserved = reserve;
 		}
 
-		_RDX_INLINE void _dealloc() const{
-			Allocator::deallocate(_data);
-		}
-
-		_RDX_INLINE auto _alloc(size_type size) const {
-			return Allocator::allocate(size + 1); //+1 null-term
-		}
-
-		_RDX_INLINE void _zero_terminate() {
-			if (_size > 0)
-				_data[_size] = zero_terminator;
-		}
-
-		CharType* _data;
+		char_type* _data;
 		size_type _size;
 		size_type _reserved;
 	};
 
-	using String = BaseString<i8, allocation::DefaultAllocator<i8>>;
+	using String = BaseString<allocation::DefaultAllocator<char>>;
 }

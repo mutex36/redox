@@ -162,4 +162,5 @@ namespace redox::math {
 	using Vec4f = Vec<f32, simd::f32x4, 4>;
 	using Vec3f = Vec<f32, simd::f32x4, 3>;
 	using Vec2f = Vec<f32, simd::f32x4, 2>;
+
 }

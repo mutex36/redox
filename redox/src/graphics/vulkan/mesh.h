@@ -33,8 +33,8 @@ namespace redox::graphics {
 	class CommandBuffer;
 
 	struct MeshVertex {
-		math::Vec2f pos;
-		math::Vec3f color;
+		math::Vec3f pos;
+		math::Vec2f uv;
 	};
 
 	class Mesh {
@@ -54,7 +54,7 @@ namespace redox::graphics {
 		uint32_t _instanceCount;
 		const Graphics& _graphicsRef;
 		
-		StagedBuffer _indexBuffer;
-		StagedBuffer _vertexBuffer;
+		IndexBuffer _indexBuffer;
+		VertexBuffer _vertexBuffer;
 	};
 }

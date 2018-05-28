@@ -24,16 +24,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "pipeline.h"
-#include "core\utility.h"
+#include "command_buffer.h"
+#include "command_pool.h"
 
-redox::graphics::Pipeline::Pipeline(const Graphics& graphics, const RenderPass& renderPass, Resource<Shader> vs, Resource<Shader> fs) :
+redox::graphics::Pipeline::Pipeline(const Graphics& graphics, const RenderPass& renderPass,
+	const VertexLayout& vLayout, Resource<Shader> vs, Resource<Shader> fs) :
 	_vs(std::move(vs)),
 	_fs(std::move(fs)),
 	_graphicsRef(graphics),
 	_renderPassRef(renderPass) {
 
 	_init_desriptors();
-	_init();
+	_init(vLayout);
 }
 
 redox::graphics::Pipeline::~Pipeline() {
@@ -57,44 +59,56 @@ void redox::graphics::Pipeline::unbind(const CommandBuffer& commandBuffer) {
 	_renderPassRef.end(commandBuffer);
 }
 
-void redox::graphics::Pipeline::bind_ubo(const Buffer& ubo) {
-
-	VkDescriptorBufferInfo bufferInfo{};
-	bufferInfo.buffer = ubo.handle();
-	bufferInfo.offset = 0;
-	bufferInfo.range = ubo.size();
-
-	VkWriteDescriptorSet descriptorWrite{};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = _descriptorSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-	descriptorWrite.pImageInfo = nullptr; // Optional
-	descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-	vkUpdateDescriptorSets(_graphicsRef.device(), 1, &descriptorWrite, 0, nullptr);
-}
-
 void redox::graphics::Pipeline::set_viewport(const VkExtent2D& size) {
 	_viewport = size;
 }
 
-void redox::graphics::Pipeline::_init() {
+void redox::graphics::Pipeline::bind_resource(const Texture& texture, uint32_t bindingPoint) {
 
-	//TODO: allow custom vertex layout
-	layout_traits<MeshVertex> vertexLayout;
-	auto vatr = vertexLayout.atr_desc();
-	auto batr = vertexLayout.binding_desc();
+	VkDescriptorImageInfo imageInfo{};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = texture.view();
+	imageInfo.sampler = texture.sampler();
+
+	VkWriteDescriptorSet writeSet{};
+	writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeSet.dstSet = _descriptorSet;
+	writeSet.dstBinding = bindingPoint;
+	writeSet.dstArrayElement = 0;
+	writeSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	writeSet.descriptorCount = 1;
+	writeSet.pImageInfo = &imageInfo;
+
+	vkUpdateDescriptorSets(_graphicsRef.device(), 1, &writeSet, 0, nullptr);
+}
+
+void redox::graphics::Pipeline::bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint) {
+
+	VkDescriptorBufferInfo bufferInfo{};
+	bufferInfo.buffer = ubo.handle();
+	bufferInfo.offset = 0;
+	bufferInfo.range = VK_WHOLE_SIZE;
+
+	VkWriteDescriptorSet writeSet{};
+	writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeSet.dstSet = _descriptorSet;
+	writeSet.dstBinding = bindingPoint;
+	writeSet.dstArrayElement = 0;
+	writeSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	writeSet.descriptorCount = 1;
+	writeSet.pBufferInfo = &bufferInfo;
+
+	vkUpdateDescriptorSets(_graphicsRef.device(), 1, &writeSet, 0, nullptr);
+}
+
+void redox::graphics::Pipeline::_init(const VertexLayout& vLayout) {
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vatr.size());
-	vertexInputInfo.pVertexBindingDescriptions = &batr;
-	vertexInputInfo.pVertexAttributeDescriptions = vatr.data();
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vLayout.attribs.size());
+	vertexInputInfo.pVertexAttributeDescriptions = vLayout.attribs.data();
+	vertexInputInfo.pVertexBindingDescriptions = &vLayout.binding;
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -105,7 +119,6 @@ void redox::graphics::Pipeline::_init() {
 	multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-	//Note: viewport state will be set dynamically upon swapchain creation
 	VkPipelineViewportStateCreateInfo viewportState{};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
@@ -168,7 +181,8 @@ void redox::graphics::Pipeline::_init() {
 	dynamicStateInfo.dynamicStateCount = util::array_size<uint32_t>(dynamicStates);
 	dynamicStateInfo.pDynamicStates = dynamicStates;
 
-	const VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+	const VkPipelineShaderStageCreateInfo shaderStages[] = 
+		{ vertShaderStageInfo, fragShaderStageInfo };
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -192,41 +206,47 @@ void redox::graphics::Pipeline::_init() {
 }
 
 void redox::graphics::Pipeline::_init_desriptors() {
-	VkDescriptorSetLayoutBinding bindings[] = {
-		FAIL();
-	};
+
+	//TODO: variable binding layout
+	redox::Buffer<VkDescriptorSetLayoutBinding> bindings(2);
+
+	bindings[0].binding = 0;
+	bindings[0].descriptorCount = 1;
+	bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	bindings[1].binding = 1;
+	bindings[1].descriptorCount = 1;
+	bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = util::array_size<uint32_t>(bindings);
-	layoutInfo.pBindings = bindings;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(_graphicsRef.device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
 		throw Exception("failed to create descriptor set layout");
 
-	VkDescriptorPoolSize poolSize{};
-	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSize.descriptorCount = 1;
-
-	VkDescriptorPoolSize poolSize{};
-	poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSize.descriptorCount = 1;
+	VkDescriptorPoolSize poolSizes[] = {
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
+	};
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.poolSizeCount = util::array_size<uint32_t>(poolSizes);
+	poolInfo.pPoolSizes = poolSizes;
 	poolInfo.maxSets = 1;
 
 	if (vkCreateDescriptorPool(_graphicsRef.device(), &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
 		throw Exception("failed to create descriptor pool");
 
-	VkDescriptorSetLayout layouts[] = { _descriptorSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = _descriptorPool;
 	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
+	allocInfo.pSetLayouts = &_descriptorSetLayout;
 
 	if (vkAllocateDescriptorSets(_graphicsRef.device(), &allocInfo, &_descriptorSet) != VK_SUCCESS)
 		throw Exception("failed to allocate descriptor set");
