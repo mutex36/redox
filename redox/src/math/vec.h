@@ -30,7 +30,8 @@ SOFTWARE.
 
 //Accessing scalar by union seems portable, but in C++ UB and (potentially) inefficient.
 //https://stackoverflow.com/questions/12624466/get-member-of-m128-by-index
-#define RDX_SIMD_ACCESSOR_IMPL
+//https://web.archive.org/web/20170723212025/http://codrspace.com/t0rakka/simd-scalar-accessor/
+//#define RDX_SIMD_ACCESSOR_IMPL
 
 namespace redox::math {
 	template<class Scalar, class XMM, std::size_t Size>
@@ -43,19 +44,19 @@ namespace redox::math {
 		template<class Scalar, class XMM>
 		struct VecBase<Scalar, XMM, 2> {
 			VecBase(XMM xmm) : _xmm(xmm) {}
-			VecBase(Scalar x, Scalar y) : VecBase(simd::set(x,y)) {
+			VecBase(Scalar x, Scalar y) : VecBase(simd::set(x, y)) {
 			}
 
-#ifdef RDX_SIMD_ACCESSOR_IMPL
-			XMM _xmm;
-			simd::accessor<Scalar, XMM, 0> x{ _xmm };
-			simd::accessor<Scalar, XMM, 1> y{ _xmm };
-#else
 			union alignas(simd::alignment) {
-				Scalar x, y;
 				XMM _xmm;
-			};
+
+#ifdef RDX_SIMD_ACCESSOR_IMPL
+				simd::accessor<Scalar, XMM, 0> x;
+				simd::accessor<Scalar, XMM, 1> y;
+#else
+				struct { Scalar x, y; };
 #endif
+			};
 		};
 
 		template<class Scalar, class XMM>
@@ -75,41 +76,41 @@ namespace redox::math {
 				);
 			}
 
-#ifdef RDX_SIMD_ACCESSOR_IMPL
-			XMM _xmm;
-			simd::accessor<Scalar, XMM, 0> x{ _xmm };
-			simd::accessor<Scalar, XMM, 1> y{ _xmm };
-			simd::accessor<Scalar, XMM, 2> z{ _xmm };
-#else
 			union alignas(simd::alignment) {
-				Scalar x, y, z;
 				XMM _xmm;
-			};
+
+#ifdef RDX_SIMD_ACCESSOR_IMPL
+				simd::accessor<Scalar, XMM, 0> x;
+				simd::accessor<Scalar, XMM, 1> y;
+				simd::accessor<Scalar, XMM, 2> z;
+#else
+				struct { Scalar x, y, z; };
 #endif
+			};
 		};
 
 		template<class Scalar, class XMM>
 		struct VecBase<Scalar, XMM, 4> {
 			VecBase(XMM xmm) : _xmm(xmm) {}
-			VecBase(Scalar x, Scalar y, Scalar z, Scalar w) 
+			VecBase(Scalar x, Scalar y, Scalar z, Scalar w)
 				: VecBase(simd::set(x, y, z, w)) {
 			}
 
-#ifdef RDX_SIMD_ACCESSOR_IMPL
-			XMM _xmm;
-			simd::accessor<Scalar, XMM, 0> x{ _xmm };
-			simd::accessor<Scalar, XMM, 1> y{ _xmm };
-			simd::accessor<Scalar, XMM, 2> z{ _xmm };
-			simd::accessor<Scalar, XMM, 3> w{ _xmm };
-#else
 			union alignas(simd::alignment) {
-				Scalar x, y, z, w;
 				XMM _xmm;
-			};
+
+#ifdef RDX_SIMD_ACCESSOR_IMPL
+				simd::accessor<Scalar, XMM, 0> x;
+				simd::accessor<Scalar, XMM, 1> y;
+				simd::accessor<Scalar, XMM, 2> z;
+				simd::accessor<Scalar, XMM, 3> w;
+#else
+				struct { Scalar x, y, z, w; };
 #endif
 		};
-	}
-	
+	};
+}
+
 	template<class Scalar, class XMM, std::size_t Size>
 	struct Vec : detail::VecBase<Scalar, XMM, Size> {
 		using base_type = detail::VecBase<Scalar, XMM, Size>;
@@ -162,5 +163,4 @@ namespace redox::math {
 	using Vec4f = Vec<f32, simd::f32x4, 4>;
 	using Vec3f = Vec<f32, simd::f32x4, 3>;
 	using Vec2f = Vec<f32, simd::f32x4, 2>;
-
 }

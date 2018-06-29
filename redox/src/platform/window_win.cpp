@@ -106,7 +106,12 @@ redox::platform::Window::Window(const String& title, const Configuration& config
 		windowRect.right = config.get("Engine", "resolution_x");
 		windowRect.bottom = config.get("Engine", "resolution_y");
 		AdjustWindowRect(&windowRect, dwStyle, FALSE);
-		dwStyle |= WS_OVERLAPPEDWINDOW | WS_CAPTION;
+
+		if (config.get("Surface", "resizable")) {
+			dwStyle |= WS_OVERLAPPEDWINDOW;
+		} else {
+			dwStyle |= WS_OVERLAPPED;
+		}
 	}
 
 	_internal->handle = CreateWindowEx(

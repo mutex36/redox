@@ -26,7 +26,7 @@ SOFTWARE.
 #include "buffer.h"
 
 #include "command_buffer.h"
-#include "texture.h"
+#include "resources\texture.h"
 
 redox::graphics::Buffer::Buffer(VkDeviceSize size, const Graphics& graphicsRef,
 	VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags) :
@@ -97,4 +97,19 @@ void redox::graphics::Buffer::copy_to(const Texture& texture, const CommandBuffe
 
 	vkCmdCopyBufferToImage(commandBuffer.handle(), _handle, texture.handle(),
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+}
+
+redox::graphics::StagedBuffer::StagedBuffer(VkDeviceSize size, const Graphics& graphics, VkBufferUsageFlags usage) :
+	_buffer(size, graphics, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+	_stagingBuffer(size, graphics, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
+
+}
+
+void redox::graphics::StagedBuffer::upload(const CommandBuffer& commandBuffer) {
+	_stagingBuffer.copy_to(_buffer, commandBuffer);
+}
+
+VkBuffer redox::graphics::StagedBuffer::handle() const {
+	return _buffer.handle();
 }

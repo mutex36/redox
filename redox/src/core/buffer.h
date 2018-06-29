@@ -25,6 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
+#include "core\utility.h"
 #include "core\non_copyable.h"
 #include "core\allocation\default_allocator.h"
 #include "core\allocation\growth_policy.h"
@@ -35,6 +36,7 @@ SOFTWARE.
 #include <string.h> //std::memcpy
 
 namespace redox {
+
 	template<class ValueType, 
 		class Allocator = allocation::DefaultAllocator<ValueType>,
 		class GrowthPolicy = allocation::DefaultGrowth>
@@ -94,9 +96,9 @@ namespace redox {
 		}
 
 		template<class...Args>
-		_RDX_INLINE void emplace(Args&&...args) {
+		_RDX_INLINE ValueType& emplace(Args&&...args) {
 			_grow_if_needed();
-			_emplace_no_checks(std::forward<Args>(args)...);
+			return _emplace_no_checks(std::forward<Args>(args)...);
 		}
 
 		_RDX_INLINE void clear() {
@@ -110,18 +112,16 @@ namespace redox {
 		}
 
 		_RDX_INLINE ValueType& operator[](size_type index) {
-#ifdef RDX_DEBUG
 			if (index >= _size)
 				throw Exception("index out of bounds");
-#endif
+
 			return _data[index];
 		}
 
 		_RDX_INLINE const ValueType& operator[](size_type index) const {
-#ifdef RDX_DEBUG
 			if (index >= _size)
 				throw Exception("index out of bounds");
-#endif
+		
 			return _data[index];
 		}
 
@@ -205,8 +205,8 @@ namespace redox {
 		}
 
 		template<class...Args>
-		_RDX_INLINE void _emplace_no_checks(Args&&...args) {
-			new (_data + _size++) ValueType(std::forward<Args>(args)...);
+		_RDX_INLINE ValueType& _emplace_no_checks(Args&&...args) {
+			return *(new (_data + _size++) ValueType(std::forward<Args>(args)...));
 		}
 
 		_RDX_INLINE void _dealloc() {

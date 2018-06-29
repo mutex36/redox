@@ -102,6 +102,39 @@ namespace redox::math {
 			};
 		}
 
+		_RDX_INLINE static Mat44 rotate_y(Scalar alpha) {
+			return {
+				simd::set(std::cos(alpha),0,-std::sin(alpha),0),
+				simd::set(0,1,0,0),
+				simd::set(std::sin(alpha),0,std::cos(alpha),0),
+				simd::set(0,0,0,1)
+			};
+		}
+
+		_RDX_INLINE static Mat44 rotate_euler(const vec3_type& angles) {
+			auto a = deg2rad(angles.x);
+			auto b = deg2rad(angles.y);
+			auto c = deg2rad(angles.z);
+
+			return {
+				simd::set(
+					std::cos(b) * std::cos(c), -std::cos(b) * std::sin(c),
+					std::sin(b)
+				),
+				simd::set(
+					std::sin(a) * std::sin(b) * std::cos(c) + std::cos(a) *
+					std::sin(c), -std::sin(a) * std::sin(b) * std::sin(c) +
+					std::cos(a) * std::cos(c), -std::sin(a) * std::cos(b)
+				),
+				simd::set(
+					-std::cos(a) * std::sin(b) * std::cos(c) + std::sin(a) *
+					std::sin(c), std::cos(a) * std::sin(b) * std::sin(c) +
+					std::sin(a) * std::cos(c), std::cos(a) * std::cos(b)
+				),
+				simd::set(0,0,0,1)
+			};
+		}
+
 		_RDX_INLINE static Mat44 scale(const vec3_type& scale) {
 			return {
 				simd::blend<0x1>(simd::set_zero(), scale._xmm),
@@ -112,7 +145,7 @@ namespace redox::math {
 		}
 
 		_RDX_INLINE static Mat44 perspective(Scalar fov, Scalar aspect, Scalar near, Scalar far) {
-			auto yscale = static_cast<Scalar>(1. / std::tan(constants::d2r * fov / 2.0f));
+			auto yscale = static_cast<Scalar>(-1. / deg2rad(fov / 2.0f));
 			auto xscale = static_cast<Scalar>(yscale / aspect);
 			auto nf = near - far;
 
@@ -126,7 +159,7 @@ namespace redox::math {
 
 		_RDX_INLINE static Mat44 translate(const vec3_type& coords) {
 			return {
-				//TODO: optimize
+				//TODO: Optimize
 				simd::set(1,0,0,coords.x),
 				simd::set(0,1,0,coords.y),
 				simd::set(0,0,1,coords.z),

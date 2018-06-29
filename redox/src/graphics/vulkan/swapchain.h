@@ -65,7 +65,6 @@ namespace redox::graphics {
 
 		CreateCallback _createCallback;
 
-		redox::Buffer<VkImage> _images;
 		redox::Buffer<VkImageView> _imageViews;
 		redox::Buffer<Framebuffer> _frameBuffers;
 

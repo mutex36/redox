@@ -27,9 +27,16 @@ SOFTWARE.
 #include "core\core.h"
 #include <type_traits>
 
+#define _RDX_HELPER_CONCAT_IMPL(x,y) x##y
+#define _RDX_HELPER_CONCAT(x,y) _RDX_HELPER_CONCAT_IMPL(x,y)
+
 #define RDX_ENABLE_ENUM_FLAGS(en) 								\
 	template<>													\
 	struct ::redox::enable_bit_flags<en> : std::true_type {};	\
+
+
+#define RDX_SCOPE_GUARD(fn)															\
+auto _RDX_HELPER_CONCAT(_scope_guard_, __COUNTER__) = redox::make_scope_guard(fn)	\
 
 namespace redox {
 	template<class Enum>
@@ -45,6 +52,20 @@ namespace redox {
 	constexpr std::enable_if_t<enable_bit_flags<Enum>::value, Enum> operator& (Enum a, Enum b) {
 		using ut = typename std::underlying_type_t<Enum>;
 		return static_cast<Enum>(static_cast<ut>(a) & static_cast<ut>(b));
+	}
+
+	template<class Fn>
+	struct scope_guard {
+		scope_guard(Fn&& fn) : _fn(std::move(fn)) {}
+		scope_guard(const Fn&) = delete;
+		~scope_guard() { _fn(); }
+
+		Fn _fn;
+	};
+
+	template<class Fn>
+	scope_guard<Fn> make_scope_guard(Fn&& fn) {
+		return scope_guard<Fn>(std::forward<Fn>(fn));
 	}
 }
 

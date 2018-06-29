@@ -34,45 +34,45 @@ SOFTWARE.
 namespace redox {
 
 	template<class T>
-	_RDX_INLINE T parse(const StringView& expr) = delete;
+	_RDX_INLINE T parse(StringView expr) = delete;
 
 	template<>
-	_RDX_INLINE StringView parse(const StringView& expr) {
+	_RDX_INLINE StringView parse(StringView expr) {
 		return expr;
 	}
 
 	template<>
-	_RDX_INLINE f32 parse(const StringView& expr) {
+	_RDX_INLINE f32 parse(StringView expr) {
 		return std::strtof(expr.cstr(), NULL);
 	}
 
 	template<>
-	_RDX_INLINE i64 parse(const StringView& expr) {
+	_RDX_INLINE i64 parse(StringView expr) {
 		return std::strtoll(expr.cstr(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE i32 parse(const StringView& expr) {
+	_RDX_INLINE i32 parse(StringView expr) {
 		return std::strtol(expr.cstr(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE long parse(const StringView& expr) {
+	_RDX_INLINE long parse(StringView expr) {
 		return std::strtol(expr.cstr(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE u64 parse(const StringView& expr) {
+	_RDX_INLINE u64 parse(StringView expr) {
 		return std::strtoull(expr.cstr(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE u32 parse(const StringView& expr) {
+	_RDX_INLINE u32 parse(StringView expr) {
 		return std::strtoul(expr.cstr(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE bool parse(const StringView& expr) {
+	_RDX_INLINE bool parse(StringView expr) {
 		if (expr.empty())
 			throw Exception("parsing error");
 
@@ -126,10 +126,6 @@ namespace redox {
 		return buffer;
 	}
 
-	_RDX_INLINE redox::StringView lexical_cast(const bool& expr) {
-		return expr ? "true" : "false";
-	}
-
 	template<std::size_t N>
 	_RDX_INLINE redox::StringView lexical_cast(const char(&expr)[N]) {
 		return static_cast<const char*>(expr);
@@ -139,13 +135,17 @@ namespace redox {
 		return expr;
 	}
 
+	_RDX_INLINE redox::StringView lexical_cast(const char* expr) {
+		return expr;
+	}
+
 	template<class...Args>
-	StringView format(const StringView& format, const Args&...args) {
+	StringView format(StringView format, const Args&...args) {
 		return format;
 	}
 
 	template<class Arg0, class...Args>
-	String format(const StringView& format, const Arg0& arg0, const Args&...args) {
+	String format(StringView format, const Arg0& arg0, const Args&...args) {
 		Buffer<String> parsed = { lexical_cast(arg0), lexical_cast(args)... };
 		std::size_t s0 = -1; std::size_t s1 = 0;
 

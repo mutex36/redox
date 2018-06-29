@@ -25,7 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "resources\factory.h"
-#include "graphics\vulkan\shader.h"
+#include "graphics\vulkan\resources\shader.h"
 
 namespace redox::graphics {
 	class Graphics;
@@ -33,6 +33,13 @@ namespace redox::graphics {
 	class ShaderFactory : public ResourceFactory<ShaderFactory, Shader> {
 		friend class ResourceFactory<ShaderFactory, Shader>;
 
-		Resource<Shader> load_impl(const String& path, const Graphics& graphics);
+	public:
+		ShaderFactory(const Graphics& graphics);
+
+	protected:
+		Resource<Shader> load_impl(const String& path) const;
+
+	private:
+		const Graphics& _graphicsRef;
 	};
 }

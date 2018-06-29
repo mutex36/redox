@@ -177,6 +177,12 @@ namespace redox {
 			return std::memcmp(_data, ref._data, _size) == 0;
 		}
 
+		_RDX_INLINE bool operator!=(const BaseString& ref) const {
+			if (_size != ref._size)
+				return true;
+			return std::memcmp(_data, ref._data, _size) != 0;
+		}
+
 		_RDX_INLINE operator StringView() const {
 			return { _data, _size };
 		}

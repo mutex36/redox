@@ -26,13 +26,11 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\string.h"
+#include "core\utility.h"
 #include "platform\timer.h"
 
 #define RDX_LOG_TAG "Profiler"
 #include "core\logging\log.h"
-
-#define _RDX_HELPER_CONCAT_IMPL(x,y) x##y
-#define _RDX_HELPER_CONCAT(x,y) _RDX_HELPER_CONCAT_IMPL(x,y)
 
 #define _RDX_PROFILE redox::Profiler _RDX_HELPER_CONCAT(_profiler_, __COUNTER__)(__FUNCTION__);
 

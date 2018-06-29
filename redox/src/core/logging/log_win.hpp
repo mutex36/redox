@@ -35,7 +35,7 @@ namespace redox::detail {
 	static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	template<class...Args>
-	_RDX_INLINE void log(const redox::StringView& fmts, const Args&...args) {
+	_RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
 		WriteConsole(detail::std_handle, fmt.cstr(), 
 			static_cast<DWORD>(fmt.size()), NULL, NULL);

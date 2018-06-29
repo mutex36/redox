@@ -1,12 +1,38 @@
+/*
+redox
+-----------
+MIT License
+
+Copyright (c) 2018 Luis von der Eltz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #include "texture_factory.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <thirdparty/stbimage/stb_image.h>
 
-redox::Resource<redox::graphics::Texture> redox::graphics::TextureFactory::load_impl(
-	const String& path, const Graphics& graphics) {
+redox::graphics::TextureFactory::TextureFactory(const Graphics& graphics) :
+	_graphicsRef(graphics) {}
 
-	i32 width, height, chan;
+redox::Resource<redox::graphics::SampleTexture> redox::graphics::TextureFactory::load_impl(const String& path) const {
+	i32 chan, width, height;
 	stbi_uc* pixels = stbi_load(path.cstr(),
 		&width, &height, &chan, STBI_rgb_alpha);
 
@@ -17,10 +43,9 @@ redox::Resource<redox::graphics::Texture> redox::graphics::TextureFactory::load_
 	redox::Buffer<byte> buffer(pixels, size);
 
 	stbi_image_free(pixels);
-	Texture::Dimension dimensions{
-		static_cast<uint32_t>(width),
-		static_cast<uint32_t>(height) };
+
+	VkExtent2D dimensions{ width, height };
 
 	return { construct_tag{}, std::move(buffer),
-		VK_FORMAT_R8G8B8A8_UNORM, dimensions, graphics };
+		VK_FORMAT_R8G8B8A8_UNORM, dimensions, _graphicsRef };
 }

@@ -35,8 +35,8 @@ namespace redox::platform {
 
 		void start();
 		void reset();
-		redox::f64 elapsed();
-		redox::f64 freq();
+		redox::f64 elapsed() const;
+		redox::f64 freq() const;
 
 	private:
 		struct internal;

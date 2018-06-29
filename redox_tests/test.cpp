@@ -102,13 +102,14 @@ TEST(Bitset, SetGet) {
 }
 
 TEST(Hashmap, SetGet) {
-	redox::Hashmap<size_t, size_t> hm;
+	redox::Hashmap<size_t, size_t> hm(0xFFF);
 
 	for (size_t i = 0; i < 1000; i++)
 		hm.push(i, i);
 
 	for (size_t i = 0; i < 1000; i++)
 		ASSERT_EQ(*hm.get(i), i);
+
 }
 
 struct Foo {

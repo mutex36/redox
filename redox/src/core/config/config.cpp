@@ -36,6 +36,6 @@ redox::Configuration::~Configuration() {
 	ini_free(_config);
 }
 
-redox::Configuration::value_proxy redox::Configuration::get(const String& group, const String& value) const {
+redox::Configuration::value_proxy redox::Configuration::get(StringView group, StringView value) const {
 	return { _config, group, value };
 }

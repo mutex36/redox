@@ -50,13 +50,13 @@ void redox::platform::Timer::reset() {
 	QueryPerformanceCounter(&_internal->start);
 }
 
-redox::f64 redox::platform::Timer::elapsed() {
+redox::f64 redox::platform::Timer::elapsed() const {
 	QueryPerformanceCounter(&_internal->end);
 	return static_cast<redox::f64>(
 		_internal->end.QuadPart - _internal->start.QuadPart) / _internal->freq.QuadPart * 1000.;
 }
 
-redox::f64 redox::platform::Timer::freq() {
+redox::f64 redox::platform::Timer::freq() const {
 	return static_cast<redox::f64>(_internal->freq.QuadPart);
 }
 #endif

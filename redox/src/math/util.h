@@ -34,4 +34,9 @@ namespace redox::math {
 		if (rmd == 0) return n;
 		return n + m - rmd;
 	}
+
+	template<class T>
+	constexpr auto deg2rad(T n) {
+		return std::tan(n * constants::d2r);
+	}
 }

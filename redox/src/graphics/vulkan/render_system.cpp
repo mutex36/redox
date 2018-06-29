@@ -30,6 +30,7 @@ SOFTWARE.
 #include "core\utility.h"
 
 #include "core\profiling\profiler.h"
+#include "core\application.h"
 
 #define RDX_LOG_TAG "RenderSystem"
 
@@ -37,19 +38,26 @@ redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, cons
 	_graphics(window, config),
 	_renderPass(_graphics),
 	_swapchain(_graphics, _renderPass, std::bind(&RenderSystem::_swapchain_event_create, this)),
-	_configRef(config),
 	_mvpBuffer(sizeof(mvp_uniform), _graphics),
-	_demoVs(_shaderFactory.load(RDX_ASSET("shader\\vert.spv"), _graphics)),
-	_demoFs(_shaderFactory.load(RDX_ASSET("shader\\frag.spv"), _graphics)),
-	_demoMesh(_meshFactory.load(RDX_ASSET("meshes\\box.gltf"), _graphics)),
-	_demoTexture(_textureFactory.load("textures\\uvchecker.jpg", _graphics)),
-	_pipeline(_graphics, _renderPass, get_layout<MeshVertex>(), _demoVs, _demoFs),
-	_auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
+	_shaderFactory(_graphics),
+	_textureFactory(_graphics),
+	_modelFactory(_graphics, _pipelineCache, _mvpBuffer, _shaderFactory, _textureFactory),
+	_auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
+	_pipelineCache(_graphics, _renderPass, _shaderFactory) {
 
-	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo){
-		_demoMesh->upload(cbo);
-		_demoTexture->upload(cbo);
+	_demoModel = _modelFactory.load(RDX_ASSET("meshes\\centurion.gltf"));
+
+	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
+		_renderPass.prepare_attachments(cbo);
+
+		for (auto& mat : _demoModel->materials())
+			mat->upload(cbo);
+
+		for (auto& mesh : _demoModel->meshes())
+			mesh->upload(cbo);
 	});
+
+	_demo_setup();
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
@@ -59,19 +67,29 @@ redox::graphics::RenderSystem::~RenderSystem() {
 void redox::graphics::RenderSystem::_demo_setup() {
 	_RDX_PROFILE;
 
-	_pipeline.bind_resource(_mvpBuffer, 0);
-	_pipeline.bind_resource(*_demoTexture, 1);
-
 	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
-			_pipeline.bind(commandBuffer, frameBuffer);
+			_renderPass.begin(frameBuffer, commandBuffer);
 
-			IndexedDraw drawCmd{ _demoMesh };
-			commandBuffer.submit(drawCmd);
+			_demo_draw(commandBuffer);
 
-			_pipeline.unbind(commandBuffer);
+			_renderPass.end(commandBuffer);
 		});
 	});
+}
+
+void redox::graphics::RenderSystem::_demo_draw(const CommandBuffer& commandBuffer) {
+	auto mesh = _demoModel->meshes()[0];
+
+	for (const auto& sm : mesh->submeshes()) {
+		IndexedDraw drawCmd;
+		drawCmd.mesh = mesh;
+		drawCmd.material = _demoModel->materials()[sm.materialIndex];
+		drawCmd.vertexOffset = sm.vertexOffset;
+		drawCmd.vertexCount = sm.vertexCount;
+
+		commandBuffer.submit(drawCmd);
+	}
 }
 
 void redox::graphics::RenderSystem::render() {
@@ -80,29 +98,23 @@ void redox::graphics::RenderSystem::render() {
 		auto extent = _swapchain.extent();
 		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
 
+		static float k = 0.0;
+		k += 0.02f;
+
 		auto bf = reinterpret_cast<mvp_uniform*>(data);
-		bf->model = math::Mat44f::identity();
-		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 10.f);
-		bf->view = math::Mat44f::translate({0,0,-2});
+		bf->model = math::Mat44f::rotate_y(k);
+		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
+		bf->view = math::Mat44f::translate({0,0,-3});
 	});
 
 	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
-		//update buffers
 		_mvpBuffer.upload(cbo);
 	});
 
 	_swapchain.present();
 }
 
-redox::graphics::ShaderFactory& redox::graphics::RenderSystem::shader_factory() {
-	return _shaderFactory;
-}
-
-redox::graphics::MeshFactory& redox::graphics::RenderSystem::mesh_factory() {
-	return _meshFactory;
-}
-
 void redox::graphics::RenderSystem::_swapchain_event_create() {
-	_pipeline.set_viewport(_swapchain.extent());
-	_demo_setup();
+	//_pipeline.set_viewport(_swapchain.extent()); //TODO: resize
+	//TODO: update size
 }

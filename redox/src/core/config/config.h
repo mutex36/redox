@@ -35,13 +35,17 @@ namespace redox {
 	public:
 		class value_proxy {
 		public:
-			value_proxy(ini_t* conf, const String& group, const String& value) {
+			value_proxy(ini_t* conf, StringView group, StringView value) {
 				_ini_val = ini_get(conf, group.cstr(), value.cstr());
 			}
 
 			template<class T>
 			operator T() const {
 				return parse<T>(_ini_val);
+			}
+
+			operator bool() const{
+				return parse<bool>(_ini_val);
 			}
 
 		private:
@@ -51,7 +55,7 @@ namespace redox {
 		Configuration(const String& file);
 		~Configuration();
 
-		value_proxy get(const String& group, const String& value) const;
+		value_proxy get(StringView group, StringView value) const;
 
 	private:
 		ini_t* _config;

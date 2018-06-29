@@ -67,3 +67,17 @@ void redox::graphics::CommandPool::_init(VkCommandPoolCreateFlags flags) {
 	if (vkCreateCommandPool(_graphicsRef.device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create commandpool");
 }
+
+redox::graphics::CommandBuffer::CommandBuffer(VkCommandBuffer handle) :
+	_handle(handle) {
+}
+
+void redox::graphics::CommandBuffer::submit(const IndexedDraw& command) const {
+	command.material->bind(_handle);
+	command.mesh->bind(_handle);
+	vkCmdDrawIndexed(_handle, command.vertexCount, 1, command.vertexOffset, 0, 0);
+}
+
+VkCommandBuffer redox::graphics::CommandBuffer::handle() const {
+	return _handle;
+}

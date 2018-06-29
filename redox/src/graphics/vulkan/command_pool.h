@@ -26,10 +26,48 @@ SOFTWARE.
 #pragma once
 #include "core\buffer.h"
 #include "vulkan.h"
-#include "graphics.h"
-#include "command_buffer.h"
+
+#include "resources/mesh.h"
+#include "resources/material.h"
 
 namespace redox::graphics {
+	class Graphics;
+
+	struct IndexedDraw {
+		Resource<Mesh> mesh;
+		Resource<Material> material;
+		uint32_t vertexOffset;
+		uint32_t vertexCount;
+	};
+
+	class CommandBuffer : public NonCopyable {
+	public:
+		CommandBuffer(VkCommandBuffer handle);
+		~CommandBuffer() = default;
+
+		void submit(const IndexedDraw& command) const;
+
+		template<class Fn>
+		void record(Fn&& fn) const {
+			VkCommandBufferBeginInfo beginInfo{};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+			if (vkBeginCommandBuffer(_handle, &beginInfo) != VK_SUCCESS)
+				throw Exception("failed to begin recording of commandBuffer");
+
+			fn();
+
+			if (vkEndCommandBuffer(_handle) != VK_SUCCESS)
+				throw Exception("failed to end recording of commandBuffer");
+		}
+
+		VkCommandBuffer handle() const;
+
+	private:
+		VkCommandBuffer _handle;
+	};
+
 	class CommandPool {
 	public:
 		CommandPool(const Graphics& graphics,
@@ -65,12 +103,14 @@ namespace redox::graphics {
 
 			vkQueueSubmit(_graphicsRef.graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
 			vkQueueWaitIdle(_graphicsRef.graphics_queue());
+			vkFreeCommandBuffers(_graphicsRef.device(), _handle, 1, &commandBuffer);
 		}
 
 		CommandBuffer operator[](std::size_t index) const;
 
 	private:
 		void _init(VkCommandPoolCreateFlags flags);
+
 		VkCommandPool _handle;
 		redox::Buffer<VkCommandBuffer> _commandBuffers;
 

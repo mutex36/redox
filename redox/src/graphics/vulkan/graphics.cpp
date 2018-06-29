@@ -26,11 +26,11 @@ SOFTWARE.
 #include "graphics.h"
 #include "core\utility.h"
 
-redox::graphics::Graphics::Graphics(const platform::Window& window, const Configuration& config)
-	: _windowRef(window), _configRef(config) {
+redox::graphics::Graphics::Graphics(const platform::Window& window, const Configuration& config) :
+	_configRef(config) {
 	_init_instance();
 	_init_physical_device();
-	_init_surface();
+	_init_surface(window);
 	_init_device();
 }
 
@@ -90,7 +90,7 @@ std::optional<uint32_t> redox::graphics::Graphics::pick_memory_type(uint32_t typ
 VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 	uint32_t count;
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, nullptr);
-	Buffer<VkPresentModeKHR> modes(count);
+	redox::Buffer<VkPresentModeKHR> modes(count);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, modes.data());
 
 	if (_configRef.get("Engine", "vsync"))
@@ -107,7 +107,7 @@ VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
 	uint32_t count;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, &count, nullptr);
-	Buffer<VkSurfaceFormatKHR> formats(count);
+	redox::Buffer<VkSurfaceFormatKHR> formats(count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, &count, formats.data());
 
 	if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
@@ -136,7 +136,7 @@ void redox::graphics::Graphics::_init_instance() {
 #ifdef RDX_DEBUG
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-	Buffer<VkLayerProperties> availableLayers(layerCount);
+	redox::Buffer<VkLayerProperties> availableLayers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 	for (auto& layer : availableLayers)
 		RDX_LOG("Layer: {0}", layer.layerName);
@@ -184,14 +184,14 @@ void redox::graphics::Graphics::_init_physical_device() {
 	_physicalDevice = device.value();
 }
 
-void redox::graphics::Graphics::_init_surface() {
+void redox::graphics::Graphics::_init_surface(const platform::Window& window) {
 
 #ifdef RDX_PLATFORM_WINDOWS
 	RDX_LOG("Creating surface (WIN32)...");
 
 	VkWin32SurfaceCreateInfoKHR createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	createInfo.hwnd = reinterpret_cast<HWND>(_windowRef.native_handle());
+	createInfo.hwnd = reinterpret_cast<HWND>(window.native_handle());
 	createInfo.hinstance = GetModuleHandle(0);
 
 	auto CreateWin32SurfaceKHR =
@@ -245,7 +245,7 @@ std::optional<VkPhysicalDevice> redox::graphics::Graphics::_pick_device() {
 	uint32_t num;
 	vkEnumeratePhysicalDevices(_instance, &num, nullptr);
 
-	Buffer<VkPhysicalDevice> devices(num);
+	redox::Buffer<VkPhysicalDevice> devices(num);
 	vkEnumeratePhysicalDevices(_instance, &num, devices.data());
 
 	for (auto& dev : devices) {
@@ -266,7 +266,7 @@ std::optional<VkPhysicalDevice> redox::graphics::Graphics::_pick_device() {
 
 std::optional<uint32_t> redox::graphics::Graphics::_pick_queue_family() {
 
-	Buffer<VkQueueFamilyProperties> queueFamilies;
+	redox::Buffer<VkQueueFamilyProperties> queueFamilies;
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, nullptr);
 	queueFamilies.resize(queueFamilyCount);

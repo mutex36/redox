@@ -26,11 +26,12 @@ SOFTWARE.
 #pragma once
 #include "vulkan.h"
 #include "graphics.h"
-#include "shader.h"
-#include "texture.h"
-
+#include "sampler.h"
+#include "buffer.h"
 #include "vertex_layout.h"
-#include "render_pass.h"
+
+#include "resources\shader.h"
+#include "resources\texture.h"
 
 #include "core\utility.h"
 #include <functional> //std::function
@@ -38,25 +39,22 @@ SOFTWARE.
 namespace redox::graphics {
 	class CommandPool;
 	class CommandBuffer;
+	class RenderPass;
+	class Framebuffer;
 
 	class Pipeline {
 	public:
-		Pipeline(const Graphics& graphics, 
-			const RenderPass& renderPass, const VertexLayout& vLayout,
+		Pipeline(const Graphics& graphics, const RenderPass& renderPass, 
+			const VertexLayout& vLayout, const redox::Buffer<VkDescriptorSetLayoutBinding>& bindings,
 			Resource<Shader> vs, Resource<Shader> fs);
 		~Pipeline();
 
-		void bind(const CommandBuffer& commandBuffer, const Framebuffer& frameBuffer);
-		void unbind(const CommandBuffer& commandBuffer);
-
+		void bind(const CommandBuffer& commandBuffer);
 		void set_viewport(const VkExtent2D& size);
 
-		void bind_resource(const Texture& texture, uint32_t bindingPoint);
-		void bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint);
-
 	private:
-		void _init(const VertexLayout& vLayout);
-		void _init_desriptors();
+		void _init(const VertexLayout& vLayout, const RenderPass& renderPass);
+		void _init_desriptors(const redox::Buffer<VkDescriptorSetLayoutBinding>& bindings);
 		void _update_viewport(const CommandBuffer& commandBuffer);
 
 		VkPipeline _handle;
@@ -71,6 +69,5 @@ namespace redox::graphics {
 		Resource<Shader> _fs;
 
 		const Graphics& _graphicsRef;
-		const RenderPass& _renderPassRef;
 	};
 }

@@ -69,7 +69,7 @@ namespace redox {
 			_inc_ref_count();
 		}
 
-		RefCounted(RefCounted&& ref) : _cb(ref._cb) {
+		_RDX_INLINE RefCounted(RefCounted&& ref) : _cb(ref._cb) {
 			ref._cb = nullptr;
 		}
 
@@ -83,6 +83,10 @@ namespace redox {
 			_cb = ref._cb;
 			ref._cb = nullptr;
 			return *this;
+		}
+
+		_RDX_INLINE operator bool() const {
+			return _cb != nullptr;
 		}
 
 		_RDX_INLINE auto operator->() const{

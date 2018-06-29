@@ -50,7 +50,7 @@ namespace redox::simd {
 			return *this;
 		}
 
-		XMM& _xmm;
+		XMM _xmm;
 	};
 
 	template<u32 Index, class XMM>

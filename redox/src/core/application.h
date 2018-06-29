@@ -51,6 +51,7 @@ namespace redox {
 		void stop();
 
 		const Configuration& config() const;
+		const platform::Timer& timer() const;
 
 	private:
 		Configuration _config;

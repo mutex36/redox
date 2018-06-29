@@ -1,9 +1,34 @@
+/*
+redox
+-----------
+MIT License
+
+Copyright (c) 2018 Luis von der Eltz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #include "gltf_importer.h"
 
 #define RDX_LOG_TAG "Importer"
 #include "core/logging/log.h"
 
-redox::GLTFImporter::GLTFImporter(const String& path) {
+redox::GLTFImporter::GLTFImporter(const String& path)  : _buffers("__invalid_buffer__") {
 	io::File file(path, io::File::Mode::READ);
 	auto buffer = file.read();
 
@@ -13,61 +38,104 @@ redox::GLTFImporter::GLTFImporter(const String& path) {
 		throw Exception("failed to load gltf file");
 }
 
+redox::GLTFImporter::~GLTFImporter() {
+	cgltf_free(&_data);
+}
+
 std::size_t redox::GLTFImporter::mesh_count() const {
 	return _data.meshes_count;
 }
 
-void redox::GLTFImporter::import_mesh(std::size_t index, Buffer<graphics::MeshVertex>& vertices,
-	Buffer<uint16_t>& indices) {
+std::size_t redox::GLTFImporter::material_count() const {
+	return _data.material_count;
+}
+
+redox::GLTFImporter::material_data redox::GLTFImporter::import_material(std::size_t index) {
+	if (index >= _data.material_count)
+		throw Exception("material index not found");
+
+	const auto& material = _data.materials[index];
+	material_data output{ material.name };
+
+	if (material.pbr.base_color_texture.texture)
+		output.albedoMap = material.pbr.base_color_texture.texture->image->uri;
+
+	if (material.normal_texture.texture)
+		output.normalMap = material.normal_texture.texture->image->uri;
+
+	return output;
+}
+
+redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t index) {
 
 	if (index >= _data.meshes_count)
 		throw Exception("mesh index not found");
 
 	const auto& mesh = _data.meshes[index];
+	mesh_data output{ mesh.name, 0 };
+
+	output.submeshes.reserve(mesh.primitives_count);
 
 	for (std::size_t primIndex = 0; primIndex < mesh.primitives_count; primIndex++) {
-
 		const auto& primitive = mesh.primitives[primIndex];
 
+		if (primitive.type != cgltf_type_triangles)
+			throw Exception("unsupported primitive type");
+
+		submesh_data submesh;
+		submesh.indexOffset = output.indices.size();
+		output.indices.reserve(primitive.indices->count);
+		read_buffer<uint16_t>(primitive.indices->buffer_view,
+			primitive.indices, [&output](const auto& value) {
+			output.indices.push(value);
+		});
+		submesh.indexCount = output.indices.size() - submesh.indexOffset;
+
+		submesh.attributeOffset = output.positions.size() / 3;
 		for (std::size_t attrIndex = 0; attrIndex < primitive.attributes_count; attrIndex++) {
 			const auto& attribute = primitive.attributes[attrIndex];
-
 			const auto& bufferView = attribute.data->buffer_view;
+
 			if (bufferView->type != cgltf_buffer_view_type_vertices)
 				throw Exception("invalid buffer type");
 
-			auto bufferUri = bufferView->buffer->uri;
-			auto cachedBuffer = _buffers.get(bufferUri);
-			if (!cachedBuffer) {
-				io::File blobFile(R"(C:\Users\luis9\Desktop\redox\redox\resources\meshes\BoxTextured0.bin)",
-					io::File::Mode::READ);
+			switch (attribute.name) {
+			case cgltf_attribute_type_position: {
 
-				_buffers.push(bufferUri, blobFile.read());
-			}
-
-			const auto& buffer = *cachedBuffer;
-
-			auto offset = bufferView->offset + attribute.data->offset;
-			auto stride = attribute.data->stride;
-			auto size = attribute.data->count * stride;
-
-			for (size_t index = offset; index < size; index +=stride) {
-
-				switch (attribute.name) {
-
-				case cgltf_attribute_type_position:
-				{
-					const auto& pos = reinterpret_cast<const math::Vec3f&>(buffer[index]);
-
-				}
-
+				output.positions.reserve(output.positions.capacity() + attribute.data->count * 3);
+				read_buffer<float_t>(bufferView, attribute.data, [&output](const auto& value) {
+					output.positions.push(value);
+				});
 
 				break;
+			}
+			case cgltf_attribute_type_normal: {
 
-				}
+				output.normals.reserve(output.normals.capacity() + attribute.data->count * 3);
+				read_buffer<float_t>(bufferView, attribute.data, [&output](const auto& value) {
+					output.normals.push(value);
+				});
 
+				break;
+			}
+
+			case cgltf_attribute_type_texcoord_0: {
+
+				output.texcoords.reserve(output.texcoords.capacity() + attribute.data->count * 2);
+				read_buffer<float_t>(bufferView, attribute.data, [&output](const auto& value) {
+					output.texcoords.push(value);
+				});
+
+				break;
+			}
 			}
 		}
+		submesh.attributeCount = output.positions.size() / 3 - submesh.attributeOffset;
+		submesh.materialIndex = primitive.material - _data.materials;
+
+		output.submeshes.push(std::move(submesh));
 	}
 
+	output.vertexCount = output.positions.size() / 3;
+	return output;
 }

@@ -26,31 +26,28 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\hashmap.h"
-
 #include "resource.h"
-
-#include <type_traits> //std::forward
 
 namespace redox {
 
 	template<class Derived, class ResourceType>
-	class ResourceFactory {
+	class ResourceFactory : public NonCopyable {
 	public:
-		template<class...Params>
-		Resource<ResourceType> load(const String& file, Params&&...params) {
+		ResourceFactory() : _cache("__invalid_resource__") {}
+
+		Resource<ResourceType> load(const String& file) const {
 			auto lookup = _cache.get(file);
 			if (lookup)
 				return *lookup;
 
-			auto instance = static_cast<Derived*>(this);
-			auto rx = instance->load_impl(file,
-				std::forward<Params>(params)...);
+			auto instance = static_cast<const Derived*>(this);
+			auto rx = instance->load_impl(file);
 
-			_cache.push(std::move(file), std::move(rx));
+			_cache.push(file, rx);
 			return rx;
 		}
 
 	private:
-		Hashmap<String, Resource<ResourceType>> _cache;
+		mutable Hashmap<String, Resource<ResourceType>> _cache;
 	};
 }

@@ -38,8 +38,7 @@ namespace redox::graphics {
 	class Buffer : public NonCopyable {
 	public:
 		Buffer(VkDeviceSize size, const Graphics& graphicsRef, 
-			VkBufferUsageFlags usage,
-			VkMemoryPropertyFlags memFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags);
 		~Buffer();
 
 		VkDeviceSize size() const;
@@ -62,5 +61,41 @@ namespace redox::graphics {
 		VkDeviceSize _size;
 
 		const Graphics& _graphicsRef;
+	};
+
+	class StagedBuffer : public NonCopyable {
+	public:
+		StagedBuffer(VkDeviceSize size, const Graphics& graphics, VkBufferUsageFlags usage);
+		~StagedBuffer() = default;
+
+		template<class Fn>
+		void map(Fn&& fn) {
+			_stagingBuffer.map(std::forward<Fn>(fn));
+		}
+
+		void upload(const CommandBuffer& commandBuffer);
+		VkBuffer handle() const;
+
+	private:
+		Buffer _buffer;
+		Buffer _stagingBuffer;
+	};
+
+	struct UniformBuffer : public StagedBuffer {
+		UniformBuffer(VkDeviceSize size, const Graphics& graphics) :
+			StagedBuffer(size, graphics, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) {
+		}
+	};
+
+	struct VertexBuffer : public StagedBuffer {
+		VertexBuffer(VkDeviceSize size, const Graphics& graphics) :
+			StagedBuffer(size, graphics, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
+		}
+	};
+
+	struct IndexBuffer : public StagedBuffer {
+		IndexBuffer(VkDeviceSize size, const Graphics& graphics) :
+			StagedBuffer(size, graphics, VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+		}
 	};
 }

@@ -54,7 +54,7 @@ namespace redox::graphics {
 	private:
 		void _init_instance();
 		void _init_physical_device();
-		void _init_surface();
+		void _init_surface(const platform::Window& window);
 		void _init_device();
 
 		std::optional<VkPhysicalDevice> _pick_device();
@@ -68,7 +68,6 @@ namespace redox::graphics {
 		VkPhysicalDevice _physicalDevice;
 		VkSurfaceKHR _surface;
 
-		const platform::Window& _windowRef;
 		const Configuration& _configRef;
 
 #ifdef RDX_VULKAN_VALIDATION

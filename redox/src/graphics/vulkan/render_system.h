@@ -30,30 +30,28 @@ SOFTWARE.
 #include "core\non_copyable.h"
 
 #include "platform\window.h"
-#include "core\non_copyable.h"
 
 #include "graphics.h"
 #include "swapchain.h"
-#include "pipeline.h"
 #include "command_pool.h"
 #include "render_pass.h"
 
-#include "factory\mesh_factory.h"
+#include "factory\model_factory.h"
 #include "factory\shader_factory.h"
 #include "factory\texture_factory.h"
+
+#include "pipeline_cache.h"
 
 #include "math\math.h"
 
 namespace redox::graphics {
+
 	class RenderSystem : public NonCopyable {
 	public:
 		RenderSystem(const platform::Window& window, const Configuration& config);
 		~RenderSystem();
 
 		void render();
-
-		ShaderFactory& shader_factory();
-		MeshFactory& mesh_factory();
 
 	private:
 		void _swapchain_event_create();
@@ -66,23 +64,21 @@ namespace redox::graphics {
 
 		Graphics _graphics;
 		CommandPool _auxCommandPool;
+		RenderPass _renderPass;
 
 		UniformBuffer _mvpBuffer;
-		MeshFactory _meshFactory;
 		ShaderFactory _shaderFactory;
 		TextureFactory _textureFactory;
+		ModelFactory _modelFactory;
+
+		PipelineCache _pipelineCache;
 
 		//@DEMO
+		Resource<Model> _demoModel;
 		void _demo_setup();
-		Resource<Mesh> _demoMesh;
-		Resource<Texture> _demoTexture;
-		Resource<Shader> _demoVs;
-		Resource<Shader> _demoFs;
+		void _demo_draw(const CommandBuffer&);
+		//@@@
 
-		RenderPass _renderPass;
-		Pipeline _pipeline;
 		Swapchain _swapchain;
-
-		const Configuration& _configRef;
 	};
 }

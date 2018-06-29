@@ -130,7 +130,6 @@ void redox::graphics::Swapchain::_init() {
 
 	_surfaceFormat = _graphicsRef.pick_surface_format();
 	_presentMode = _graphicsRef.pick_presentation_mode();
-
 	_extent.width = std::clamp(scp.currentExtent.width,
 		scp.minImageExtent.width, scp.maxImageExtent.width);
 	_extent.height = std::clamp(scp.currentExtent.height,
@@ -161,18 +160,18 @@ void redox::graphics::Swapchain::_init_images() {
 
 	uint32_t imageCount;
 	vkGetSwapchainImagesKHR(_graphicsRef.device(), _handle, &imageCount, nullptr);
-	_images.resize(imageCount);
-	vkGetSwapchainImagesKHR(_graphicsRef.device(), _handle, &imageCount, _images.data());
+
+	redox::Buffer<VkImage> images(imageCount);
+	vkGetSwapchainImagesKHR(_graphicsRef.device(), _handle, &imageCount, images.data());
 
 	_imageViews.resize(imageCount);
-
 	_commandPool.free_all();
 	_commandPool.allocate(imageCount);
 
-	for (std::size_t i = 0; i < _images.size(); ++i) {
+	for (std::size_t i = 0; i < images.size(); ++i) {
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = _images[i];
+		createInfo.image = images[i];
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		createInfo.format = _surfaceFormat.format;
 		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
