@@ -37,32 +37,4 @@ namespace redox::graphics {
 		redox::Buffer<VkVertexInputAttributeDescription> attribs;
 	};
 
-	template<class Vertex>
-	VertexLayout get_layout() = delete;
-
-	template<>
-	_RDX_INLINE VertexLayout get_layout<MeshVertex>() {
-		VertexLayout out;
-		out.binding.binding = 0;
-		out.binding.stride = sizeof(MeshVertex);
-		out.binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		out.attribs.resize(3);
-		out.attribs[0].binding = 0;
-		out.attribs[0].location = 0;
-		out.attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		out.attribs[0].offset = util::offset_of<uint32_t>(&MeshVertex::pos);
-
-		out.attribs[1].binding = 0;
-		out.attribs[1].location = 1;
-		out.attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		out.attribs[1].offset = util::offset_of<uint32_t>(&MeshVertex::normal);
-
-		out.attribs[2].binding = 0;
-		out.attribs[2].location = 2;
-		out.attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
-		out.attribs[2].offset = util::offset_of<uint32_t>(&MeshVertex::uv);
-
-		return out;
-	}
 }

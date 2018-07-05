@@ -26,12 +26,15 @@ SOFTWARE.
 #include "material.h"
 #include "graphics\vulkan\graphics.h"
 
-redox::graphics::Material::Material(PipelineHandle pipeline) :
-	_pipeline(std::move(pipeline)) {
+redox::graphics::Material::Material(PipelineHandle pipeline, const DescriptorSet& descSet) :
+	_pipeline(std::move(pipeline)),
+	_descSet(descSet),
+	_textures(TextureKeys::INVALID) {
 }
 
 void redox::graphics::Material::bind(const CommandBuffer& commandBuffer) {
 	_pipeline->bind(commandBuffer);
+	_descSet.bind(commandBuffer, *_pipeline);
 }
 
 void redox::graphics::Material::upload(const CommandBuffer& commandBuffer) {
@@ -42,7 +45,7 @@ void redox::graphics::Material::set_buffer(BufferKeys key, const UniformBuffer& 
 
 	switch (key) {
 	case redox::graphics::BufferKeys::MVP:
-		_pipeline->bind_resource(buffer, 0);
+		_descSet.bind_resource(buffer, 0);
 		break;
 	}
 }
@@ -51,8 +54,9 @@ void redox::graphics::Material::set_texture(TextureKeys key, Resource<SampleText
 
 	switch (key) {
 	case redox::graphics::TextureKeys::ALBEDO:
-		_albedoTexture = std::move(texture);
-		_pipeline->bind_resource(*_albedoTexture, 1);
+		_descSet.bind_resource(*texture, 1);
 		break;
 	}
+
+	_textures.push(key, std::move(texture));
 }

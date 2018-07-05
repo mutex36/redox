@@ -25,19 +25,17 @@ SOFTWARE.
 */
 #include "model_factory.h"
 #include "texture_factory.h"
-#include "shader_factory.h"
 
 #include "graphics/vulkan/pipeline_cache.h"
 #include "resources/importer/gltf_importer.h"
 #include "core/profiling/profiler.h"
 
-redox::graphics::ModelFactory::ModelFactory(const Graphics& graphics, const PipelineCache& pipelineCache,
-	const UniformBuffer& ubo, const ShaderFactory& shaderFactory, const TextureFactory& textureFactory) :
-_graphicsRef(graphics),
+redox::graphics::ModelFactory::ModelFactory(const PipelineCache& pipelineCache,
+	const UniformBuffer& ubo, const TextureFactory& textureFactory, const DescriptorPool& dscPool) :
 _pipelineCacheRef(pipelineCache),
 _uboRef(ubo),
-_shaderFactoryRef(shaderFactory),
-_textureFactoryRef(textureFactory) {
+_textureFactoryRef(textureFactory),
+_descPoolRef(dscPool) {
 }
 
 redox::Resource<redox::graphics::Model> redox::graphics::ModelFactory::load_impl(const String& path) const {
@@ -76,7 +74,7 @@ redox::Resource<redox::graphics::Model> redox::graphics::ModelFactory::load_impl
 		}
 
 		meshes.emplace(construct_tag{}, std::move(vertices),
-			std::move(mesh.indices), std::move(submeshes), _graphicsRef);
+			std::move(mesh.indices), std::move(submeshes));
 	}
 
 	//import materials
@@ -86,12 +84,11 @@ redox::Resource<redox::graphics::Model> redox::graphics::ModelFactory::load_impl
 	for (std::size_t i = 0; i < importer.material_count(); i++) {
 		auto impMat = importer.import_material(i);
 
-		auto vs = _shaderFactoryRef.load(RDX_ASSET("shader\\vert.spv"));
-		auto fs = _shaderFactoryRef.load(RDX_ASSET("shader\\frag.spv"));
 		auto albedoTexture = _textureFactoryRef.load(RDX_FIND_ASSET("textures\\", impMat.albedoMap));
 		auto pipeline = _pipelineCacheRef.load(PipelineType::DEFAULT_MESH_PIPELINE);
+		auto dset = _descPoolRef.allocate(pipeline->descriptorLayout());
 
-		auto& material = materials.emplace(construct_tag{}, pipeline);
+		auto& material = materials.emplace(construct_tag{}, pipeline, dset);
 
 		material->set_texture(TextureKeys::ALBEDO, std::move(albedoTexture));
 		material->set_buffer(BufferKeys::MVP, _uboRef);

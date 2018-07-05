@@ -31,27 +31,21 @@ SOFTWARE.
 #include "core\utility.h"
 #include "core\error.h"
 
+#include <thirdparty/function_ref/function_ref.hpp>
+
 namespace redox::graphics {
 	class CommandBuffer;
 	class Texture;
 
 	class Buffer : public NonCopyable {
 	public:
-		Buffer(VkDeviceSize size, const Graphics& graphicsRef, 
-			VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags);
+		Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags);
 		~Buffer();
 
 		VkDeviceSize size() const;
 		VkBuffer handle() const;
 
-		template<class Fn>
-		void map(Fn&& fn) const {
-			void* data;
-			vkMapMemory(_graphicsRef.device(), _memory, 0, _size, 0, &data);
-			fn(data);
-			vkUnmapMemory(_graphicsRef.device(), _memory);
-		}
-
+		void map(tl::function_ref<void(void*)> fn) const;
 		void copy_to(const Buffer& other, const CommandBuffer& commandBuffer);
 		void copy_to(const Texture& texture, const CommandBuffer& commandBuffer);
 
@@ -59,13 +53,11 @@ namespace redox::graphics {
 		VkBuffer _handle;
 		VkDeviceMemory _memory;
 		VkDeviceSize _size;
-
-		const Graphics& _graphicsRef;
 	};
 
 	class StagedBuffer : public NonCopyable {
 	public:
-		StagedBuffer(VkDeviceSize size, const Graphics& graphics, VkBufferUsageFlags usage);
+		StagedBuffer(VkDeviceSize size, VkBufferUsageFlags usage);
 		~StagedBuffer() = default;
 
 		template<class Fn>
@@ -82,20 +74,20 @@ namespace redox::graphics {
 	};
 
 	struct UniformBuffer : public StagedBuffer {
-		UniformBuffer(VkDeviceSize size, const Graphics& graphics) :
-			StagedBuffer(size, graphics, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) {
+		UniformBuffer(VkDeviceSize size) :
+			StagedBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) {
 		}
 	};
 
 	struct VertexBuffer : public StagedBuffer {
-		VertexBuffer(VkDeviceSize size, const Graphics& graphics) :
-			StagedBuffer(size, graphics, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
+		VertexBuffer(VkDeviceSize size) :
+			StagedBuffer(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
 		}
 	};
 
 	struct IndexBuffer : public StagedBuffer {
-		IndexBuffer(VkDeviceSize size, const Graphics& graphics) :
-			StagedBuffer(size, graphics, VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+		IndexBuffer(VkDeviceSize size) :
+			StagedBuffer(size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
 		}
 	};
 }

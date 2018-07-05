@@ -57,7 +57,6 @@ namespace redox {
 	template<class Fn>
 	struct scope_guard {
 		scope_guard(Fn&& fn) : _fn(std::move(fn)) {}
-		scope_guard(const Fn&) = delete;
 		~scope_guard() { _fn(); }
 
 		Fn _fn;
@@ -67,6 +66,14 @@ namespace redox {
 	scope_guard<Fn> make_scope_guard(Fn&& fn) {
 		return scope_guard<Fn>(std::forward<Fn>(fn));
 	}
+
+	template<class M>
+	struct member_type_wrapper {
+		using type = M;
+	};
+
+	template <class T, class M>
+	member_type_wrapper<M> member_type(M T:: *);
 }
 
 //####UTIL####

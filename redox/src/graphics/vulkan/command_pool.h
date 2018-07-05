@@ -30,37 +30,28 @@ SOFTWARE.
 #include "resources/mesh.h"
 #include "resources/material.h"
 
+#include <thirdparty/function_ref/function_ref.hpp>
+
 namespace redox::graphics {
 	class Graphics;
+
+	struct VertexRange {
+		uint32_t start, end;
+	};
 
 	struct IndexedDraw {
 		Resource<Mesh> mesh;
 		Resource<Material> material;
-		uint32_t vertexOffset;
-		uint32_t vertexCount;
+		VertexRange range;
 	};
 
-	class CommandBuffer : public NonCopyable {
+	class CommandBuffer {
 	public:
 		CommandBuffer(VkCommandBuffer handle);
 		~CommandBuffer() = default;
 
 		void submit(const IndexedDraw& command) const;
-
-		template<class Fn>
-		void record(Fn&& fn) const {
-			VkCommandBufferBeginInfo beginInfo{};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-			if (vkBeginCommandBuffer(_handle, &beginInfo) != VK_SUCCESS)
-				throw Exception("failed to begin recording of commandBuffer");
-
-			fn();
-
-			if (vkEndCommandBuffer(_handle) != VK_SUCCESS)
-				throw Exception("failed to end recording of commandBuffer");
-		}
+		void record(tl::function_ref<void()> fn) const;
 
 		VkCommandBuffer handle() const;
 
@@ -68,43 +59,14 @@ namespace redox::graphics {
 		VkCommandBuffer _handle;
 	};
 
-	class CommandPool {
+	class CommandPool : public NonCopyable {
 	public:
-		CommandPool(const Graphics& graphics,
-			VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+		CommandPool(VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 		~CommandPool();
 
 		void free_all();
 		void allocate(uint32_t numBuffers);
-
-		template<class Fn>
-		void quick_submit(Fn&& fn) const {
-			VkCommandBufferAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = _handle;
-			allocInfo.commandBufferCount = 1;
-
-			VkCommandBuffer commandBuffer;
-			vkAllocateCommandBuffers(_graphicsRef.device(), &allocInfo, &commandBuffer);
-
-			VkCommandBufferBeginInfo beginInfo{};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-			vkBeginCommandBuffer(commandBuffer, &beginInfo);
-			fn(CommandBuffer{ commandBuffer });
-			vkEndCommandBuffer(commandBuffer);
-
-			VkSubmitInfo submitInfo{};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffer;
-
-			vkQueueSubmit(_graphicsRef.graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
-			vkQueueWaitIdle(_graphicsRef.graphics_queue());
-			vkFreeCommandBuffers(_graphicsRef.device(), _handle, 1, &commandBuffer);
-		}
+		void quick_submit(tl::function_ref<void(const CommandBuffer&)> fn) const;
 
 		CommandBuffer operator[](std::size_t index) const;
 
@@ -113,7 +75,5 @@ namespace redox::graphics {
 
 		VkCommandPool _handle;
 		redox::Buffer<VkCommandBuffer> _commandBuffers;
-
-		const Graphics& _graphicsRef;
 	};
 }

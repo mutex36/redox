@@ -28,26 +28,25 @@ SOFTWARE.
 #include "graphics\vulkan\resources\model.h"
 
 namespace redox::graphics {
-	class Graphics;
-	class ShaderFactory;
+
 	class TextureFactory;
 	class PipelineCache;
+	class DescriptorPool;
 
 	class ModelFactory : public ResourceFactory<ModelFactory, Model> {
 		friend class ResourceFactory<ModelFactory, Model>;
 
 	public:
-		ModelFactory(const Graphics& graphics, const PipelineCache& pipelineCache,
-			const UniformBuffer& ubo, const ShaderFactory& shaderFactory, const TextureFactory& textureFactory);
+		ModelFactory(const PipelineCache& pipelineCache,
+			const UniformBuffer& ubo, const TextureFactory& textureFactory, const DescriptorPool& dscPool);
 
 	protected:
 		Resource<Model> load_impl(const String& path) const;
 
 	private:
-		const Graphics& _graphicsRef;
 		const UniformBuffer& _uboRef;
 		const PipelineCache& _pipelineCacheRef;
-		const ShaderFactory& _shaderFactoryRef;
 		const TextureFactory& _textureFactoryRef;
+		const DescriptorPool& _descPoolRef;
 	};
 }

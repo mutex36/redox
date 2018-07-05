@@ -37,8 +37,9 @@ static const redox::String
 #define RDX_FIND_ASSET(folder, file) RDX_RESOURCE_PATH + folder + file
 #define RDX_CONFIG_ASSET(file) RDX_CONFIG_PATH + file
 
+
 namespace redox {
-	
+
 	template<class T>
 	using Resource = RefCounted<T>;
 

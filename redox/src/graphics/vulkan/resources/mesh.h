@@ -29,7 +29,6 @@ SOFTWARE.
 #include "math\math.h"
 
 namespace redox::graphics {
-	class Graphics;
 	class CommandBuffer;
 
 	struct MeshVertex {
@@ -47,7 +46,7 @@ namespace redox::graphics {
 	class Mesh : public NonCopyable {
 	public:
 		Mesh(const redox::Buffer<MeshVertex>& vertices, 
-			const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes, const Graphics& graphics);
+			const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes);
 		~Mesh() = default;
 
 		void bind(const CommandBuffer& commandBuffer);
@@ -66,7 +65,5 @@ namespace redox::graphics {
 
 		IndexBuffer _indexBuffer;
 		VertexBuffer _vertexBuffer;
-
-		const Graphics& _graphicsRef;
 	};
 }

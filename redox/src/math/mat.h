@@ -53,45 +53,13 @@ namespace redox::math {
 		}
 
 		_RDX_INLINE Mat44 operator+(const Mat44& rhs) const {
-			return { 
-				simd::add(_xmm[0], rhs._xmm[0]), 
+			return {
+				simd::add(_xmm[0], rhs._xmm[0]),
 				simd::add(_xmm[1], rhs._xmm[1]),
 				simd::add(_xmm[2], rhs._xmm[2]),
 				simd::add(_xmm[3], rhs._xmm[3])
 			};
 		}
-
-		//_RDX_INLINE Mat44 inverse() const {
-	
-		//	//https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
-		//	//// transpose 3x3, we know m03 = m13 = m23 = 0
-		//	//__m128 t0 = VecShuffle_0101(inM.mVec[0], inM.mVec[1]); // 00, 01, 10, 11
-		//	//__m128 t1 = VecShuffle_2323(inM.mVec[0], inM.mVec[1]); // 02, 03, 12, 13
-		//	//r.mVec[0] = VecShuffle(t0, inM.mVec[2], 0, 2, 0, 3); // 00, 10, 20, 23(=0)
-		//	//r.mVec[1] = VecShuffle(t0, inM.mVec[2], 1, 3, 1, 3); // 01, 11, 21, 23(=0)
-		//	//r.mVec[2] = VecShuffle(t1, inM.mVec[2], 0, 2, 2, 3); // 02, 12, 22, 23(=0)
-
-		//	//													 // last line
-		//	//r.mVec[3] = _mm_mul_ps(r.mVec[0], VecSwizzle1(inM.mVec[3], 0));
-		//	//r.mVec[3] = _mm_add_ps(r.mVec[3], _mm_mul_ps(r.mVec[1], VecSwizzle1(inM.mVec[3], 1)));
-		//	//r.mVec[3] = _mm_add_ps(r.mVec[3], _mm_mul_ps(r.mVec[2], VecSwizzle1(inM.mVec[3], 2)));
-		//	//r.mVec[3] = _mm_sub_ps(_mm_setr_ps(0.f, 0.f, 0.f, 1.f), r.mVec[3]);s
-
-
-		//	//auto t0 = simd::shuffle<0, 1, 0, 1>(_xmm[0], _xmm[1]);
-		//	//auto t1 = simd::shuffle<2, 3, 2, 3>(_xmm[0], _xmm[1]);
-
-		//	//auto r0 = simd::shuffle<0, 2, 0, 3>(t0, _xmm[2]);
-		//	//auto r1 = simd::shuffle<1, 3, 1, 3>(t0, _xmm[2]);
-		//	//auto r2 = simd::shuffle<0, 2, 2, 3>(t1, _xmm[2]);
-		//	//
-		//	//auto r3 = simd::mul(r0,			 simd::swizzle1<0>(_xmm[3]));
-		//	//r3 = simd::add(r3, simd::mul(r1, simd::swizzle1<1>(_xmm[3])));
-		//	//r3 = simd::add(r3, simd::mul(r2, simd::swizzle1<2>(_xmm[3])));
-		//	//r3 = simd::sub(simd::set(0.0f, 0.0f, 0.0f, 1.0f), r3);
-
-		//	return { r0, r1, r2, r3 };
-		//}
 
 		_RDX_INLINE static Mat44 identity() {
 			return {

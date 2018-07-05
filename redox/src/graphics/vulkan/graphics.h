@@ -33,6 +33,12 @@ SOFTWARE.
 namespace redox::graphics {
 	class Graphics {
 	public:
+
+		//For convenience the active instance of graphics will
+		//be exposed globally via this variable. It's probably not the best way
+		//but arguably better than manual dependency injection
+		static Graphics* instance;
+
 		Graphics(const platform::Window& window, const Configuration& config);
 		~Graphics();
 

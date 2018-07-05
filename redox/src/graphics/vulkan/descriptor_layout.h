@@ -24,25 +24,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "graphics\vulkan\vulkan.h"
-
-#include "core\core.h"
-#include "core\string.h"
-#include "resources\factory.h"
-
-#include "platform\filesystem.h"
+#include "core/buffer.h"
+#include "vulkan.h"
 
 namespace redox::graphics {
-
-	class Shader : public NonCopyable
-	{
-	public:
-		Shader(const redox::Buffer<i8>& buffer);
-		~Shader();
-
-		VkShaderModule handle() const;
-
-	private:
-		VkShaderModule _handle;
+	
+	struct DescriptorLayout {
+		redox::Buffer<VkDescriptorSetLayoutBinding> bindings;
 	};
+
 }

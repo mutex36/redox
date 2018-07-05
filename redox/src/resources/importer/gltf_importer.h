@@ -32,7 +32,7 @@ SOFTWARE.
 #include <thirdparty/gltf/cgltf.h>
 
 namespace redox {
-	class GLTFImporter {
+	class GLTFImporter : public NonCopyable {
 	public:
 		GLTFImporter(const String& path);
 		~GLTFImporter();
@@ -68,8 +68,10 @@ namespace redox {
 		mesh_data import_mesh(std::size_t index);
 
 	private:
-		template<class ParseType, class Fn>
+		//template<class ParseType, class Fn>
 		void read_buffer(cgltf_buffer_view* bufferView, cgltf_accessor* accessor, Fn&& fn) {
+			auto it = 
+
 			if (!_buffers.has_key(bufferView->buffer->uri)) {
 				io::File blobFile(RDX_FIND_ASSET("meshes\\", bufferView->buffer->uri),
 					io::File::Mode::READ);

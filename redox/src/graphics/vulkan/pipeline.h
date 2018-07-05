@@ -28,7 +28,9 @@ SOFTWARE.
 #include "graphics.h"
 #include "sampler.h"
 #include "buffer.h"
+
 #include "vertex_layout.h"
+#include "descriptor_layout.h"
 
 #include "resources\shader.h"
 #include "resources\texture.h"
@@ -44,17 +46,20 @@ namespace redox::graphics {
 
 	class Pipeline {
 	public:
-		Pipeline(const Graphics& graphics, const RenderPass& renderPass, 
-			const VertexLayout& vLayout, const redox::Buffer<VkDescriptorSetLayoutBinding>& bindings,
+		Pipeline(const RenderPass& renderPass, 
+			const VertexLayout& vLayout, const DescriptorLayout& dLayout,
 			Resource<Shader> vs, Resource<Shader> fs);
 		~Pipeline();
 
 		void bind(const CommandBuffer& commandBuffer);
 		void set_viewport(const VkExtent2D& size);
 
+		VkPipelineLayout layout() const;
+		VkDescriptorSetLayout descriptorLayout() const;
+
 	private:
 		void _init(const VertexLayout& vLayout, const RenderPass& renderPass);
-		void _init_desriptors(const redox::Buffer<VkDescriptorSetLayoutBinding>& bindings);
+		void _init_desriptors(const DescriptorLayout& dLayout);
 		void _update_viewport(const CommandBuffer& commandBuffer);
 
 		VkPipeline _handle;
@@ -62,12 +67,7 @@ namespace redox::graphics {
 		VkExtent2D _viewport;
 
 		VkDescriptorSetLayout _descriptorSetLayout;
-		VkDescriptorPool _descriptorPool;
-		VkDescriptorSet _descriptorSet;
-
 		Resource<Shader> _vs;
 		Resource<Shader> _fs;
-
-		const Graphics& _graphicsRef;
 	};
 }

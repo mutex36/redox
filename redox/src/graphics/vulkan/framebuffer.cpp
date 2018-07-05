@@ -27,9 +27,8 @@ SOFTWARE.
 #include "graphics.h"
 #include "render_pass.h"
 
-redox::graphics::Framebuffer::Framebuffer(const Graphics& graphics, const RenderPass& rp,
-	VkImageView imageView, VkExtent2D extent) :
-_graphicsRef(graphics), _extent(extent) {
+redox::graphics::Framebuffer::Framebuffer(const RenderPass& rp, VkImageView imageView, VkExtent2D extent) 
+	:  _extent(extent) {
 
 	const VkImageView attachments[] = { imageView, rp.depth_texture().view() };
 
@@ -42,19 +41,16 @@ _graphicsRef(graphics), _extent(extent) {
 	framebufferInfo.height = extent.height;
 	framebufferInfo.layers = 1;
 
-	if (vkCreateFramebuffer(_graphicsRef.device(), &framebufferInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateFramebuffer(Graphics::instance->device(), &framebufferInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create frambuffer");
 }
 
 redox::graphics::Framebuffer::~Framebuffer() {
-	vkDestroyFramebuffer(_graphicsRef.device(), _handle, nullptr);
+	vkDestroyFramebuffer(Graphics::instance->device(), _handle, nullptr);
 }
 
 redox::graphics::Framebuffer::Framebuffer(Framebuffer&& ref) :
-	_handle(ref._handle),
-	_extent(ref._extent),
-	_graphicsRef(ref._graphicsRef) {
-
+	_handle(ref._handle), _extent(ref._extent) {
 }
 
 VkFramebuffer redox::graphics::Framebuffer::handle() const {

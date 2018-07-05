@@ -25,13 +25,11 @@ SOFTWARE.
 */
 #include "buffer.h"
 
-#include "command_buffer.h"
+#include "command_pool.h"
 #include "resources\texture.h"
 
-redox::graphics::Buffer::Buffer(VkDeviceSize size, const Graphics& graphicsRef,
-	VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags) :
-	_size(size),
-	_graphicsRef(graphicsRef) {
+redox::graphics::Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags) :
+	_size(size) {
 	
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -39,31 +37,31 @@ redox::graphics::Buffer::Buffer(VkDeviceSize size, const Graphics& graphicsRef,
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(_graphicsRef.device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateBuffer(Graphics::instance->device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create buffer");
 
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(_graphicsRef.device(), _handle, &memRequirements);
+	vkGetBufferMemoryRequirements(Graphics::instance->device(), _handle, &memRequirements);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
 
-	auto memType = _graphicsRef.pick_memory_type(memRequirements.memoryTypeBits, memFlags);
+	auto memType = Graphics::instance->pick_memory_type(memRequirements.memoryTypeBits, memFlags);
 	if (!memType)
 		throw Exception("failed to determine memory type");
 
 	allocInfo.memoryTypeIndex = memType.value();
 
-	if (vkAllocateMemory(_graphicsRef.device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
+	if (vkAllocateMemory(Graphics::instance->device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
 		throw Exception("failed to allocate vertex buffer memory");
 
-	vkBindBufferMemory(_graphicsRef.device(), _handle, _memory, 0);
+	vkBindBufferMemory(Graphics::instance->device(), _handle, _memory, 0);
 }
 
 redox::graphics::Buffer::~Buffer() {
-	vkDestroyBuffer(_graphicsRef.device(), _handle, nullptr);
-	vkFreeMemory(_graphicsRef.device(), _memory, nullptr);
+	vkDestroyBuffer(Graphics::instance->device(), _handle, nullptr);
+	vkFreeMemory(Graphics::instance->device(), _memory, nullptr);
 }
 
 VkDeviceSize redox::graphics::Buffer::size() const {
@@ -72,6 +70,13 @@ VkDeviceSize redox::graphics::Buffer::size() const {
 
 VkBuffer redox::graphics::Buffer::handle() const {
 	return _handle;
+}
+
+void redox::graphics::Buffer::map(tl::function_ref<void(void*)> fn) const {
+	void* data;
+	vkMapMemory(Graphics::instance->device(), _memory, 0, _size, 0, &data);
+	fn(data);
+	vkUnmapMemory(Graphics::instance->device(), _memory);
 }
 
 void redox::graphics::Buffer::copy_to(const Buffer& other, const CommandBuffer& commandBuffer) {
@@ -99,10 +104,9 @@ void redox::graphics::Buffer::copy_to(const Texture& texture, const CommandBuffe
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
 
-redox::graphics::StagedBuffer::StagedBuffer(VkDeviceSize size, const Graphics& graphics, VkBufferUsageFlags usage) :
-	_buffer(size, graphics, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
-	_stagingBuffer(size, graphics, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
+redox::graphics::StagedBuffer::StagedBuffer(VkDeviceSize size, VkBufferUsageFlags usage) :
+	_buffer(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+	_stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
 
 }
 

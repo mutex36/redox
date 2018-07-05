@@ -30,7 +30,6 @@ SOFTWARE.
 #include "core\buffer.h"
 
 #include "math\util.h"
-#include "logging\log.h"
 
 #include <limits> //std::numeric_limits
 
@@ -39,12 +38,9 @@ namespace redox {
 		class Allocator = allocation::DefaultAllocator<UnitType>>
 	class BaseBitset {
 	public:
-		static_assert(std::is_unsigned_v<UnitType>,
-			"UnitType should be unsigned");
-
+		static_assert(std::is_unsigned_v<UnitType>, "UnitType should be unsigned");
 		static constexpr auto bits_per_unit = sizeof(UnitType) * 8;
-		static constexpr auto unit_0ff_mask 
-			= std::numeric_limits<UnitType>::max();
+		static constexpr auto unit_0ff_mask = std::numeric_limits<UnitType>::max();
 
 		BaseBitset() : _size(0) {}
 		~BaseBitset() = default;

@@ -26,11 +26,10 @@ SOFTWARE.
 #include "render_pass.h"
 
 #include "graphics.h"
-#include "command_buffer.h"
+#include "command_pool.h"
 
-redox::graphics::RenderPass::RenderPass(const Graphics& graphics) :
-	_graphicsRef(graphics),
-	_depthTexture({500,500}, graphics) { //TODO: change
+redox::graphics::RenderPass::RenderPass() :
+	_depthTexture({500,500}) { //TODO: change
 
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -85,20 +84,19 @@ redox::graphics::RenderPass::RenderPass(const Graphics& graphics) :
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(_graphicsRef.device(), &renderPassInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateRenderPass(Graphics::instance->device(), &renderPassInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create render pass");
 }
 
 redox::graphics::RenderPass::~RenderPass() {
-	vkDestroyRenderPass(_graphicsRef.device(), _handle, nullptr);
+	vkDestroyRenderPass(Graphics::instance->device(), _handle, nullptr);
 }
 
 void redox::graphics::RenderPass::prepare_attachments(const CommandBuffer& commandBuffer) {
 	_depthTexture.prepare_layout(commandBuffer);
 }
 
-void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, 
-	const CommandBuffer& commandBuffer) const {
+void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) const {
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = _handle;

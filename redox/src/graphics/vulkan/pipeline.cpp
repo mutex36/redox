@@ -28,20 +28,20 @@ SOFTWARE.
 #include "command_pool.h"
 #include "render_pass.h"
 
-redox::graphics::Pipeline::Pipeline(const Graphics& graphics, const RenderPass& renderPass,
-	const VertexLayout& vLayout, const redox::Buffer<VkDescriptorSetLayoutBinding>& bindings, Resource<Shader> vs, Resource<Shader> fs) :
+redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass,
+	const VertexLayout& vLayout, const DescriptorLayout& dLayout, Resource<Shader> vs, Resource<Shader> fs) :
 	_vs(std::move(vs)),
 	_fs(std::move(fs)),
-	_graphicsRef(graphics) {
+	_viewport({ 500,500 }) {
 
-	_init_desriptors(bindings);
+	_init_desriptors(dLayout);
 	_init(vLayout, renderPass);
 }
 
 redox::graphics::Pipeline::~Pipeline() {
-	vkDestroyDescriptorSetLayout(_graphicsRef.device(), _descriptorSetLayout, nullptr);
-	vkDestroyPipeline(_graphicsRef.device(), _handle, nullptr);
-	vkDestroyPipelineLayout(_graphicsRef.device(), _layout, nullptr);
+	vkDestroyDescriptorSetLayout(Graphics::instance->device(), _descriptorSetLayout, nullptr);
+	vkDestroyPipeline(Graphics::instance->device(), _handle, nullptr);
+	vkDestroyPipelineLayout(Graphics::instance->device(), _layout, nullptr);
 }
 
 void redox::graphics::Pipeline::bind(const CommandBuffer& commandBuffer) {
@@ -51,6 +51,14 @@ void redox::graphics::Pipeline::bind(const CommandBuffer& commandBuffer) {
 
 void redox::graphics::Pipeline::set_viewport(const VkExtent2D& size) {
 	_viewport = size;
+}
+
+VkPipelineLayout redox::graphics::Pipeline::layout() const {
+	return _layout;
+}
+
+VkDescriptorSetLayout redox::graphics::Pipeline::descriptorLayout() const {
+	return _descriptorSetLayout;
 }
 
 void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderPass& renderPass) {
@@ -119,7 +127,7 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	pipelineLayoutInfo.setLayoutCount = 1;
 	pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
 
-	if (vkCreatePipelineLayout(_graphicsRef.device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(Graphics::instance->device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS)
 		throw Exception("failed to create pipeline layout");
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -162,21 +170,20 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(
-		_graphicsRef.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS)
+		Graphics::instance->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS)
 			throw Exception("failed to create pipeline");
 }
 
-void redox::graphics::Pipeline::_init_desriptors(const redox::Buffer<VkDescriptorSetLayoutBinding>& bindings) {
+void redox::graphics::Pipeline::_init_desriptors(const DescriptorLayout& dLayout) {
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
+	layoutInfo.bindingCount = static_cast<uint32_t>(dLayout.bindings.size());
+	layoutInfo.pBindings = dLayout.bindings.data();
 	//VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 
-	if (vkCreateDescriptorSetLayout(_graphicsRef.device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
+	if (vkCreateDescriptorSetLayout(Graphics::instance->device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
 		throw Exception("failed to create descriptor set layout");
-
 }
 
 void redox::graphics::Pipeline::_update_viewport(const CommandBuffer& commandBuffer) {

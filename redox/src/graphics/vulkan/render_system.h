@@ -35,6 +35,7 @@ SOFTWARE.
 #include "swapchain.h"
 #include "command_pool.h"
 #include "render_pass.h"
+#include "descriptor_pool.h"
 
 #include "factory\model_factory.h"
 #include "factory\shader_factory.h"
@@ -64,6 +65,7 @@ namespace redox::graphics {
 
 		Graphics _graphics;
 		CommandPool _auxCommandPool;
+		DescriptorPool _descriptorPool;
 		RenderPass _renderPass;
 
 		UniformBuffer _mvpBuffer;
@@ -72,6 +74,7 @@ namespace redox::graphics {
 		ModelFactory _modelFactory;
 
 		PipelineCache _pipelineCache;
+		Sampler _defaultSampler;
 
 		//@DEMO
 		Resource<Model> _demoModel;

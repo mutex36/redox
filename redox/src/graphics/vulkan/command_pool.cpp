@@ -26,17 +26,16 @@ SOFTWARE.
 #include "command_pool.h"
 #include "graphics.h"
 
-redox::graphics::CommandPool::CommandPool(const Graphics& graphics, VkCommandPoolCreateFlags flags) :
-	_graphicsRef(graphics) {
+redox::graphics::CommandPool::CommandPool(VkCommandPoolCreateFlags flags) {
 	_init(flags);
 }
 
 redox::graphics::CommandPool::~CommandPool() {
-	vkDestroyCommandPool(_graphicsRef.device(), _handle, nullptr);
+	vkDestroyCommandPool(Graphics::instance->device(), _handle, nullptr);
 }
 
 void redox::graphics::CommandPool::free_all() {
-	vkFreeCommandBuffers(_graphicsRef.device(), 
+	vkFreeCommandBuffers(Graphics::instance->device(),
 		_handle, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
@@ -49,8 +48,37 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = static_cast<uint32_t>(_commandBuffers.size());
 
-	if (vkAllocateCommandBuffers(_graphicsRef.device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(Graphics::instance->device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
 		throw Exception("failed to create commandbuffers");
+}
+
+void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const CommandBuffer&)> fn) const {
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = _handle;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(Graphics::instance->device(), &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	fn(CommandBuffer{ commandBuffer });
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(Graphics::instance->graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(Graphics::instance->graphics_queue());
+	vkFreeCommandBuffers(Graphics::instance->device(), _handle, 1, &commandBuffer);
 }
 
 redox::graphics::CommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {
@@ -61,10 +89,10 @@ void redox::graphics::CommandPool::_init(VkCommandPoolCreateFlags flags) {
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = _graphicsRef.queue_family();
+	poolInfo.queueFamilyIndex = Graphics::instance->queue_family();
 	poolInfo.flags = flags; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-	if (vkCreateCommandPool(_graphicsRef.device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateCommandPool(Graphics::instance->device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create commandpool");
 }
 
@@ -75,7 +103,21 @@ redox::graphics::CommandBuffer::CommandBuffer(VkCommandBuffer handle) :
 void redox::graphics::CommandBuffer::submit(const IndexedDraw& command) const {
 	command.material->bind(_handle);
 	command.mesh->bind(_handle);
-	vkCmdDrawIndexed(_handle, command.vertexCount, 1, command.vertexOffset, 0, 0);
+	vkCmdDrawIndexed(_handle, command.range.start, 1, command.range.end, 0, 0);
+}
+
+void redox::graphics::CommandBuffer::record(tl::function_ref<void()> fn) const {
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+	if (vkBeginCommandBuffer(_handle, &beginInfo) != VK_SUCCESS)
+		throw Exception("failed to begin recording of commandBuffer");
+
+	fn();
+
+	if (vkEndCommandBuffer(_handle) != VK_SUCCESS)
+		throw Exception("failed to end recording of commandBuffer");
 }
 
 VkCommandBuffer redox::graphics::CommandBuffer::handle() const {

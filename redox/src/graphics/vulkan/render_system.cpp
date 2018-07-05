@@ -36,14 +36,12 @@ SOFTWARE.
 
 redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config) :
 	_graphics(window, config),
-	_renderPass(_graphics),
-	_swapchain(_graphics, _renderPass, std::bind(&RenderSystem::_swapchain_event_create, this)),
-	_mvpBuffer(sizeof(mvp_uniform), _graphics),
-	_shaderFactory(_graphics),
-	_textureFactory(_graphics),
-	_modelFactory(_graphics, _pipelineCache, _mvpBuffer, _shaderFactory, _textureFactory),
-	_auxCommandPool(_graphics, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
-	_pipelineCache(_graphics, _renderPass, _shaderFactory) {
+	_swapchain(_renderPass, std::bind(&RenderSystem::_swapchain_event_create, this)),
+	_mvpBuffer(sizeof(mvp_uniform)),
+	_modelFactory(_pipelineCache, _mvpBuffer, _textureFactory, _descriptorPool),
+	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
+	_pipelineCache(_renderPass, _shaderFactory),
+	_descriptorPool(5, 20, 20) {
 
 	_demoModel = _modelFactory.load(RDX_ASSET("meshes\\centurion.gltf"));
 
@@ -85,8 +83,8 @@ void redox::graphics::RenderSystem::_demo_draw(const CommandBuffer& commandBuffe
 		IndexedDraw drawCmd;
 		drawCmd.mesh = mesh;
 		drawCmd.material = _demoModel->materials()[sm.materialIndex];
-		drawCmd.vertexOffset = sm.vertexOffset;
-		drawCmd.vertexCount = sm.vertexCount;
+		drawCmd.range.start = sm.vertexOffset;
+		drawCmd.range.end = sm.vertexCount;
 
 		commandBuffer.submit(drawCmd);
 	}

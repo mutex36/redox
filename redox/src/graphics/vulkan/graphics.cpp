@@ -26,12 +26,16 @@ SOFTWARE.
 #include "graphics.h"
 #include "core\utility.h"
 
+redox::graphics::Graphics* redox::graphics::Graphics::instance = nullptr;
+
 redox::graphics::Graphics::Graphics(const platform::Window& window, const Configuration& config) :
 	_configRef(config) {
 	_init_instance();
 	_init_physical_device();
 	_init_surface(window);
 	_init_device();
+
+	Graphics::instance = this;
 }
 
 redox::graphics::Graphics::~Graphics() {

@@ -143,7 +143,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir);$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir);$(ProjectDir)src;$(ProjectDir)thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -192,9 +192,11 @@
   <ItemGroup>
     <ClInclude Include="src\core\config\config.h" />
     <ClInclude Include="src\core\hash.h" />
+    <ClInclude Include="src\core\iterator.h" />
     <ClInclude Include="src\core\meta\reflection.h" />
     <ClInclude Include="src\core\meta\type_hash.h" />
     <ClInclude Include="src\core\ref_counted.h" />
+    <ClInclude Include="src\graphics\vulkan\descriptor_layout.h" />
     <ClInclude Include="src\graphics\vulkan\descriptor_pool.h" />
     <ClInclude Include="src\graphics\vulkan\buffer.h" />
     <ClInclude Include="src\graphics\vulkan\factory\model_factory.h" />

@@ -28,12 +28,11 @@ SOFTWARE.
 #include "core\non_copyable.h"
 
 namespace redox::graphics {
-	class Graphics;
 	class RenderPass;
 
 	class Framebuffer : public NonCopyable {
 	public:
-		Framebuffer(const Graphics& graphics, const RenderPass& rp, VkImageView imageView, VkExtent2D extent);
+		Framebuffer(const RenderPass& rp, VkImageView imageView, VkExtent2D extent);
 		~Framebuffer();
 
 		Framebuffer(Framebuffer&&);
@@ -45,7 +44,5 @@ namespace redox::graphics {
 	private:
 		VkFramebuffer _handle;
 		VkExtent2D _extent;
-
-		const Graphics& _graphicsRef;
 	};
 }

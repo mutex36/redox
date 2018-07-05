@@ -33,13 +33,7 @@ namespace redox::graphics {
 	class TextureFactory : public ResourceFactory<TextureFactory, SampleTexture> {
 		friend class ResourceFactory<TextureFactory, SampleTexture>;
 
-	public:
-		TextureFactory(const Graphics& graphics);
-
 	protected:
 		Resource<SampleTexture> load_impl(const String& path) const;
-
-	private:
-		const Graphics& _graphicsRef;
 	};
 }

@@ -26,8 +26,7 @@ SOFTWARE.
 #include "sampler.h"
 #include "graphics.h"
 
-redox::graphics::Sampler::Sampler(const Graphics& graphics) :
-	_graphicsRef(graphics) {
+redox::graphics::Sampler::Sampler() {
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -47,12 +46,12 @@ redox::graphics::Sampler::Sampler(const Graphics& graphics) :
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
 
-	if (vkCreateSampler(_graphicsRef.device(), &samplerInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateSampler(Graphics::instance->device() , &samplerInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create texture sampler");
 }
 
 redox::graphics::Sampler::~Sampler() {
-	vkDestroySampler(_graphicsRef.device(), _handle, nullptr);
+	vkDestroySampler(Graphics::instance->device(), _handle, nullptr);
 }
 
 VkSampler redox::graphics::Sampler::handle() const {

@@ -28,13 +28,12 @@ SOFTWARE.
 #include "graphics\vulkan\command_pool.h"
 
 redox::graphics::Mesh::Mesh(const redox::Buffer<MeshVertex>& vertices,
-	const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes, const Graphics& graphics) :
-	_graphicsRef(graphics),
+	const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes) :
 	_vertexCount(vertices.size()),
 	_indexCount(indices.size()),
 	_submeshes(std::move(submeshes)),
-	_vertexBuffer(vertices.byte_size(), graphics),
-	_indexBuffer(indices.byte_size(), graphics) {
+	_vertexBuffer(vertices.byte_size()),
+	_indexBuffer(indices.byte_size()) {
 
 	_vertexBuffer.map([&vertices](void* dest) {
 		std::memcpy(dest, vertices.data(), vertices.byte_size());

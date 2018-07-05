@@ -28,20 +28,19 @@ SOFTWARE.
 
 #include "platform\filesystem.h"
 
-redox::graphics::Shader::Shader(const redox::Buffer<i8>& buffer, const Graphics& graphics) :
-	_graphicsRef(graphics) {
+redox::graphics::Shader::Shader(const redox::Buffer<i8>& buffer) {
 
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = buffer.size();
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.data());
 
-	if (vkCreateShaderModule(_graphicsRef.device(), &createInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateShaderModule(Graphics::instance->device(), &createInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create shader module");
 }
 
 redox::graphics::Shader::~Shader() {
-	vkDestroyShaderModule(_graphicsRef.device(), _handle, nullptr);
+	vkDestroyShaderModule(Graphics::instance->device(), _handle, nullptr);
 }
 
 VkShaderModule redox::graphics::Shader::handle() const {

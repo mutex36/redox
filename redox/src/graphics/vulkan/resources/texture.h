@@ -30,13 +30,16 @@ SOFTWARE.
 
 #include "graphics\vulkan\vulkan.h"
 #include "graphics\vulkan\buffer.h"
+#include "graphics\vulkan\sampler.h"
 
 namespace redox::graphics {
-	class Graphics;
 	class CommandBuffer;
 
 	class Texture : public NonCopyable {
 	public:
+		Texture(VkFormat format, const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
+		~Texture();
+
 		VkImage handle() const;
 		VkImageView view() const;
 
@@ -44,17 +47,16 @@ namespace redox::graphics {
 
 		const VkExtent2D& dimension() const;
 		const VkFormat& format() const;
+		const Sampler& sampler() const;
 	
-		Texture(VkFormat format, const VkExtent2D& size, 
-			VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags, const Graphics& graphics);
-		~Texture();
-
 	protected:
 		void _destroy();
 		void _init();
 		void _init_view();
 		void _transfer_layout(VkImageLayout oldLayout, VkImageLayout newLayout, 
 			const CommandBuffer& commandBuffer) const;
+
+		Sampler _sampler;
 
 		VkImage _handle;
 		VkImageView _view;
@@ -64,14 +66,12 @@ namespace redox::graphics {
 		VkDeviceMemory _memory;
 		VkFormat _format;
 		VkExtent2D _dimensions;
-
-		const Graphics& _graphicsRef;
 	};
 
 	class StagedTexture : public Texture {
 	public:
 		StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format,
-			const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags, const Graphics& graphics);
+			const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
 
 		~StagedTexture() = default;
 
@@ -83,13 +83,12 @@ namespace redox::graphics {
 
 	class SampleTexture : public StagedTexture {
 	public:
-		SampleTexture(const redox::Buffer<byte>& pixels,
-			VkFormat format, const VkExtent2D& size, const Graphics& graphics);
+		SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size);
 	};
 
 	class DepthTexture : public Texture {
 	public:
-		DepthTexture(const VkExtent2D& size, const Graphics& graphics);
+		DepthTexture(const VkExtent2D& size);
 
 		void prepare_layout(const CommandBuffer& commandBuffer) const;
 	};

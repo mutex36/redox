@@ -33,13 +33,8 @@ namespace redox::graphics {
 	class ShaderFactory : public ResourceFactory<ShaderFactory, Shader> {
 		friend class ResourceFactory<ShaderFactory, Shader>;
 
-	public:
-		ShaderFactory(const Graphics& graphics);
-
 	protected:
 		Resource<Shader> load_impl(const String& path) const;
 
-	private:
-		const Graphics& _graphicsRef;
 	};
 }

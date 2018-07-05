@@ -28,16 +28,16 @@ SOFTWARE.
 #include "core/non_copyable.h"
 #include "core/buffer.h"
 
+#include "graphics\vulkan\descriptor_pool.h"
 #include "graphics\vulkan\vulkan.h"
 #include "graphics\vulkan\pipeline_cache.h"
 #include "shader.h"
 
 namespace redox::graphics {
-	class Graphics;
 	class CommandBuffer;
 
 	enum class TextureKeys {
-		ALBEDO, ROUGHNESS_METALNESS, NORMAL, DISPLACEMENT, LIGHT, OCCLUSION
+		ALBEDO, ROUGHNESS_METALNESS, NORMAL, DISPLACEMENT, LIGHT, OCCLUSION, INVALID
 	};
 
 	enum class BufferKeys {
@@ -46,7 +46,7 @@ namespace redox::graphics {
 
 	class Material : public NonCopyable {
 	public:
-		Material(PipelineHandle pipeline);
+		Material(PipelineHandle pipeline, const DescriptorSet& descSet);
 
 		void bind(const CommandBuffer& commandBuffer);
 		void upload(const CommandBuffer& commandBuffer);
@@ -55,9 +55,9 @@ namespace redox::graphics {
 		void set_texture(TextureKeys key, Resource<SampleTexture> texture);
 
 	private:
+		DescriptorSet _descSet;
 		PipelineHandle _pipeline;
 
-		Resource<SampleTexture> _albedoTexture;
-		Resource<SampleTexture> _normalTexture;
+		redox::Hashmap<TextureKeys, Resource<SampleTexture>> _textures;
 	};
 }

@@ -26,7 +26,7 @@ SOFTWARE.
 #pragma once
 #include "buffer.h"
 #include "hash.h"
-#include "bitset.h"
+#include "iterator.h"
 
 #include "allocation\default_allocator.h"
 #include "allocation\growth_policy.h"
@@ -39,8 +39,7 @@ namespace redox {
 		struct node {
 			template<class _Key, class...ValueArgs>
 			node(_Key&& key, ValueArgs&&...args) :
-				key(std::forward<_Key>(key)),
-				value(std::forward<ValueArgs>(args)...) {
+				key(std::forward<_Key>(key)), value(std::forward<ValueArgs>(args)...) {
 			}
 
 			Key key;
@@ -62,6 +61,7 @@ namespace redox {
 				return (slot + index) % n;
 			}
 		};
+
 	}
 
 	template<class Key, class Value,
@@ -72,12 +72,24 @@ namespace redox {
 	public:
 		using node_type = detail::node<Key, Value>;
 		using size_type = std::size_t;
+		
+		struct iterator : public Iterator<node_type, iterator> {
+			void increment() {
+				_ptr++;
+			}
+
+			void decrement() {
+				_ptr--;
+			}
+		};
 
 		template<class _Key,
 			class = std::enable_if_t<std::is_constructible_v<Key, std::decay_t<_Key>>>>
 		Hashmap(_Key&& nullKey) :
 			_nullKey(std::forward<_Key>(nullKey)),
-			_data(nullptr), _size(0), _slots(0) {
+			_data(nullptr),
+			_size(0),
+			_slots(0) {
 		}
 
 		template<class _Key,
@@ -128,19 +140,14 @@ namespace redox {
 			return _emplace_no_checks(std::forward<_Key>(key), std::forward<Args>(args)...);
 		}
 
-		_RDX_INLINE bool has_key(const Key& key) const {
-			return _find_key(key).has_value();
-		}
-
-		_RDX_INLINE const Value* get(const Key& key) const {
+		_RDX_INLINE iterator_type get(const Key& key) const {
 			auto slot = _find_key(key);
 			if (slot)
-				//TODO: std::optional<&>
-				return std::addressof(_data[slot.value()].value);
-			return nullptr;
+				return { _data + slot.value(), _nullKey };
+			return end();
 		}
 
-		_RDX_INLINE void resize(std::size_t slots) {
+		void resize(std::size_t slots) {
 			if (slots <= _slots) return;
 			auto oldData = _data;
 			auto oldSlots = _slots;
@@ -169,6 +176,17 @@ namespace redox {
 
 		_RDX_INLINE bool empty() const {
 			return _size == 0;
+		}
+
+		_RDX_INLINE iterator_type begin() {
+			//Return first non-empty entry
+			for (std::size_t slot = 0; slot < _slots; slot++)
+				if (_occupied(slot)) return { _data, _nullKey };
+			return end();
+		}
+
+		_RDX_INLINE iterator_type end() {
+			return { _data + _slots, _nullKey };
 		}
 
 	private:

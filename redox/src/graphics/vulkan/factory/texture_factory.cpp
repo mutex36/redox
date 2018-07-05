@@ -28,9 +28,6 @@ SOFTWARE.
 #define STB_IMAGE_IMPLEMENTATION
 #include <thirdparty/stbimage/stb_image.h>
 
-redox::graphics::TextureFactory::TextureFactory(const Graphics& graphics) :
-	_graphicsRef(graphics) {}
-
 redox::Resource<redox::graphics::SampleTexture> redox::graphics::TextureFactory::load_impl(const String& path) const {
 	i32 chan, width, height;
 	stbi_uc* pixels = stbi_load(path.cstr(),
@@ -46,6 +43,5 @@ redox::Resource<redox::graphics::SampleTexture> redox::graphics::TextureFactory:
 
 	VkExtent2D dimensions{ width, height };
 
-	return { construct_tag{}, std::move(buffer),
-		VK_FORMAT_R8G8B8A8_UNORM, dimensions, _graphicsRef };
+	return { construct_tag{}, std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions };
 }

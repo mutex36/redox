@@ -1,58 +1,76 @@
+/*
+redox
+-----------
+MIT License
+
+Copyright (c) 2018 Luis von der Eltz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 #include "descriptor_pool.h"
 #include "command_pool.h"
-
 #include "graphics.h"
 #include "resources/texture.h"
 #include "buffer.h"
+#include "pipeline.h"
 
-redox::graphics::DescriptorPool::DescriptorPool(const Graphics& graphics) :
-	_graphicsRef(graphics) {
+redox::graphics::DescriptorPool::DescriptorPool(uint32_t maxSets, uint32_t maxImages, uint32_t maxUBOs) {
 
 	VkDescriptorPoolSize poolSizes[] = {
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20 }
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, maxUBOs },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxImages }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = util::array_size<uint32_t>(poolSizes);
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 5;
+	poolInfo.maxSets = maxSets;
 
-	if (vkCreateDescriptorPool(_graphicsRef.device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateDescriptorPool(Graphics::instance->device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create descriptor pool");
 }
 
 redox::graphics::DescriptorPool::~DescriptorPool() {
-	vkDestroyDescriptorPool(_graphicsRef.device(), _handle, nullptr);
+	vkDestroyDescriptorPool(Graphics::instance->device(), _handle, nullptr);
 }
 
-void redox::graphics::DescriptorPool::allocate(uint32_t numSets) {
-	_sets.resize(numSets);
-
+redox::graphics::DescriptorSet redox::graphics::DescriptorPool::allocate(VkDescriptorSetLayout layout) const {
+	VkDescriptorSet set;
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = _handle;
-	allocInfo.descriptorSetCount = numSets;
-	allocInfo.pSetLayouts = &_descriptorSetLayout;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &layout;
 
-	if (vkAllocateDescriptorSets(_graphicsRef.device(), &allocInfo, _sets.data()) != VK_SUCCESS)
+	if (vkAllocateDescriptorSets(Graphics::instance->device(), &allocInfo, &set) != VK_SUCCESS)
 		throw Exception("failed to allocate descriptor set");
+
+	return set;
 }
 
-redox::graphics::DescriptorSet redox::graphics::DescriptorPool::operator[](std::size_t index) const {
-	return { _sets[index], _graphicsRef };
+redox::graphics::DescriptorSet::DescriptorSet(VkDescriptorSet handle) : _handle(handle) {
 }
 
-redox::graphics::DescriptorSet::DescriptorSet(VkDescriptorSet handle, const Graphics& graphics) :
-	_handle(handle),
-	_graphicsRef(graphics) {
-
-}
-
-void redox::graphics::DescriptorSet::bind(const CommandBuffer& commandBuffer) {
+void redox::graphics::DescriptorSet::bind(const CommandBuffer& commandBuffer, const Pipeline& pipeline) {
 	vkCmdBindDescriptorSets(commandBuffer.handle(),
-		VK_PIPELINE_BIND_POINT_GRAPHICS, lay, 0, 1, &_handle, 0, nullptr);
+		VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout(), 0, 1, &_handle, 0, nullptr);
 }
 
 void redox::graphics::DescriptorSet::bind_resource(const Texture& texture, uint32_t bindingPoint) {
@@ -60,7 +78,7 @@ void redox::graphics::DescriptorSet::bind_resource(const Texture& texture, uint3
 	VkDescriptorImageInfo imageInfo{};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo.imageView = texture.view();
-	imageInfo.sampler = _defaultSampler.handle();
+	imageInfo.sampler = texture.sampler().handle();
 
 	VkWriteDescriptorSet writeSet{};
 	writeSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -71,7 +89,7 @@ void redox::graphics::DescriptorSet::bind_resource(const Texture& texture, uint3
 	writeSet.descriptorCount = 1;
 	writeSet.pImageInfo = &imageInfo;
 
-	vkUpdateDescriptorSets(_graphicsRef.device(), 1, &writeSet, 0, nullptr);
+	vkUpdateDescriptorSets(Graphics::instance->device(), 1, &writeSet, 0, nullptr);
 }
 
 void redox::graphics::DescriptorSet::bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint) {
@@ -90,5 +108,5 @@ void redox::graphics::DescriptorSet::bind_resource(const UniformBuffer& ubo, uin
 	writeSet.descriptorCount = 1;
 	writeSet.pBufferInfo = &bufferInfo;
 
-	vkUpdateDescriptorSets(_graphicsRef.device(), 1, &writeSet, 0, nullptr);
+	vkUpdateDescriptorSets(Graphics::instance->device(), 1, &writeSet, 0, nullptr);
 }

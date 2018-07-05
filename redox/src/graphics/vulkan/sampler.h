@@ -28,17 +28,15 @@ SOFTWARE.
 #include "vulkan.h"
 
 namespace redox::graphics {
-	class Graphics;
 
-	class Sampler {
+	class Sampler : public NonCopyable {
 	public:
-		Sampler(const Graphics& graphics);
+		Sampler();
 		~Sampler();
 
 		VkSampler handle() const;
 
 	private:
 		VkSampler _handle;
-		const Graphics& _graphicsRef;
 	};
 }

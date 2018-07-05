@@ -28,8 +28,7 @@ SOFTWARE.
 #include "graphics\vulkan\command_pool.h"
 
 redox::graphics::Texture::Texture(VkFormat format, const VkExtent2D& size,
-	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags, const Graphics& graphics) :
-	_graphicsRef(graphics),
+	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags) :
 	_format(format),
 	_dimensions(size),
 	_usageFlags(usage),
@@ -44,9 +43,9 @@ redox::graphics::Texture::~Texture() {
 }
 
 void redox::graphics::Texture::_destroy() {
-	vkDestroyImage(_graphicsRef.device(), _handle, nullptr);
-	vkFreeMemory(_graphicsRef.device(), _memory, nullptr);
-	vkDestroyImageView(_graphicsRef.device(), _view, nullptr);
+	vkDestroyImage(Graphics::instance->device(), _handle, nullptr);
+	vkFreeMemory(Graphics::instance->device(), _memory, nullptr);
+	vkDestroyImageView(Graphics::instance->device(), _view, nullptr);
 }
 
 VkImage redox::graphics::Texture::handle() const {
@@ -58,9 +57,8 @@ VkImageView redox::graphics::Texture::view() const {
 }
 
 void redox::graphics::Texture::resize(const VkExtent2D& size) {
-	_destroy();
-
 	_dimensions = size;
+	_destroy();
 	_init();
 	_init_view();
 }
@@ -72,6 +70,11 @@ const VkExtent2D& redox::graphics::Texture::dimension() const {
 const VkFormat& redox::graphics::Texture::format() const {
 	return _format;
 }
+
+const redox::graphics::Sampler& redox::graphics::Texture::sampler() const {
+	return _sampler;
+}
+
 void redox::graphics::Texture::_init() {
 
 	VkImageCreateInfo imageInfo{};
@@ -89,24 +92,24 @@ void redox::graphics::Texture::_init() {
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
-	if (vkCreateImage(_graphicsRef.device(), &imageInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateImage(Graphics::instance->device(), &imageInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create image");
 
 	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(_graphicsRef.device(), _handle, &memRequirements);
+	vkGetImageMemoryRequirements(Graphics::instance->device(), _handle, &memRequirements);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	auto memType = _graphicsRef.pick_memory_type(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	auto memType = Graphics::instance->pick_memory_type(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	if (!memType)
 		throw Exception("could not find suitable memory type");
 	allocInfo.memoryTypeIndex = memType.value();
 
-	if (vkAllocateMemory(_graphicsRef.device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
+	if (vkAllocateMemory(Graphics::instance->device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
 		throw Exception("failed to allocate image memory");
 
-	vkBindImageMemory(_graphicsRef.device(), _handle, _memory, 0);
+	vkBindImageMemory(Graphics::instance->device(), _handle, _memory, 0);
 }
 
 void redox::graphics::Texture::_init_view() {
@@ -121,7 +124,7 @@ void redox::graphics::Texture::_init_view() {
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	if (vkCreateImageView(_graphicsRef.device(), &viewInfo, nullptr, &_view) != VK_SUCCESS)
+	if (vkCreateImageView(Graphics::instance->device(), &viewInfo, nullptr, &_view) != VK_SUCCESS)
 		throw Exception("failed to create texture image view");
 }
 
@@ -176,10 +179,9 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 
 redox::graphics::StagedTexture::StagedTexture(
 	const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size,
-	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags, const Graphics& graphics) :
-	Texture(format, size, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT, viewAspectFlags, graphics),
-	_stagingBuffer(pixels.byte_size(), graphics, 
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
+	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags) :
+	Texture(format, size, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT, viewAspectFlags),
+	_stagingBuffer(pixels.byte_size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
 
 	_stagingBuffer.map([&pixels](void* data) {
 		std::memcpy(data, pixels.data(), pixels.byte_size());
@@ -193,14 +195,12 @@ void redox::graphics::StagedTexture::upload(const CommandBuffer& commandBuffer) 
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
 }
 
-redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels, 
-	VkFormat format, const VkExtent2D & size, const Graphics& graphics) :
-		StagedTexture(pixels, format, size, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, graphics) {
+redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D & size) :
+	StagedTexture(pixels, format, size, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT) {
 }
 
-redox::graphics::DepthTexture::DepthTexture(const VkExtent2D& size, const Graphics& graphics) :
-	Texture(VK_FORMAT_D32_SFLOAT, size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-		VK_IMAGE_ASPECT_DEPTH_BIT, graphics) {
+redox::graphics::DepthTexture::DepthTexture(const VkExtent2D& size) :
+	Texture(VK_FORMAT_D32_SFLOAT, size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT) {
 
 }
 

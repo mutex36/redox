@@ -41,7 +41,7 @@ namespace redox::graphics {
 	public:
 		using CreateCallback = std::function<void()>;
 
-		Swapchain(const Graphics& graphics, const RenderPass& renderPass, CreateCallback&& createCallback);
+		Swapchain(const RenderPass& renderPass, CreateCallback&& createCallback);
 		~Swapchain();
 
 		template<class Fn>
@@ -78,7 +78,6 @@ namespace redox::graphics {
 		VkSemaphore _imageAvailableSemaphore;
 		VkSemaphore _renderFinishedSemaphore;
 
-		const Graphics& _graphicsRef;
 		const RenderPass& _renderPassRef;
 	};
 }

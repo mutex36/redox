@@ -30,12 +30,11 @@ SOFTWARE.
 #include "core\non_copyable.h"
 
 namespace redox::graphics {
-	class Graphics;
 	class CommandBuffer;
 
 	class RenderPass : public NonCopyable {
 	public:
-		RenderPass(const Graphics& graphicsRef);
+		RenderPass();
 		~RenderPass();
 
 		void prepare_attachments(const CommandBuffer& commandBuffer);
@@ -49,7 +48,5 @@ namespace redox::graphics {
 	private:
 		VkRenderPass _handle;
 		DepthTexture _depthTexture;
-
-		const Graphics& _graphicsRef;
 	};
 }
