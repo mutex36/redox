@@ -104,11 +104,23 @@ TEST(Bitset, SetGet) {
 TEST(Hashmap, SetGet) {
 	redox::Hashmap<size_t, size_t> hm(0xFFF);
 
+	//Linear
+
 	for (size_t i = 0; i < 1000; i++)
 		hm.push(i, i);
 
 	for (size_t i = 0; i < 1000; i++)
-		ASSERT_EQ(*hm.get(i), i);
+		ASSERT_EQ(hm.get(i)->value, i);
+
+	auto it = hm.get(3);
+	ASSERT_EQ(it->value, 3);
+
+	++it;
+	ASSERT_EQ(it->value, 4);
+
+	--it;
+	--it;
+	ASSERT_EQ(it->value, 2);
 
 }
 

@@ -74,12 +74,15 @@ namespace redox {
 		using size_type = std::size_t;
 		
 		struct iterator : public Iterator<node_type, iterator> {
+			using base_type = Iterator<node_type, iterator>;
+			using base_type::base_type;
+
 			void increment() {
-				_ptr++;
+				base_type::_ptr++;
 			}
 
 			void decrement() {
-				_ptr--;
+				base_type::_ptr--;
 			}
 		};
 
@@ -128,22 +131,26 @@ namespace redox {
 			ref._slots = 0;
 			return *this;
 		}
-		template<class _Key, class _Value>
-		_RDX_INLINE void push(_Key&& key, _Value&& value) {
+
+		template<class _Key, class _Value, class = std::enable_if_t<
+			std::is_constructible_v<Key, std::decay_t<_Key>> &&
+			std::is_constructible_v<Value, std::decay_t<_Value>>>>
+		_RDX_INLINE iterator push(_Key&& key, _Value&& value) {
 			_grow_if_needed();
-			_push_no_checks(std::forward<_Key>(key), std::forward<_Value>(value));
+			return _push_no_checks(std::forward<_Key>(key), std::forward<_Value>(value));
 		}
 
-		template<class _Key, class...Args>
+		template<class _Key, class...Args,
+			class = std::enable_if_t<std::is_constructible_v<Key, std::decay_t<_Key>>>>
 		_RDX_INLINE Value& emplace(_Key&& key, Args&&...args) {
 			_grow_if_needed();
 			return _emplace_no_checks(std::forward<_Key>(key), std::forward<Args>(args)...);
 		}
 
-		_RDX_INLINE iterator_type get(const Key& key) const {
+		_RDX_INLINE iterator get(const Key& key) const {
 			auto slot = _find_key(key);
 			if (slot)
-				return { _data + slot.value(), _nullKey };
+				return { _data + slot.value() };
 			return end();
 		}
 
@@ -178,15 +185,12 @@ namespace redox {
 			return _size == 0;
 		}
 
-		_RDX_INLINE iterator_type begin() {
-			//Return first non-empty entry
-			for (std::size_t slot = 0; slot < _slots; slot++)
-				if (_occupied(slot)) return { _data, _nullKey };
-			return end();
+		_RDX_INLINE iterator begin() const {
+			return { _data };
 		}
 
-		_RDX_INLINE iterator_type end() {
-			return { _data + _slots, _nullKey };
+		_RDX_INLINE iterator end() const {
+			return { _data + _slots };
 		}
 
 	private:
@@ -219,11 +223,12 @@ namespace redox {
 		}
 
 		template<class _Key, class _Value>
-		_RDX_INLINE void _push_no_checks(_Key&& key, _Value&& value) {
+		_RDX_INLINE iterator _push_no_checks(_Key&& key, _Value&& value) {
 			auto slot = _find_empty_slot(key);
 			new (_data + slot) node_type(
 				std::forward<_Key>(key), std::forward<_Value>(value));
 			_size++;
+			return { _data + slot };
 		}
 
 		_RDX_INLINE std::size_t _find_empty_slot(const Key& key) {

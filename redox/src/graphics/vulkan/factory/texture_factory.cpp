@@ -41,7 +41,7 @@ redox::Resource<redox::graphics::SampleTexture> redox::graphics::TextureFactory:
 
 	stbi_image_free(pixels);
 
-	VkExtent2D dimensions{ width, height };
+	VkExtent2D dimensions{ static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
 	return { construct_tag{}, std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions };
 }

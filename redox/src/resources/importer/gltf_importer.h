@@ -68,24 +68,22 @@ namespace redox {
 		mesh_data import_mesh(std::size_t index);
 
 	private:
-		//template<class ParseType, class Fn>
+		template<class ParseType, class Fn>
 		void read_buffer(cgltf_buffer_view* bufferView, cgltf_accessor* accessor, Fn&& fn) {
-			auto it = 
-
-			if (!_buffers.has_key(bufferView->buffer->uri)) {
+			auto it = _buffers.get(bufferView->buffer->uri);
+			if (it == _buffers.end()) {
 				io::File blobFile(RDX_FIND_ASSET("meshes\\", bufferView->buffer->uri),
 					io::File::Mode::READ);
 
-				_buffers.push(bufferView->buffer->uri, blobFile.read());
+				it = _buffers.push(bufferView->buffer->uri, blobFile.read());
 			}
 
-			const auto& buffer = *_buffers.get(bufferView->buffer->uri);
 			auto readOffset = bufferView->offset + accessor->offset;
 			auto readSize = accessor->count * accessor->stride;
 
 			for (size_t bufferIndex = readOffset;
 				bufferIndex < readOffset + readSize; bufferIndex += sizeof(ParseType)) {
-				fn(reinterpret_cast<const ParseType&>(buffer[bufferIndex]));
+				fn(reinterpret_cast<const ParseType&>(it->value[bufferIndex]));
 			}
 		}
 

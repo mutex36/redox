@@ -26,6 +26,7 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "vec.h"
+#include "util.h"
 #include "simd.h"
 
 #include <array> //std::array

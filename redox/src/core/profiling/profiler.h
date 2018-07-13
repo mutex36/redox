@@ -36,7 +36,7 @@ SOFTWARE.
 
 namespace redox {
 	struct Profiler {
-		_RDX_INLINE Profiler(const redox::String& name) {
+		_RDX_INLINE Profiler(StringView name) {
 			RDX_LOG("{0}", name);
 			_timer.start();
 		}

@@ -38,7 +38,10 @@ void redox::graphics::Material::bind(const CommandBuffer& commandBuffer) {
 }
 
 void redox::graphics::Material::upload(const CommandBuffer& commandBuffer) {
-	_albedoTexture->upload(commandBuffer);
+	
+	for (auto& it : _textures)
+		it.value->upload(commandBuffer);
+
 }
 
 void redox::graphics::Material::set_buffer(BufferKeys key, const UniformBuffer& buffer) {

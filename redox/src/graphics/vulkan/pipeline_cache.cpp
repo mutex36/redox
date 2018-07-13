@@ -39,7 +39,7 @@ redox::graphics::PipelineCache::PipelineCache(const RenderPass& renderPass,
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) const {
 	auto hit = _pipelines.get(type);
 
-	if (hit)
+	if (hit != _pipelines.end())
 		return hit->value;
 
 	return _create_pipeline(type);

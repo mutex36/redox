@@ -37,8 +37,8 @@ namespace redox {
 
 		Resource<ResourceType> load(const String& file) const {
 			auto lookup = _cache.get(file);
-			if (lookup)
-				return *lookup;
+			if (lookup != _cache.end())
+				return lookup->value;
 
 			auto instance = static_cast<const Derived*>(this);
 			auto rx = instance->load_impl(file);

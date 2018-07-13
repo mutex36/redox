@@ -79,19 +79,19 @@ void redox::input::InputSystem::poll() {
 			case RIM_TYPEKEYBOARD:
 			{
 				auto& kbData = raw->data.keyboard;
-				auto mapping = g_vkey_mappings.get(kbData.VKey);
+				auto mappingIt = g_vkey_mappings.get(kbData.VKey);
 
-				if (!mapping) {
+				if (mappingIt == g_vkey_mappings.end()) {
 					RDX_LOG("Unknown VKey code: {0}", kbData.VKey);
 					continue;
 				}
 
 				switch (kbData.Flags) {
 				case RI_KEY_MAKE:
-					_keyStates.push(*mapping, KeyState::PRESSED);
+					_keyStates.push(mappingIt->value, KeyState::PRESSED);
 					break;
 				case RI_KEY_BREAK: {
-					_keyStates.push(*mapping, KeyState::RELEASED);
+					_keyStates.push(mappingIt->value, KeyState::RELEASED);
 					break;
 				}}
 				break;
@@ -119,8 +119,8 @@ void redox::input::InputSystem::poll() {
 
 redox::input::KeyState redox::input::InputSystem::key_state(Keys key) {
 	auto state = _keyStates.get(key);
-	if (state)
-		return *state;
+	if (state != _keyStates.end())
+		return state->value;
 
 	return KeyState::NORMAL;
 }
