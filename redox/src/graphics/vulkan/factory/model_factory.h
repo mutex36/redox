@@ -41,7 +41,7 @@ namespace redox::graphics {
 			const UniformBuffer& ubo, const TextureFactory& textureFactory, const DescriptorPool& dscPool);
 
 	protected:
-		Resource<Model> load_impl(const String& path) const;
+		ResourceHandle<Model> load_impl(const String& path) const;
 
 	private:
 		const UniformBuffer& _uboRef;

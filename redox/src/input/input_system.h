@@ -32,9 +32,6 @@ SOFTWARE.
 #include "keys.h"
 
 #define RDX_INPUT_HIGH_DPI
-
-namespace redox { class Configuration; }
-
 namespace redox::input {
 	enum class KeyState {
 		NORMAL, PRESSED, RELEASED
@@ -50,7 +47,6 @@ namespace redox::input {
 		KeyState key_state(Keys key);
 
 	private:
-		const platform::Window& _windowRef;
 		Hashmap<Keys, KeyState> _keyStates;
 	};
 }

@@ -52,12 +52,12 @@ namespace redox::graphics {
 		void upload(const CommandBuffer& commandBuffer);
 
 		void set_buffer(BufferKeys key, const UniformBuffer& buffer);
-		void set_texture(TextureKeys key, Resource<SampleTexture> texture);
+		void set_texture(TextureKeys key, ResourceHandle<SampleTexture> texture);
 
 	private:
 		DescriptorSet _descSet;
 		PipelineHandle _pipeline;
 
-		redox::Hashmap<TextureKeys, Resource<SampleTexture>> _textures;
+		redox::Hashmap<TextureKeys, ResourceHandle<SampleTexture>> _textures;
 	};
 }

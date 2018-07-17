@@ -28,8 +28,8 @@ SOFTWARE.
 #include "graphics.h"
 #include "command_pool.h"
 
-redox::graphics::RenderPass::RenderPass() :
-	_depthTexture({500,500}) { //TODO: change
+redox::graphics::RenderPass::RenderPass() : 
+	_depthTexture({ 1, 1 }) {
 
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -92,11 +92,13 @@ redox::graphics::RenderPass::~RenderPass() {
 	vkDestroyRenderPass(Graphics::instance->device(), _handle, nullptr);
 }
 
-void redox::graphics::RenderPass::prepare_attachments(const CommandBuffer& commandBuffer) {
-	_depthTexture.prepare_layout(commandBuffer);
+void redox::graphics::RenderPass::resize_attachments(const CommandBuffer& cbo, const VkExtent2D & extent) {
+	_depthTexture.resize(extent);
+	_depthTexture.prepare_layout(cbo);
 }
 
-void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) const {
+void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
+
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = _handle;

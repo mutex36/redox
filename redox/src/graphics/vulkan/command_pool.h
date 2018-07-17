@@ -40,8 +40,8 @@ namespace redox::graphics {
 	};
 
 	struct IndexedDraw {
-		Resource<Mesh> mesh;
-		Resource<Material> material;
+		ResourceHandle<Mesh> mesh;
+		ResourceHandle<Material> material;
 		VertexRange range;
 	};
 
@@ -71,8 +71,6 @@ namespace redox::graphics {
 		CommandBuffer operator[](std::size_t index) const;
 
 	private:
-		void _init(VkCommandPoolCreateFlags flags);
-
 		VkCommandPool _handle;
 		redox::Buffer<VkCommandBuffer> _commandBuffers;
 	};

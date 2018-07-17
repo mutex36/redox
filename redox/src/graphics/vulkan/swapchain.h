@@ -35,21 +35,18 @@ SOFTWARE.
 #include "framebuffer.h"
 
 #include <functional> //std::function
+#include <thirdparty/function_ref/function_ref.hpp>
 
 namespace redox::graphics {
 	class Swapchain : public NonCopyable {
 	public:
 		using CreateCallback = std::function<void()>;
 
-		Swapchain(const RenderPass& renderPass, CreateCallback&& createCallback);
+		Swapchain(CreateCallback&& recreateCallback);
 		~Swapchain();
 
-		template<class Fn>
-		void visit(Fn&& fn) {
-			for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
-				fn(_frameBuffers[index], _commandPool[index]);
-		}
-
+		void create_fbs(const RenderPass& renderPass);
+		void visit(tl::function_ref<void(const Framebuffer&, const CommandBuffer&)> fn);
 		void present();
 
 		VkSwapchainKHR handle() const;
@@ -59,7 +56,6 @@ namespace redox::graphics {
 		void _init();
 		void _init_semaphores();
 		void _init_images();
-		void _init_fb();
 		void _destroy();
 		void _reload();
 
@@ -77,7 +73,5 @@ namespace redox::graphics {
 
 		VkSemaphore _imageAvailableSemaphore;
 		VkSemaphore _renderFinishedSemaphore;
-
-		const RenderPass& _renderPassRef;
 	};
 }

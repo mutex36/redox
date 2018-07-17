@@ -41,6 +41,12 @@ static const redox::String
 namespace redox {
 
 	template<class T>
-	using Resource = RefCounted<T>;
+	using ResourceHandle = RefCounted<T>;
+
+	//class IResource {
+	//public:
+	//	virtual void upload() = 0;
+	//	virtual void reload(const String& path) = 0;
+	//};
 
 }

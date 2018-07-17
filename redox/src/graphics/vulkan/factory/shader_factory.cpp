@@ -25,7 +25,7 @@ SOFTWARE.
 */
 #include "shader_factory.h"
 
-redox::Resource<redox::graphics::Shader> redox::graphics::ShaderFactory::load_impl(const String& path) const {
+redox::ResourceHandle<redox::graphics::Shader> redox::graphics::ShaderFactory::load_impl(const String& path) const {
 
 	io::File fstream(path, io::File::Mode::READ);
 	auto buffer = fstream.read();

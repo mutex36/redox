@@ -102,8 +102,8 @@ namespace redox {
 		}
 
 		_RDX_INLINE void clear() {
-			_size = 0;
 			_destruct();
+			_size = 0;
 		}
 
 		_RDX_INLINE ~Buffer() {

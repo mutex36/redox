@@ -30,6 +30,14 @@ redox::graphics::Model::Model(mesh_buffer&& meshBuffer, material_buffer&& materi
 	_materials(std::move(materialBuffer)) {
 }
 
+void redox::graphics::Model::upload(const CommandBuffer& cbo) {
+	for (auto& mat : _materials)
+		mat->upload(cbo);
+
+	for (auto& mesh : _meshes)
+		mesh->upload(cbo);
+}
+
 const redox::graphics::Model::mesh_buffer& redox::graphics::Model::meshes() const {
 	return _meshes;
 }

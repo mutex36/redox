@@ -28,13 +28,11 @@ SOFTWARE.
 #include "core\profiling\profiler.h"
 #include <limits> //std::numeric_limits
 
-redox::graphics::Swapchain::Swapchain(const RenderPass& renderPass, CreateCallback&& createCallback) :
-	_createCallback(std::move(createCallback)),
-	_renderPassRef(renderPass) {
+redox::graphics::Swapchain::Swapchain(CreateCallback&& createCallback) :
+	_createCallback(std::move(createCallback)) {
 	_init();
 	_init_semaphores();
 	_init_images();
-	_init_fb();
 	_createCallback();
 }
 
@@ -49,6 +47,20 @@ void redox::graphics::Swapchain::_destroy() {
 
 redox::graphics::Swapchain::~Swapchain() {
 	_destroy();
+}
+
+void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
+	_RDX_PROFILE;
+	_frameBuffers.clear();
+	_frameBuffers.reserve(_imageViews.size());
+
+	for (size_t i = 0; i < _frameBuffers.capacity(); i++)
+		_frameBuffers.emplace(renderPass, _imageViews[i], _extent);
+}
+
+void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBuffer&)> fn) {
+	for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
+		fn(_frameBuffers[index], _commandPool[index]);
 }
 
 void redox::graphics::Swapchain::present() {
@@ -97,7 +109,6 @@ void redox::graphics::Swapchain::_reload() {
 	_init();
 	_init_semaphores();
 	_init_images();
-	_init_fb();
 	_createCallback();
 }
 
@@ -185,13 +196,4 @@ void redox::graphics::Swapchain::_init_images() {
 		if (vkCreateImageView(Graphics::instance->device(), &createInfo, nullptr, &_imageViews[i]) != VK_SUCCESS)
 			throw Exception("failed to create image view");
 	}
-}
-
-void redox::graphics::Swapchain::_init_fb() {
-	_RDX_PROFILE;
-	_frameBuffers.clear();
-	_frameBuffers.reserve(_imageViews.size());
-
-	for (size_t i = 0; i < _frameBuffers.capacity(); i++)
-		_frameBuffers.emplace(_renderPassRef, _imageViews[i], _extent);
 }

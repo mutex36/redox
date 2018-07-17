@@ -38,13 +38,13 @@ _textureFactoryRef(textureFactory),
 _descPoolRef(dscPool) {
 }
 
-redox::Resource<redox::graphics::Model> redox::graphics::ModelFactory::load_impl(const String& path) const {
+redox::ResourceHandle<redox::graphics::Model> redox::graphics::ModelFactory::load_impl(const String& path) const {
 	_RDX_PROFILE;
 
 	GLTFImporter importer(path);
 
 	//import meshes
-	redox::Buffer<Resource<Mesh>> meshes;
+	redox::Buffer<ResourceHandle<Mesh>> meshes;
 	meshes.reserve(importer.mesh_count());
 
 	for (std::size_t i = 0; i < importer.mesh_count(); i++) {
@@ -78,7 +78,7 @@ redox::Resource<redox::graphics::Model> redox::graphics::ModelFactory::load_impl
 	}
 
 	//import materials
-	redox::Buffer<Resource<Material>> materials;
+	redox::Buffer<ResourceHandle<Material>> materials;
 	materials.reserve(importer.material_count());
 
 	for (std::size_t i = 0; i < importer.material_count(); i++) {

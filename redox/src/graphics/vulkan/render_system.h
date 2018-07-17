@@ -77,9 +77,8 @@ namespace redox::graphics {
 		Sampler _defaultSampler;
 
 		//@DEMO
-		Resource<Model> _demoModel;
-		void _demo_setup();
-		void _demo_draw(const CommandBuffer&);
+		ResourceHandle<Model> _demoModel;
+		void _demo_draw();
 		//@@@
 
 		Swapchain _swapchain;

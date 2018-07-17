@@ -34,7 +34,7 @@ namespace redox::graphics {
 		friend class ResourceFactory<ShaderFactory, Shader>;
 
 	protected:
-		Resource<Shader> load_impl(const String& path) const;
+		ResourceHandle<Shader> load_impl(const String& path) const;
 
 	};
 }

@@ -29,10 +29,9 @@ SOFTWARE.
 #include "render_pass.h"
 
 redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass,
-	const VertexLayout& vLayout, const DescriptorLayout& dLayout, Resource<Shader> vs, Resource<Shader> fs) :
+	const VertexLayout& vLayout, const DescriptorLayout& dLayout, ResourceHandle<Shader> vs, ResourceHandle<Shader> fs) :
 	_vs(std::move(vs)),
-	_fs(std::move(fs)),
-	_viewport({ 500,500 }) {
+	_fs(std::move(fs)) {
 
 	_init_desriptors(dLayout);
 	_init(vLayout, renderPass);
@@ -49,8 +48,8 @@ void redox::graphics::Pipeline::bind(const CommandBuffer& commandBuffer) {
 	_update_viewport(commandBuffer);
 }
 
-void redox::graphics::Pipeline::set_viewport(const VkExtent2D& size) {
-	_viewport = size;
+void redox::graphics::Pipeline::set_viewport(const VkExtent2D& viewport) {
+	_viewport = viewport;
 }
 
 VkPipelineLayout redox::graphics::Pipeline::layout() const {
@@ -186,18 +185,18 @@ void redox::graphics::Pipeline::_init_desriptors(const DescriptorLayout& dLayout
 		throw Exception("failed to create descriptor set layout");
 }
 
-void redox::graphics::Pipeline::_update_viewport(const CommandBuffer& commandBuffer) {
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(_viewport.width);
-	viewport.height = static_cast<float>(_viewport.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer.handle(), 0, 1, &viewport);
+void redox::graphics::Pipeline::_update_viewport(const CommandBuffer& cbo) {
+	VkViewport vp{};
+	vp.x = 0.0f;
+	vp.y = 0.0f;
+	vp.width = static_cast<float>(_viewport.width);
+	vp.height = static_cast<float>(_viewport.height);
+	vp.minDepth = 0.0f;
+	vp.maxDepth = 1.0f;
+	vkCmdSetViewport(cbo.handle(), 0, 1, &vp);
 
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
 	scissor.extent = _viewport;
-	vkCmdSetScissor(commandBuffer.handle(), 0, 1, &scissor);
+	vkCmdSetScissor(cbo.handle(), 0, 1, &scissor);
 }

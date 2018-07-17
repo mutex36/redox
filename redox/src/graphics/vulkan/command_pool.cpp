@@ -27,7 +27,13 @@ SOFTWARE.
 #include "graphics.h"
 
 redox::graphics::CommandPool::CommandPool(VkCommandPoolCreateFlags flags) {
-	_init(flags);
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = Graphics::instance->queue_family();
+	poolInfo.flags = flags; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+	if (vkCreateCommandPool(Graphics::instance->device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+		throw Exception("failed to create commandpool");
 }
 
 redox::graphics::CommandPool::~CommandPool() {
@@ -76,24 +82,19 @@ void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const Comm
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 
-	vkQueueSubmit(Graphics::instance->graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(Graphics::instance->graphics_queue());
+	VkFence fence;
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	vkCreateFence(Graphics::instance->device(), &fenceInfo, VK_NULL_HANDLE, &fence);
+
+	vkQueueSubmit(Graphics::instance->graphics_queue(), 1, &submitInfo, fence);
+	vkWaitForFences(Graphics::instance->device(), 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkFreeCommandBuffers(Graphics::instance->device(), _handle, 1, &commandBuffer);
+	vkDestroyFence(Graphics::instance->device(), fence, VK_NULL_HANDLE);
 }
 
 redox::graphics::CommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {
 	return _commandBuffers[index];
-}
-
-void redox::graphics::CommandPool::_init(VkCommandPoolCreateFlags flags) {
-
-	VkCommandPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = Graphics::instance->queue_family();
-	poolInfo.flags = flags; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-	if (vkCreateCommandPool(Graphics::instance->device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
-		throw Exception("failed to create commandpool");
 }
 
 redox::graphics::CommandBuffer::CommandBuffer(VkCommandBuffer handle) :

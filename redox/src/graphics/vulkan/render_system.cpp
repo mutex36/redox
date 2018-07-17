@@ -36,58 +36,44 @@ SOFTWARE.
 
 redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config) :
 	_graphics(window, config),
-	_swapchain(_renderPass, std::bind(&RenderSystem::_swapchain_event_create, this)),
+	_swapchain(std::bind(&RenderSystem::_swapchain_event_create, this)),
 	_mvpBuffer(sizeof(mvp_uniform)),
 	_modelFactory(_pipelineCache, _mvpBuffer, _textureFactory, _descriptorPool),
 	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
 	_pipelineCache(_renderPass, _shaderFactory),
-	_descriptorPool(5, 20, 20) {
-
-	_demoModel = _modelFactory.load(RDX_ASSET("meshes\\centurion.gltf"));
+	_descriptorPool(5, 20, 20),
+	_demoModel(_modelFactory.load(RDX_ASSET("meshes\\centurion.gltf"))) {
 
 	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
-		_renderPass.prepare_attachments(cbo);
-
-		for (auto& mat : _demoModel->materials())
-			mat->upload(cbo);
-
-		for (auto& mesh : _demoModel->meshes())
-			mesh->upload(cbo);
+		_demoModel->upload(cbo);
 	});
-
-	_demo_setup();
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
 	_graphics.wait_pending();
 }
 
-void redox::graphics::RenderSystem::_demo_setup() {
-	_RDX_PROFILE;
+void redox::graphics::RenderSystem::_demo_draw() {
 
 	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
 			_renderPass.begin(frameBuffer, commandBuffer);
 
-			_demo_draw(commandBuffer);
+			auto mesh = _demoModel->meshes()[0];
+			for (const auto& sm : mesh->submeshes()) {
+				IndexedDraw drawCmd;
+				drawCmd.mesh = mesh;
+				drawCmd.material = _demoModel->materials()[sm.materialIndex];
+				drawCmd.range.start = sm.vertexOffset;
+				drawCmd.range.end = sm.vertexCount;
+
+				commandBuffer.submit(drawCmd);
+			}
 
 			_renderPass.end(commandBuffer);
 		});
 	});
-}
 
-void redox::graphics::RenderSystem::_demo_draw(const CommandBuffer& commandBuffer) {
-	auto mesh = _demoModel->meshes()[0];
-
-	for (const auto& sm : mesh->submeshes()) {
-		IndexedDraw drawCmd;
-		drawCmd.mesh = mesh;
-		drawCmd.material = _demoModel->materials()[sm.materialIndex];
-		drawCmd.range.start = sm.vertexOffset;
-		drawCmd.range.end = sm.vertexCount;
-
-		commandBuffer.submit(drawCmd);
-	}
 }
 
 void redox::graphics::RenderSystem::render() {
@@ -113,6 +99,13 @@ void redox::graphics::RenderSystem::render() {
 }
 
 void redox::graphics::RenderSystem::_swapchain_event_create() {
-	//_pipeline.set_viewport(_swapchain.extent()); //TODO: resize
-	//TODO: update size
+
+	for (auto& pipelineIt : _pipelineCache)
+		pipelineIt.value->set_viewport(_swapchain.extent());
+	
+	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
+		_renderPass.resize_attachments(cbo, _swapchain.extent()); 
+	});
+	_swapchain.create_fbs(_renderPass);
+	_demo_draw();
 }

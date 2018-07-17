@@ -15,5 +15,5 @@ void main() {
     vec3 baseColor = texture(albedoTexture, fragUV).rgb;
 	float diffuse = max(0.0, dot(fragNormal, vec3(0,1,1)));
 
-	outColor = vec4(baseColor * diffuse, 1);
+	outColor = vec4(baseColor,1); // * diffuse, 1);
 }

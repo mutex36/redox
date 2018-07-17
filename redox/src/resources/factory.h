@@ -35,7 +35,7 @@ namespace redox {
 	public:
 		ResourceFactory() : _cache("__invalid_resource__") {}
 
-		Resource<ResourceType> load(const String& file) const {
+		ResourceHandle<ResourceType> load(const String& file) const {
 			auto lookup = _cache.get(file);
 			if (lookup != _cache.end())
 				return lookup->value;
@@ -48,6 +48,6 @@ namespace redox {
 		}
 
 	private:
-		mutable Hashmap<String, Resource<ResourceType>> _cache;
+		mutable Hashmap<String, ResourceHandle<ResourceType>> _cache;
 	};
 }

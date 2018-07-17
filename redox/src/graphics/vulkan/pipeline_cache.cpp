@@ -29,8 +29,7 @@ SOFTWARE.
 #include "render_pass.h"
 #include "factory/shader_factory.h"
 
-redox::graphics::PipelineCache::PipelineCache(const RenderPass& renderPass, 
-	const ShaderFactory& shaderFactory) :
+redox::graphics::PipelineCache::PipelineCache(const RenderPass& renderPass, const ShaderFactory& shaderFactory) :
 	_pipelines(PipelineType::INVALID),
 	_renderPassRef(renderPass),
 	_shaderFactoryRef(shaderFactory) {

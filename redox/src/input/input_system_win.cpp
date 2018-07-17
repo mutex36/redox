@@ -34,9 +34,7 @@ SOFTWARE.
 
 #define RDX_LOG_TAG "InputSystem"
 
-redox::input::InputSystem::InputSystem(const platform::Window& window) : 
-	_windowRef(window),
-	_keyStates(Keys::INVALID) {
+redox::input::InputSystem::InputSystem(const platform::Window& window) : _keyStates(Keys::INVALID) {
 	RDX_LOG("Registering input devices...");
 
 #ifdef RDX_INPUT_HIGH_DPI
@@ -60,8 +58,7 @@ void redox::input::InputSystem::poll() {
 	_keyStates.clear();
 
 	MSG msg;
-	while (PeekMessage(&msg, reinterpret_cast<HWND>(_windowRef.native_handle()), 
-		WM_INPUT, WM_KEYLAST, PM_REMOVE | PM_QS_INPUT)) {
+	while (PeekMessage(&msg, NULL, WM_INPUT, WM_KEYLAST, PM_REMOVE | PM_QS_INPUT)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 

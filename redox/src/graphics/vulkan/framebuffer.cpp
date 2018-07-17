@@ -27,9 +27,8 @@ SOFTWARE.
 #include "graphics.h"
 #include "render_pass.h"
 
-redox::graphics::Framebuffer::Framebuffer(const RenderPass& rp, VkImageView imageView, VkExtent2D extent) 
-	:  _extent(extent) {
-
+redox::graphics::Framebuffer::Framebuffer(const RenderPass& rp, VkImageView imageView, VkExtent2D extent) :
+	_extent(extent) {
 	const VkImageView attachments[] = { imageView, rp.depth_texture().view() };
 
 	VkFramebufferCreateInfo framebufferInfo{};

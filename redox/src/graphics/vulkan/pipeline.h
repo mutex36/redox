@@ -48,7 +48,7 @@ namespace redox::graphics {
 	public:
 		Pipeline(const RenderPass& renderPass, 
 			const VertexLayout& vLayout, const DescriptorLayout& dLayout,
-			Resource<Shader> vs, Resource<Shader> fs);
+			ResourceHandle<Shader> vs, ResourceHandle<Shader> fs);
 		~Pipeline();
 
 		void bind(const CommandBuffer& commandBuffer);
@@ -60,14 +60,14 @@ namespace redox::graphics {
 	private:
 		void _init(const VertexLayout& vLayout, const RenderPass& renderPass);
 		void _init_desriptors(const DescriptorLayout& dLayout);
-		void _update_viewport(const CommandBuffer& commandBuffer);
+		void _update_viewport(const CommandBuffer& cbo);
 
 		VkPipeline _handle;
 		VkPipelineLayout _layout;
 		VkExtent2D _viewport;
 
 		VkDescriptorSetLayout _descriptorSetLayout;
-		Resource<Shader> _vs;
-		Resource<Shader> _fs;
+		ResourceHandle<Shader> _vs;
+		ResourceHandle<Shader> _fs;
 	};
 }

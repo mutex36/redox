@@ -28,7 +28,7 @@ SOFTWARE.
 #define STB_IMAGE_IMPLEMENTATION
 #include <thirdparty/stbimage/stb_image.h>
 
-redox::Resource<redox::graphics::SampleTexture> redox::graphics::TextureFactory::load_impl(const String& path) const {
+redox::ResourceHandle<redox::graphics::SampleTexture> redox::graphics::TextureFactory::load_impl(const String& path) const {
 	i32 chan, width, height;
 	stbi_uc* pixels = stbi_load(path.cstr(),
 		&width, &height, &chan, STBI_rgb_alpha);

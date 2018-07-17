@@ -89,7 +89,7 @@ namespace redox::reflection {
 
 		template<class T, class Fn, size_t...N>
 		constexpr void visit_impl(Fn&& fn, std::index_sequence<N...>) noexcept {
-			(fn(N, field_type<T, N>{}), ...);
+			(std::forward<Fn>(fn)(N, field_type<T, N>{}), ...);
 		}
 
 		template<class T, class Fn>
@@ -101,8 +101,8 @@ namespace redox::reflection {
 
 	template<typename T>
 	struct Reflect {
-		static_assert(std::is_pod_v<T>, 
-			"reflected type is not a POD");
+		//static_assert(std::is_pod_v<T>, 
+		//	"reflected type is not a POD");
 
 		constexpr auto field_count() const noexcept {
 			return detail::count_fields<T>();

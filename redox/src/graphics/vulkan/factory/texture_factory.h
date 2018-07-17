@@ -34,6 +34,6 @@ namespace redox::graphics {
 		friend class ResourceFactory<TextureFactory, SampleTexture>;
 
 	protected:
-		Resource<SampleTexture> load_impl(const String& path) const;
+		ResourceHandle<SampleTexture> load_impl(const String& path) const;
 	};
 }

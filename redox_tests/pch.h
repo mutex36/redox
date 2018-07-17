@@ -14,3 +14,5 @@
 #include "core\bitset.h"
 
 #include "math\math.h"
+
+#include "core/meta/reflection.h"

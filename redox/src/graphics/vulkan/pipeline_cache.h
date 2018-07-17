@@ -50,6 +50,9 @@ namespace redox::graphics {
 
 		PipelineHandle load(PipelineType type) const;
 
+		auto begin() const { return _pipelines.begin(); }
+		auto end() const { return _pipelines.end(); }
+
 	private:
 		PipelineHandle _create_pipeline(PipelineType type) const;
 		PipelineHandle _create_default_mesh_pipeline() const;

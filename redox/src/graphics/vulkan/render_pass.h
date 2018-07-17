@@ -37,12 +37,11 @@ namespace redox::graphics {
 		RenderPass();
 		~RenderPass();
 
-		void prepare_attachments(const CommandBuffer& commandBuffer);
-
-		void begin(const Framebuffer& frameBuffer, 
-			const CommandBuffer& commandBuffer) const;
+		void resize_attachments(const CommandBuffer& cbo, const VkExtent2D& extent);
+		void begin(const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer);
 		void end(const CommandBuffer& commandBuffer) const;
 		VkRenderPass handle() const;
+
 		const DepthTexture& depth_texture() const;
 
 	private:

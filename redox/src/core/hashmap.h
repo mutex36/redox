@@ -72,18 +72,25 @@ namespace redox {
 	public:
 		using node_type = detail::node<Key, Value>;
 		using size_type = std::size_t;
-		
+
 		struct iterator : public Iterator<node_type, iterator> {
 			using base_type = Iterator<node_type, iterator>;
-			using base_type::base_type;
 
-			void increment() {
-				base_type::_ptr++;
+			iterator(node_type* ptr, const Hashmap* map) :
+				base_type(ptr), _map(map) {
 			}
 
-			void decrement() {
-				base_type::_ptr--;
+			_RDX_INLINE void increment() {
+				while ((*this != _map->end()) 
+					&& (!_map->_occupied(++this->_ptr)));
 			}
+
+			_RDX_INLINE void decrement() {
+				while ((*this != _map->begin())
+					&& (!_map->_occupied(--this->_ptr)));
+			}
+
+			const Hashmap* _map;
 		};
 
 		template<class _Key,
@@ -150,7 +157,7 @@ namespace redox {
 		_RDX_INLINE iterator get(const Key& key) const {
 			auto slot = _find_key(key);
 			if (slot)
-				return { _data + slot.value() };
+				return { _data + slot.value(), this };
 			return end();
 		}
 
@@ -186,11 +193,14 @@ namespace redox {
 		}
 
 		_RDX_INLINE iterator begin() const {
-			return { _data };
+			for (std::size_t slot = 0; slot < _slots; slot++)
+				if (_occupied(slot)) //find first non-empty slot
+					return { _data + slot, this };
+			return end();
 		}
 
 		_RDX_INLINE iterator end() const {
-			return { _data + _slots };
+			return { _data + _slots, this };
 		}
 
 	private:
@@ -210,7 +220,11 @@ namespace redox {
 		}
 
 		_RDX_INLINE bool _occupied(std::size_t slot) const {
-			return _data[slot].key != _nullKey;
+			return _occupied(_data + slot);
+		}
+
+		_RDX_INLINE bool _occupied(const node_type* ptr) const {
+			return ptr->key != _nullKey;
 		}
 
 		template<class _Key, class...Args>
@@ -228,7 +242,7 @@ namespace redox {
 			new (_data + slot) node_type(
 				std::forward<_Key>(key), std::forward<_Value>(value));
 			_size++;
-			return { _data + slot };
+			return { _data + slot, this };
 		}
 
 		_RDX_INLINE std::size_t _find_empty_slot(const Key& key) {
