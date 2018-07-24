@@ -33,15 +33,7 @@ SOFTWARE.
 
 #include "graphics.h"
 #include "swapchain.h"
-#include "command_pool.h"
 #include "render_pass.h"
-#include "descriptor_pool.h"
-
-#include "factory\model_factory.h"
-#include "factory\shader_factory.h"
-#include "factory\texture_factory.h"
-
-#include "pipeline_cache.h"
 
 #include "math\math.h"
 
@@ -49,7 +41,7 @@ namespace redox::graphics {
 
 	class RenderSystem : public NonCopyable {
 	public:
-		RenderSystem(const platform::Window& window, const Configuration& config);
+		RenderSystem(const platform::Window& window);
 		~RenderSystem();
 
 		void render();
@@ -64,17 +56,7 @@ namespace redox::graphics {
 		};
 
 		Graphics _graphics;
-		CommandPool _auxCommandPool;
-		DescriptorPool _descriptorPool;
-		RenderPass _renderPass;
-
 		UniformBuffer _mvpBuffer;
-		ShaderFactory _shaderFactory;
-		TextureFactory _textureFactory;
-		ModelFactory _modelFactory;
-
-		PipelineCache _pipelineCache;
-		Sampler _defaultSampler;
 
 		//@DEMO
 		ResourceHandle<Model> _demoModel;

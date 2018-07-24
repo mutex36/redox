@@ -25,10 +25,10 @@ SOFTWARE.
 */
 #include "shader_factory.h"
 
-redox::ResourceHandle<redox::graphics::Shader> redox::graphics::ShaderFactory::load_impl(const String& path) const {
+redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(const String& path) {
 
 	io::File fstream(path, io::File::Mode::READ);
 	auto buffer = fstream.read();
 
-	return { construct_tag{}, std::move(buffer) };
+	return std::make_shared<Shader>(std::move(buffer));
 }

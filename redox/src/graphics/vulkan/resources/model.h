@@ -32,14 +32,14 @@ SOFTWARE.
 
 namespace redox::graphics {
 
-	class Model {
+	class Model : public IResource {
 	public:
 		using mesh_buffer = redox::Buffer<ResourceHandle<Mesh>>;
 		using material_buffer = redox::Buffer<ResourceHandle<Material>>;
 
 		Model(mesh_buffer&& meshBuffer, material_buffer&& materialBuffer);
 
-		void upload(const CommandBuffer& cbo);
+		void upload() override;
 
 		const mesh_buffer& meshes() const;
 		const material_buffer& materials() const;

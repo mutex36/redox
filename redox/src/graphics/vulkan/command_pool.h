@@ -45,10 +45,10 @@ namespace redox::graphics {
 		VertexRange range;
 	};
 
-	class CommandBuffer {
+	class CommandBufferView {
 	public:
-		CommandBuffer(VkCommandBuffer handle);
-		~CommandBuffer() = default;
+		CommandBufferView(VkCommandBuffer handle);
+		~CommandBufferView() = default;
 
 		void submit(const IndexedDraw& command) const;
 		void record(tl::function_ref<void()> fn) const;
@@ -66,9 +66,9 @@ namespace redox::graphics {
 
 		void free_all();
 		void allocate(uint32_t numBuffers);
-		void quick_submit(tl::function_ref<void(const CommandBuffer&)> fn) const;
+		void quick_submit(tl::function_ref<void(const CommandBufferView&)> fn) const;
 
-		CommandBuffer operator[](std::size_t index) const;
+		CommandBufferView operator[](std::size_t index) const;
 
 	private:
 		VkCommandPool _handle;

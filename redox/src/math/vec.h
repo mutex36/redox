@@ -28,9 +28,7 @@ SOFTWARE.
 
 #include "simd.h"
 
-//Accessing scalar by union seems portable, but in C++ UB and (potentially) inefficient.
-//https://stackoverflow.com/questions/12624466/get-member-of-m128-by-index
-//https://web.archive.org/web/20170723212025/http://codrspace.com/t0rakka/simd-scalar-accessor/
+//Accessing scalar by union seems portable, but technically UB in C++
 //#define RDX_SIMD_ACCESSOR_IMPL
 
 namespace redox::math {
@@ -145,8 +143,7 @@ namespace redox::math {
 		}
 
 		_RDX_INLINE Scalar dot(const Vec& rhs) const {
-			return simd::extract_lower(
-				simd::dot<0x71>(base_type::_xmm, rhs._xmm));
+			return simd::extract_lower(simd::dot<0x71>(base_type::_xmm, rhs._xmm));
 		}
 
 		_RDX_INLINE Scalar length() const {

@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
-#include "graphics.h"
 #include "sampler.h"
 #include "buffer.h"
 
@@ -36,13 +35,11 @@ SOFTWARE.
 #include "resources\texture.h"
 
 #include "core\utility.h"
-#include <functional> //std::function
 
 namespace redox::graphics {
 	class CommandPool;
-	class CommandBuffer;
+	class CommandBufferView;
 	class RenderPass;
-	class Framebuffer;
 
 	class Pipeline {
 	public:
@@ -51,7 +48,7 @@ namespace redox::graphics {
 			ResourceHandle<Shader> vs, ResourceHandle<Shader> fs);
 		~Pipeline();
 
-		void bind(const CommandBuffer& commandBuffer);
+		void bind(const CommandBufferView& commandBuffer);
 		void set_viewport(const VkExtent2D& size);
 
 		VkPipelineLayout layout() const;
@@ -60,7 +57,7 @@ namespace redox::graphics {
 	private:
 		void _init(const VertexLayout& vLayout, const RenderPass& renderPass);
 		void _init_desriptors(const DescriptorLayout& dLayout);
-		void _update_viewport(const CommandBuffer& cbo);
+		void _update_viewport(const CommandBufferView& cbo);
 
 		VkPipeline _handle;
 		VkPipelineLayout _layout;

@@ -25,22 +25,23 @@ SOFTWARE.
 */
 #pragma once
 #include "graphics\vulkan\vulkan.h"
+#include "resources\resource.h"
 
 #include "core\core.h"
 #include "core\string.h"
-#include "resources\factory.h"
 
 #include "platform\filesystem.h"
 
 namespace redox::graphics {
 
-	class Shader : public NonCopyable
+	class Shader : public IResource
 	{
 	public:
 		Shader(const redox::Buffer<i8>& buffer);
 		~Shader();
 
 		VkShaderModule handle() const;
+		void upload() override;
 
 	private:
 		VkShaderModule _handle;

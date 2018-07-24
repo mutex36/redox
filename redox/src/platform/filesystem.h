@@ -27,9 +27,9 @@ SOFTWARE.
 #include "core\core.h"
 #include "core\string.h"
 #include "core\buffer.h"
-
-#include "core\smart_ptr.h"
 #include "core\utility.h"
+
+#include <memory> //std::unique_ptr
 
 namespace redox::io {
 
@@ -48,7 +48,7 @@ namespace redox::io {
 
 	private:
 		struct internal;
-		SmartPtr<internal> _internal;
+		std::unique_ptr<internal> _internal;
 	};
 }
 

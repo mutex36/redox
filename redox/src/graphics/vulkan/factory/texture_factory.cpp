@@ -28,7 +28,8 @@ SOFTWARE.
 #define STB_IMAGE_IMPLEMENTATION
 #include <thirdparty/stbimage/stb_image.h>
 
-redox::ResourceHandle<redox::graphics::SampleTexture> redox::graphics::TextureFactory::load_impl(const String& path) const {
+redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(const String& path) {
+	
 	i32 chan, width, height;
 	stbi_uc* pixels = stbi_load(path.cstr(),
 		&width, &height, &chan, STBI_rgb_alpha);
@@ -41,7 +42,11 @@ redox::ResourceHandle<redox::graphics::SampleTexture> redox::graphics::TextureFa
 
 	stbi_image_free(pixels);
 
-	VkExtent2D dimensions{ static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+	VkExtent2D dimensions{ 
+		static_cast<uint32_t>(width),
+		static_cast<uint32_t>(height) 
+	};
 
-	return { construct_tag{}, std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions };
+	return std::make_shared<SampleTexture>(
+		std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions);
 }

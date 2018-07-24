@@ -27,9 +27,10 @@ SOFTWARE.
 #include "graphics\vulkan\vulkan.h"
 #include "graphics\vulkan\buffer.h"
 #include "math\math.h"
+#include "resources\resource.h"
 
 namespace redox::graphics {
-	class CommandBuffer;
+	class CommandBufferView;
 
 	struct MeshVertex {
 		math::Vec3f pos;
@@ -43,14 +44,14 @@ namespace redox::graphics {
 		std::size_t materialIndex;
 	};
 
-	class Mesh : public NonCopyable {
+	class Mesh : public IResource {
 	public:
 		Mesh(const redox::Buffer<MeshVertex>& vertices, 
 			const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes);
 		~Mesh() = default;
 
-		void bind(const CommandBuffer& commandBuffer);
-		void upload(const CommandBuffer& commandBuffer);
+		void bind(const CommandBufferView& commandBuffer);
+		void upload() override;
 
 		uint32_t vertex_count() const;
 		uint32_t index_count() const;

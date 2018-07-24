@@ -56,13 +56,6 @@ VkImageView redox::graphics::Texture::view() const {
 	return _view;
 }
 
-void redox::graphics::Texture::resize(const VkExtent2D& size) {
-	_dimensions = size;
-	_destroy();
-	_init();
-	_init_view();
-}
-
 const VkExtent2D& redox::graphics::Texture::dimension() const {
 	return _dimensions;
 }
@@ -128,7 +121,7 @@ void redox::graphics::Texture::_init_view() {
 		throw Exception("failed to create texture image view");
 }
 
-void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImageLayout newLayout, const CommandBuffer& commandBuffer) const {
+void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImageLayout newLayout) const {
 	
 	VkImageMemoryBarrier barrier{};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -173,12 +166,14 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 	}
 	else throw Exception("unsupported layout transition");
 
-	vkCmdPipelineBarrier(commandBuffer.handle(), sourceStage, destinationStage,
-		0, 0, nullptr, 0, nullptr, 1, &barrier);
+	Graphics::instance->aux_command_pool().quick_submit(
+	[sourceStage, destinationStage, &barrier](CommandBufferView cbo) {
+		vkCmdPipelineBarrier(cbo.handle(), sourceStage, destinationStage,
+			0, 0, nullptr, 0, nullptr, 1, &barrier);
+	});
 }
 
-redox::graphics::StagedTexture::StagedTexture(
-	const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size,
+redox::graphics::StagedTexture::StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size,
 	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags) :
 	Texture(format, size, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT, viewAspectFlags),
 	_stagingBuffer(pixels.byte_size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
@@ -188,23 +183,31 @@ redox::graphics::StagedTexture::StagedTexture(
 	});
 }
 
-void redox::graphics::StagedTexture::upload(const CommandBuffer& commandBuffer) {
-	_transfer_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer);
-	_stagingBuffer.copy_to(*this, commandBuffer);
-	_transfer_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
+void redox::graphics::StagedTexture::upload() {
+	_transfer_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	_stagingBuffer.copy_to(*this);
+	_transfer_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D & size) :
 	StagedTexture(pixels, format, size, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT) {
 }
 
-redox::graphics::DepthTexture::DepthTexture(const VkExtent2D& size) :
-	Texture(VK_FORMAT_D32_SFLOAT, size, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT) {
-
+void redox::graphics::ResizableTexture::resize(const VkExtent2D& extent) {
+	_dimensions = extent;
+	_destroy();
+	_init();
+	_init_view();
 }
 
-void redox::graphics::DepthTexture::prepare_layout(const CommandBuffer& commandBuffer) const {
-	_transfer_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-		commandBuffer);
-}	
+redox::graphics::DepthTexture::DepthTexture(const VkExtent2D& size) :
+	ResizableTexture(VK_FORMAT_D32_SFLOAT, size, 
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT) {
+
+	_transfer_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}
+
+void redox::graphics::DepthTexture::resize(const VkExtent2D& extent) {
+	ResizableTexture::resize(extent);
+	_transfer_layout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}

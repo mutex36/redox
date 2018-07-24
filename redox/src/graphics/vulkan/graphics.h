@@ -28,18 +28,23 @@ SOFTWARE.
 #include "platform\window.h"
 #include "core\config\config.h"
 
+#include "descriptor_pool.h"
+#include "command_pool.h"
+#include "pipeline_cache.h"
+#include "render_pass.h"
+
+#include "factory/model_factory.h"
+#include "factory/shader_factory.h"
+#include "factory/texture_factory.h"
+
 #include <optional> //std::optional
 
 namespace redox::graphics {
 	class Graphics {
 	public:
-
-		//For convenience the active instance of graphics will
-		//be exposed globally via this variable. It's probably not the best way
-		//but arguably better than manual dependency injection
 		static Graphics* instance;
 
-		Graphics(const platform::Window& window, const Configuration& config);
+		Graphics(const platform::Window& window);
 		~Graphics();
 
 		VkDevice device() const;
@@ -57,6 +62,11 @@ namespace redox::graphics {
 		VkPresentModeKHR pick_presentation_mode() const;
 		VkSurfaceFormatKHR pick_surface_format() const;
 
+		const CommandPool& aux_command_pool() const;
+		const DescriptorPool& descriptor_pool() const;
+		const PipelineCache& pipeline_cache() const;
+		const RenderPass& forward_render_pass() const;
+
 	private:
 		void _init_instance();
 		void _init_physical_device();
@@ -66,6 +76,18 @@ namespace redox::graphics {
 		std::optional<VkPhysicalDevice> _pick_device();
 		std::optional<uint32_t> _pick_queue_family();
 
+		static_instance_wrapper _iw{ this };
+
+		RenderPass _forwardRenderPass;
+
+		ModelFactory _modelFactory;
+		TextureFactory _textureFactory;
+		ShaderFactory  _shaderFactory;
+
+		CommandPool _auxCommandPool;
+		DescriptorPool _descriptorPool;
+		PipelineCache _pipelineCache;
+
 		uint32_t _queueFamily;
 		VkQueue _graphicsQueue;
 
@@ -73,8 +95,6 @@ namespace redox::graphics {
 		VkDevice _device;
 		VkPhysicalDevice _physicalDevice;
 		VkSurfaceKHR _surface;
-
-		const Configuration& _configRef;
 
 #ifdef RDX_VULKAN_VALIDATION
 		VkDebugReportCallbackEXT _debugReportCallback;

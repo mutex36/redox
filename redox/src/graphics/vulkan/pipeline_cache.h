@@ -25,14 +25,12 @@ SOFTWARE.
 */
 #pragma once
 #include "core/hashmap.h"
-#include "core/ref_counted.h"
-
 #include "pipeline.h"
 
+#include <memory> //std::shared_ptr
+
 namespace redox::graphics {
-	class Graphics;
 	class RenderPass;
-	class ShaderFactory;
 
 	enum class PipelineType {
 		DEFAULT_MESH_PIPELINE,
@@ -42,11 +40,11 @@ namespace redox::graphics {
 		INVALID
 	};
 
-	using PipelineHandle = RefCounted<Pipeline>;
+	using PipelineHandle = std::shared_ptr<Pipeline>;
 
-	class PipelineCache {
+	class PipelineCache : public NonCopyable {
 	public:
-		PipelineCache(const RenderPass& renderPass, const ShaderFactory& shaderFactory);
+		PipelineCache();
 
 		PipelineHandle load(PipelineType type) const;
 
@@ -58,8 +56,5 @@ namespace redox::graphics {
 		PipelineHandle _create_default_mesh_pipeline() const;
 
 		mutable Hashmap<PipelineType, PipelineHandle> _pipelines;
-
-		const RenderPass& _renderPassRef;
-		const ShaderFactory& _shaderFactoryRef;
 	};
 }

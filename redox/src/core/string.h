@@ -111,10 +111,6 @@ namespace redox {
 			_zero_terminate();
 		}
 
-		//template<size_type Length>
-		//BaseString(const char_type(&literal)[Length]) :
-		//	BaseString(literal, Length - 1) {}
-
 		BaseString(const char_type* str) :
 			BaseString(str, std::strlen(str)) {}
 

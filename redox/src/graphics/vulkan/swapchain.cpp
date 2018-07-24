@@ -58,7 +58,7 @@ void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 		_frameBuffers.emplace(renderPass, _imageViews[i], _extent);
 }
 
-void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBuffer&)> fn) {
+void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) {
 	for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
 		fn(_frameBuffers[index], _commandPool[index]);
 }

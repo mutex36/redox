@@ -97,7 +97,7 @@ namespace redox {
 	}
 
 	_RDX_INLINE redox::String lexical_cast(const f64& expr) {
-		i8 result[16];
+		i8 result[16]; //TODO: unsafe
 		sprintf_s(result, "%.3f", expr);
 		return result;
 	}

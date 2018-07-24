@@ -28,7 +28,7 @@ SOFTWARE.
 #define RDX_TYPE_HASH(Type)									\
 template<>													\
 struct redox::reflection::type_to_hash<Type> {				\
-	static constexpr size_t hash = __COUNTER__;				\
+	static constexpr hash_type hash = __COUNTER__;			\
 };															\
 template<>													\
 struct redox::reflection::hash_to_type<						\
@@ -37,6 +37,8 @@ struct redox::reflection::hash_to_type<						\
 };															\
 
 namespace redox::reflection {
+	using hash_type = std::size_t;
+
 	template<typename T>
 	struct type_to_hash;
 

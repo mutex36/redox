@@ -26,13 +26,10 @@ SOFTWARE.
 #include "pipeline_cache.h"
 
 #include "graphics.h"
-#include "render_pass.h"
-#include "factory/shader_factory.h"
+#include "core/application.h"
 
-redox::graphics::PipelineCache::PipelineCache(const RenderPass& renderPass, const ShaderFactory& shaderFactory) :
-	_pipelines(PipelineType::INVALID),
-	_renderPassRef(renderPass),
-	_shaderFactoryRef(shaderFactory) {
+redox::graphics::PipelineCache::PipelineCache() :
+	_pipelines(PipelineType::INVALID) {
 }
 
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) const {
@@ -43,7 +40,6 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineTyp
 
 	return _create_pipeline(type);
 }
-
 
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_pipeline(PipelineType type) const {
 
@@ -92,9 +88,13 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_
 	vLayout.attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
 	vLayout.attribs[2].offset = util::offset_of<uint32_t>(&MeshVertex::uv);
 
-	auto vs = _shaderFactoryRef.load(RDX_ASSET("shader\\vert.spv"));
-	auto fs = _shaderFactoryRef.load(RDX_ASSET("shader\\frag.spv"));
+	const auto& resources = Application::instance->resource_manager();
+	
+	auto vs = resources.load<Shader>("shader\\vert.spv");
+	auto fs = resources.load<Shader>("shader\\frag.spv");
 
-	return _pipelines.emplace(PipelineType::DEFAULT_MESH_PIPELINE, construct_tag{}, _renderPassRef,
-		vLayout, dLayout, std::move(vs), std::move(fs));
+	auto pipeline = std::make_shared<Pipeline>(
+		Graphics::instance->forward_render_pass(), vLayout, dLayout, std::move(vs), std::move(fs));
+
+	return _pipelines.emplace(PipelineType::DEFAULT_MESH_PIPELINE, std::move(pipeline));
 }

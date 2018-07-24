@@ -72,8 +72,7 @@ namespace redox {
 		void read_buffer(cgltf_buffer_view* bufferView, cgltf_accessor* accessor, Fn&& fn) {
 			auto it = _buffers.get(bufferView->buffer->uri);
 			if (it == _buffers.end()) {
-				io::File blobFile(RDX_FIND_ASSET("meshes\\", bufferView->buffer->uri),
-					io::File::Mode::READ);
+				io::File blobFile("meshes\\", io::File::Mode::READ);
 
 				it = _buffers.push(bufferView->buffer->uri, blobFile.read());
 			}

@@ -25,7 +25,8 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\smart_ptr.h"
+
+#include <memory> //std::unique_ptr
 
 namespace redox::platform {
 	class Timer {
@@ -40,6 +41,6 @@ namespace redox::platform {
 
 	private:
 		struct internal;
-		SmartPtr<internal> _internal;
+		std::unique_ptr<internal> _internal;
 	};
 }

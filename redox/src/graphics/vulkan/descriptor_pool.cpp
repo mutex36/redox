@@ -51,7 +51,7 @@ redox::graphics::DescriptorPool::~DescriptorPool() {
 	vkDestroyDescriptorPool(Graphics::instance->device(), _handle, nullptr);
 }
 
-redox::graphics::DescriptorSet redox::graphics::DescriptorPool::allocate(VkDescriptorSetLayout layout) const {
+redox::graphics::DescriptorSetView redox::graphics::DescriptorPool::allocate(VkDescriptorSetLayout layout) const {
 	VkDescriptorSet set;
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -65,15 +65,15 @@ redox::graphics::DescriptorSet redox::graphics::DescriptorPool::allocate(VkDescr
 	return set;
 }
 
-redox::graphics::DescriptorSet::DescriptorSet(VkDescriptorSet handle) : _handle(handle) {
+redox::graphics::DescriptorSetView::DescriptorSetView(VkDescriptorSet handle) : _handle(handle) {
 }
 
-void redox::graphics::DescriptorSet::bind(const CommandBuffer& commandBuffer, const Pipeline& pipeline) {
+void redox::graphics::DescriptorSetView::bind(const CommandBufferView& commandBuffer, const Pipeline& pipeline) {
 	vkCmdBindDescriptorSets(commandBuffer.handle(),
 		VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout(), 0, 1, &_handle, 0, nullptr);
 }
 
-void redox::graphics::DescriptorSet::bind_resource(const Texture& texture, uint32_t bindingPoint) {
+void redox::graphics::DescriptorSetView::bind_resource(const Texture& texture, uint32_t bindingPoint) {
 
 	VkDescriptorImageInfo imageInfo{};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -92,7 +92,7 @@ void redox::graphics::DescriptorSet::bind_resource(const Texture& texture, uint3
 	vkUpdateDescriptorSets(Graphics::instance->device(), 1, &writeSet, 0, nullptr);
 }
 
-void redox::graphics::DescriptorSet::bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint) {
+void redox::graphics::DescriptorSetView::bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint) {
 
 	VkDescriptorBufferInfo bufferInfo{};
 	bufferInfo.buffer = ubo.handle();

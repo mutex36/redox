@@ -27,7 +27,8 @@ SOFTWARE.
 
 int main() {
 
-	auto& myApp = redox::Application::instance();
+	redox::Application myApp;
 	myApp.run();
+
 	return 0;
 }

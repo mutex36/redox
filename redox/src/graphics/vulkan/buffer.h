@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
-#include "graphics.h"
 
 #include "core\non_copyable.h"
 #include "core\utility.h"
@@ -34,7 +33,7 @@ SOFTWARE.
 #include <thirdparty/function_ref/function_ref.hpp>
 
 namespace redox::graphics {
-	class CommandBuffer;
+	class CommandBufferView;
 	class Texture;
 
 	class Buffer : public NonCopyable {
@@ -46,8 +45,8 @@ namespace redox::graphics {
 		VkBuffer handle() const;
 
 		void map(tl::function_ref<void(void*)> fn) const;
-		void copy_to(const Buffer& other, const CommandBuffer& commandBuffer);
-		void copy_to(const Texture& texture, const CommandBuffer& commandBuffer);
+		void copy_to(const Buffer& other);
+		void copy_to(const Texture& texture);
 
 	protected:
 		VkBuffer _handle;
@@ -65,7 +64,7 @@ namespace redox::graphics {
 			_stagingBuffer.map(std::forward<Fn>(fn));
 		}
 
-		void upload(const CommandBuffer& commandBuffer);
+		void upload();
 		VkBuffer handle() const;
 
 	private:

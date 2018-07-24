@@ -58,7 +58,7 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 		throw Exception("failed to create commandbuffers");
 }
 
-void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const CommandBuffer&)> fn) const {
+void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const CommandBufferView&)> fn) const {
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -74,7 +74,7 @@ void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const Comm
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-	fn(CommandBuffer{ commandBuffer });
+	fn(CommandBufferView{ commandBuffer });
 	vkEndCommandBuffer(commandBuffer);
 
 	VkSubmitInfo submitInfo{};
@@ -93,21 +93,21 @@ void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const Comm
 	vkDestroyFence(Graphics::instance->device(), fence, VK_NULL_HANDLE);
 }
 
-redox::graphics::CommandBuffer redox::graphics::CommandPool::operator[](std::size_t index) const {
+redox::graphics::CommandBufferView redox::graphics::CommandPool::operator[](std::size_t index) const {
 	return _commandBuffers[index];
 }
 
-redox::graphics::CommandBuffer::CommandBuffer(VkCommandBuffer handle) :
+redox::graphics::CommandBufferView::CommandBufferView(VkCommandBuffer handle) :
 	_handle(handle) {
 }
 
-void redox::graphics::CommandBuffer::submit(const IndexedDraw& command) const {
+void redox::graphics::CommandBufferView::submit(const IndexedDraw& command) const {
 	command.material->bind(_handle);
 	command.mesh->bind(_handle);
 	vkCmdDrawIndexed(_handle, command.range.start, 1, command.range.end, 0, 0);
 }
 
-void redox::graphics::CommandBuffer::record(tl::function_ref<void()> fn) const {
+void redox::graphics::CommandBufferView::record(tl::function_ref<void()> fn) const {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -121,6 +121,6 @@ void redox::graphics::CommandBuffer::record(tl::function_ref<void()> fn) const {
 		throw Exception("failed to end recording of commandBuffer");
 }
 
-VkCommandBuffer redox::graphics::CommandBuffer::handle() const {
+VkCommandBuffer redox::graphics::CommandBufferView::handle() const {
 	return _handle;
 }

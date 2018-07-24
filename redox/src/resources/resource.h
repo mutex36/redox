@@ -24,29 +24,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\ref_counted.h"
 #include "core\string.h"
 
-static const redox::String
-	RDX_RESOURCE_PATH(R"(C:\Users\luis9\Desktop\redox\redox\resources\)");
-
-static const redox::String
-	RDX_CONFIG_PATH(R"(C:\Users\luis9\Desktop\redox\redox\config\)");
-
-#define RDX_ASSET(file) RDX_RESOURCE_PATH + file
-#define RDX_FIND_ASSET(folder, file) RDX_RESOURCE_PATH + folder + file
-#define RDX_CONFIG_ASSET(file) RDX_CONFIG_PATH + file
-
+#include <memory>
 
 namespace redox {
+	
+	struct IResource {
+		virtual void upload() = 0;
+	};
 
 	template<class T>
-	using ResourceHandle = RefCounted<T>;
+	using ResourceHandle = std::shared_ptr<T>;
 
-	//class IResource {
-	//public:
-	//	virtual void upload() = 0;
-	//	virtual void reload(const String& path) = 0;
-	//};
-
+	struct IResourceFactory {
+		virtual ResourceHandle<IResource> load(const String& path) = 0;
+	};
 }

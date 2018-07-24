@@ -34,7 +34,7 @@ SOFTWARE.
 #include "shader.h"
 
 namespace redox::graphics {
-	class CommandBuffer;
+	class CommandBufferView;
 
 	enum class TextureKeys {
 		ALBEDO, ROUGHNESS_METALNESS, NORMAL, DISPLACEMENT, LIGHT, OCCLUSION, INVALID
@@ -44,18 +44,18 @@ namespace redox::graphics {
 		MVP, USER0, USER1
 	};
 
-	class Material : public NonCopyable {
+	class Material : public IResource {
 	public:
-		Material(PipelineHandle pipeline, const DescriptorSet& descSet);
+		Material(PipelineHandle pipeline, DescriptorSetView descSet);
 
-		void bind(const CommandBuffer& commandBuffer);
-		void upload(const CommandBuffer& commandBuffer);
+		void bind(const CommandBufferView& commandBuffer);
+		void upload() override;
 
 		void set_buffer(BufferKeys key, const UniformBuffer& buffer);
 		void set_texture(TextureKeys key, ResourceHandle<SampleTexture> texture);
 
 	private:
-		DescriptorSet _descSet;
+		DescriptorSetView _descSet;
 		PipelineHandle _pipeline;
 
 		redox::Hashmap<TextureKeys, ResourceHandle<SampleTexture>> _textures;

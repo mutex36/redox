@@ -150,7 +150,7 @@ namespace redox::math {
 			};
 		}
 
-		constexpr vec4_type operator[](std::size_t index) {
+		_RDX_INLINE vec4_type operator[](std::size_t index) {
 			return _xmm[index];
 		}
 

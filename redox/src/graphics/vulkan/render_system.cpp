@@ -34,19 +34,13 @@ SOFTWARE.
 
 #define RDX_LOG_TAG "RenderSystem"
 
-redox::graphics::RenderSystem::RenderSystem(const platform::Window& window, const Configuration& config) :
-	_graphics(window, config),
+redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
+	_graphics(window),
 	_swapchain(std::bind(&RenderSystem::_swapchain_event_create, this)),
 	_mvpBuffer(sizeof(mvp_uniform)),
-	_modelFactory(_pipelineCache, _mvpBuffer, _textureFactory, _descriptorPool),
-	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
-	_pipelineCache(_renderPass, _shaderFactory),
-	_descriptorPool(5, 20, 20),
-	_demoModel(_modelFactory.load(RDX_ASSET("meshes\\centurion.gltf"))) {
+	_demoModel(Application::instance->
+		resource_manager().load<Model>("meshes\\centurion.gltf")) {
 
-	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
-		_demoModel->upload(cbo);
-	});
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
@@ -55,9 +49,10 @@ redox::graphics::RenderSystem::~RenderSystem() {
 
 void redox::graphics::RenderSystem::_demo_draw() {
 
-	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
+	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
-			_renderPass.begin(frameBuffer, commandBuffer);
+			const auto& fwdPass = Graphics::instance->forward_render_pass();
+			fwdPass.begin(frameBuffer, commandBuffer);
 
 			auto mesh = _demoModel->meshes()[0];
 			for (const auto& sm : mesh->submeshes()) {
@@ -70,7 +65,7 @@ void redox::graphics::RenderSystem::_demo_draw() {
 				commandBuffer.submit(drawCmd);
 			}
 
-			_renderPass.end(commandBuffer);
+			fwdPass.end(commandBuffer);
 		});
 	});
 
@@ -90,22 +85,18 @@ void redox::graphics::RenderSystem::render() {
 		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
 		bf->view = math::Mat44f::translate({0,0,-3});
 	});
-
-	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
-		_mvpBuffer.upload(cbo);
-	});
-
+	
+	_mvpBuffer.upload();
 	_swapchain.present();
 }
 
 void redox::graphics::RenderSystem::_swapchain_event_create() {
 
-	for (auto& pipelineIt : _pipelineCache)
-		pipelineIt.value->set_viewport(_swapchain.extent());
-	
-	_auxCommandPool.quick_submit([this](const CommandBuffer& cbo) {
-		_renderPass.resize_attachments(cbo, _swapchain.extent()); 
-	});
-	_swapchain.create_fbs(_renderPass);
+	//for (auto& pipelineIt : Graphics::instance->pipeline_cache())
+	//	pipelineIt.value->set_viewport(_swapchain.extent());
+	//
+	const auto& rp = Graphics::instance->forward_render_pass(); 
+	//rp.resize_attachments(_swapchain.extent());
+	_swapchain.create_fbs(rp);
 	_demo_draw();
 }

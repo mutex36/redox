@@ -26,20 +26,20 @@ SOFTWARE.
 #include "material.h"
 #include "graphics\vulkan\graphics.h"
 
-redox::graphics::Material::Material(PipelineHandle pipeline, const DescriptorSet& descSet) :
+redox::graphics::Material::Material(PipelineHandle pipeline, DescriptorSetView descSet) :
 	_pipeline(std::move(pipeline)),
 	_descSet(descSet),
 	_textures(TextureKeys::INVALID) {
 }
 
-void redox::graphics::Material::bind(const CommandBuffer& commandBuffer) {
+void redox::graphics::Material::bind(const CommandBufferView& commandBuffer) {
 	_pipeline->bind(commandBuffer);
 	_descSet.bind(commandBuffer, *_pipeline);
 }
 
-void redox::graphics::Material::upload(const CommandBuffer& commandBuffer) {
+void redox::graphics::Material::upload() {
 	for (auto& it : _textures)
-		it.value->upload(commandBuffer);
+		it.value->upload();
 }
 
 void redox::graphics::Material::set_buffer(BufferKeys key, const UniformBuffer& buffer) {

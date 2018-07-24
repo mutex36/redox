@@ -24,16 +24,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "resources\factory.h"
 #include "graphics\vulkan\resources\texture.h"
+#include "resources\resource.h"	
 
 namespace redox::graphics {
-	class Graphics;
+	
+	class TextureFactory : public IResourceFactory {
+	public:
+		ResourceHandle<IResource> load(const String& path) override;
 
-	class TextureFactory : public ResourceFactory<TextureFactory, SampleTexture> {
-		friend class ResourceFactory<TextureFactory, SampleTexture>;
-
-	protected:
-		ResourceHandle<SampleTexture> load_impl(const String& path) const;
 	};
+
 }

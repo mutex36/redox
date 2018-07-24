@@ -31,6 +31,8 @@ SOFTWARE.
 #include "platform\windows.h"
 #include "resources\resource.h"
 
+#include "core\application.h"
+
 #define RDX_LOG_TAG "WindowSystem"
 
 struct redox::platform::Window::internal {
@@ -74,15 +76,20 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-redox::platform::Window::Window(const String& title, const Configuration& config) : 
-	_internal(construct_tag{}) {
+redox::platform::Window::Window(const String& title) :
+	_internal(std::make_unique<internal>()) {
 
 	_internal->instance = GetModuleHandle(0);
 	_internal->classname = "redox_window";
 
 	DWORD dwStyle = WS_SYSMENU | WS_MINIMIZEBOX;
 
-	auto iconFile = RDX_ASSET(config.get("Surface", "icon"));
+	const auto& config = Application::instance->config();
+	const auto& resources = Application::instance->resource_manager();
+
+	String iconFile = resources.resolve_path(
+		config.get("Surface", "icon"));
+
 	auto icon = (HICON)LoadImage(NULL, iconFile.cstr(), IMAGE_ICON,
 		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
 
@@ -103,8 +110,8 @@ redox::platform::Window::Window(const String& title, const Configuration& config
 		windowRect.bottom = GetSystemMetrics(SM_CYSCREEN);
 		dwStyle |= WS_POPUP;
 	} else {
-		windowRect.right = config.get("Engine", "resolution_x");
-		windowRect.bottom = config.get("Engine", "resolution_y");
+		windowRect.right = config.get("Surface", "resolution_x");
+		windowRect.bottom = config.get("Surface", "resolution_y");
 		AdjustWindowRect(&windowRect, dwStyle, FALSE);
 
 		if (config.get("Surface", "resizable")) {

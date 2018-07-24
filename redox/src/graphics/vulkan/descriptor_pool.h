@@ -28,16 +28,16 @@ SOFTWARE.
 
 namespace redox::graphics {
 	class Graphics;
-	class CommandBuffer;
+	class CommandBufferView;
 	class Texture;
 	class Pipeline;
 	struct UniformBuffer;
 
-	class DescriptorSet {
+	class DescriptorSetView {
 	public:
-		DescriptorSet(VkDescriptorSet handle);
+		DescriptorSetView(VkDescriptorSet handle);
 
-		void bind(const CommandBuffer& commandBuffer, const Pipeline& pipeline);
+		void bind(const CommandBufferView& commandBuffer, const Pipeline& pipeline);
 		void bind_resource(const Texture& texture, uint32_t bindingPoint);
 		void bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint);
 
@@ -50,7 +50,7 @@ namespace redox::graphics {
 		DescriptorPool(uint32_t maxSets, uint32_t maxImages, uint32_t maxUBOs);
 		~DescriptorPool();
 
-		DescriptorSet allocate(VkDescriptorSetLayout layout) const;
+		DescriptorSetView allocate(VkDescriptorSetLayout layout) const;
 
 	private:
 		VkDescriptorPool _handle;

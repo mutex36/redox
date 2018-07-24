@@ -28,7 +28,6 @@ SOFTWARE.
 #include "core\hashmap.h"
 
 #include "platform\window.h"
-#include "core\smart_ptr.h"
 #include "keys.h"
 
 #define RDX_INPUT_HIGH_DPI

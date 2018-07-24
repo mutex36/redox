@@ -25,6 +25,7 @@ SOFTWARE.
 */
 #include "buffer.h"
 
+#include "graphics.h"
 #include "command_pool.h"
 #include "resources\texture.h"
 
@@ -79,13 +80,15 @@ void redox::graphics::Buffer::map(tl::function_ref<void(void*)> fn) const {
 	vkUnmapMemory(Graphics::instance->device(), _memory);
 }
 
-void redox::graphics::Buffer::copy_to(const Buffer& other, const CommandBuffer& commandBuffer) {
+void redox::graphics::Buffer::copy_to(const Buffer& other) {
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _size;
-	vkCmdCopyBuffer(commandBuffer.handle(), _handle, other.handle(), 1, &copyRegion);
+	Graphics::instance->aux_command_pool().quick_submit([this, &other, &copyRegion](CommandBufferView cbo) {
+		vkCmdCopyBuffer(cbo.handle(), _handle, other.handle(), 1, &copyRegion);
+	});
 }
 
-void redox::graphics::Buffer::copy_to(const Texture& texture, const CommandBuffer& commandBuffer) {
+void redox::graphics::Buffer::copy_to(const Texture& texture) {
 	VkBufferImageCopy region{};
 	region.bufferOffset = 0;
 	region.bufferRowLength = 0;
@@ -100,8 +103,10 @@ void redox::graphics::Buffer::copy_to(const Texture& texture, const CommandBuffe
 	const auto& ts = texture.dimension();
 	region.imageExtent = { ts.width, ts.height, 1 };
 
-	vkCmdCopyBufferToImage(commandBuffer.handle(), _handle, texture.handle(),
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	Graphics::instance->aux_command_pool().quick_submit([this, &texture, &region](CommandBufferView cbo) {
+		vkCmdCopyBufferToImage(cbo.handle(), _handle, texture.handle(),
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	});
 }
 
 redox::graphics::StagedBuffer::StagedBuffer(VkDeviceSize size, VkBufferUsageFlags usage) :
@@ -110,8 +115,8 @@ redox::graphics::StagedBuffer::StagedBuffer(VkDeviceSize size, VkBufferUsageFlag
 
 }
 
-void redox::graphics::StagedBuffer::upload(const CommandBuffer& commandBuffer) {
-	_stagingBuffer.copy_to(_buffer, commandBuffer);
+void redox::graphics::StagedBuffer::upload() {
+	_stagingBuffer.copy_to(_buffer);
 }
 
 VkBuffer redox::graphics::StagedBuffer::handle() const {

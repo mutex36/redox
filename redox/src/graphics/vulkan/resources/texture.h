@@ -24,7 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\smart_ptr.h"
 #include "core\non_copyable.h"
 #include "core\buffer.h"
 
@@ -32,18 +31,19 @@ SOFTWARE.
 #include "graphics\vulkan\buffer.h"
 #include "graphics\vulkan\sampler.h"
 
+#include "resources/resource.h"
+
 namespace redox::graphics {
-	class CommandBuffer;
+	class CommandBufferView;
 
 	class Texture : public NonCopyable {
 	public:
-		Texture(VkFormat format, const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
+		Texture(VkFormat format, const VkExtent2D& size, 
+			VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
 		~Texture();
 
 		VkImage handle() const;
 		VkImageView view() const;
-
-		void resize(const VkExtent2D& size);
 
 		const VkExtent2D& dimension() const;
 		const VkFormat& format() const;
@@ -53,8 +53,7 @@ namespace redox::graphics {
 		void _destroy();
 		void _init();
 		void _init_view();
-		void _transfer_layout(VkImageLayout oldLayout, VkImageLayout newLayout, 
-			const CommandBuffer& commandBuffer) const;
+		void _transfer_layout(VkImageLayout oldLayout, VkImageLayout newLayout) const;
 
 		Sampler _sampler;
 
@@ -68,14 +67,26 @@ namespace redox::graphics {
 		VkExtent2D _dimensions;
 	};
 
-	class StagedTexture : public Texture {
+	class ResizableTexture : public Texture {
+	public:
+		using Texture::Texture;
+		void resize(const VkExtent2D& extent);
+	};
+
+	class DepthTexture : public ResizableTexture {
+	public:
+		DepthTexture(const VkExtent2D& size);
+		void resize(const VkExtent2D& extent);
+	};
+
+	class StagedTexture : public IResource, public Texture {
 	public:
 		StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format,
 			const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
 
 		~StagedTexture() = default;
 
-		void upload(const CommandBuffer& commandBuffer);
+		void upload() override;
 
 	protected:
 		Buffer _stagingBuffer;
@@ -86,10 +97,4 @@ namespace redox::graphics {
 		SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size);
 	};
 
-	class DepthTexture : public Texture {
-	public:
-		DepthTexture(const VkExtent2D& size);
-
-		void prepare_layout(const CommandBuffer& commandBuffer) const;
-	};
 }

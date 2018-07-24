@@ -34,7 +34,7 @@ struct redox::io::File::internal {
 };
 
 redox::io::File::File(const redox::String& file, const Mode mode) :
-	_internal(construct_tag{}) {
+	_internal(std::make_unique<internal>()) {
 
 	DWORD access{ 0 };
 	if ((mode & Mode::READ) == Mode::READ)

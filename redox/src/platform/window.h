@@ -26,13 +26,12 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\string.h"
-#include "core\smart_ptr.h"
 #include "core\utility.h"
-#include "core\config\config.h"
 
 #include "filesystem.h"
 
 #include <functional> //std::function
+#include <memory> //std::unique_ptr
 
 namespace redox::platform {
 	class Window {
@@ -43,7 +42,7 @@ namespace redox::platform {
 
 		using EventFn = std::function<void(Event)>;
 
-		Window(const String& name, const Configuration& config);
+		Window(const String& name);
 		~Window();
 
 		void show() const;
@@ -61,6 +60,6 @@ namespace redox::platform {
 		EventFn _eventfn;
 
 		struct internal;
-		SmartPtr<internal> _internal;
+		std::unique_ptr<internal> _internal;
 	};
 }

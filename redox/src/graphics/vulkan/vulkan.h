@@ -40,6 +40,13 @@ SOFTWARE.
 #define RDX_VULKAN_VALIDATION
 #endif
 
+//########
+//SETTINGS
+//########
+#define RDX_VULKAN_MAX_DESC_SETS 5
+#define RDX_VULKAN_MAX_DESC_SAMPLERS 20
+#define RDX_VULKAN_MAX_DESC_UBOS 5
+
 static constexpr const char* RDX_VULKAN_LAYERS[] = {
 	"VK_LAYER_LUNARG_standard_validation"
 };

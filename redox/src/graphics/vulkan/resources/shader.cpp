@@ -46,3 +46,7 @@ redox::graphics::Shader::~Shader() {
 VkShaderModule redox::graphics::Shader::handle() const {
 	return _handle;
 }
+
+void redox::graphics::Shader::upload() {
+	//SPIR-V compile...?
+}

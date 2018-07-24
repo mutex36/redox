@@ -44,16 +44,16 @@ redox::graphics::Mesh::Mesh(const redox::Buffer<MeshVertex>& vertices,
 	});
 }
 
-void redox::graphics::Mesh::bind(const CommandBuffer& commandBuffer) {
+void redox::graphics::Mesh::bind(const CommandBufferView& commandBuffer) {
 	VkBuffer vertexBuffers[] = { _vertexBuffer.handle() };
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer.handle(), 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer.handle(), _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
 }
 
-void redox::graphics::Mesh::upload(const CommandBuffer& commandBuffer) {
-	_vertexBuffer.upload(commandBuffer);
-	_indexBuffer.upload(commandBuffer);
+void redox::graphics::Mesh::upload() {
+	_vertexBuffer.upload();
+	_indexBuffer.upload();
 }
 
 uint32_t redox::graphics::Mesh::vertex_count() const {

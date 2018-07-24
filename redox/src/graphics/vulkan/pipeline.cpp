@@ -28,8 +28,8 @@ SOFTWARE.
 #include "command_pool.h"
 #include "render_pass.h"
 
-redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass,
-	const VertexLayout& vLayout, const DescriptorLayout& dLayout, ResourceHandle<Shader> vs, ResourceHandle<Shader> fs) :
+redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass, const VertexLayout& vLayout, 
+	const DescriptorLayout& dLayout, ResourceHandle<Shader> vs, ResourceHandle<Shader> fs) :
 	_vs(std::move(vs)),
 	_fs(std::move(fs)) {
 
@@ -43,7 +43,7 @@ redox::graphics::Pipeline::~Pipeline() {
 	vkDestroyPipelineLayout(Graphics::instance->device(), _layout, nullptr);
 }
 
-void redox::graphics::Pipeline::bind(const CommandBuffer& commandBuffer) {
+void redox::graphics::Pipeline::bind(const CommandBufferView& commandBuffer) {
 	vkCmdBindPipeline(commandBuffer.handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, _handle);
 	_update_viewport(commandBuffer);
 }
@@ -185,7 +185,7 @@ void redox::graphics::Pipeline::_init_desriptors(const DescriptorLayout& dLayout
 		throw Exception("failed to create descriptor set layout");
 }
 
-void redox::graphics::Pipeline::_update_viewport(const CommandBuffer& cbo) {
+void redox::graphics::Pipeline::_update_viewport(const CommandBufferView& cbo) {
 	VkViewport vp{};
 	vp.x = 0.0f;
 	vp.y = 0.0f;

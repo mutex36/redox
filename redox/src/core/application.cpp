@@ -31,10 +31,11 @@ SOFTWARE.
 #define RDX_LOG_TAG "Application"
 
 redox::Application::Application() :
-	_config(RDX_CONFIG_ASSET("settings.ini")),
-	_window("redox engine", _config),
-	_renderSystem(_window, _config),
-	_inputSystem(_window) {
+	_config("settings.ini"),
+	_window("redox engine"),
+	_renderSystem(_window),
+	_inputSystem(_window),
+	_resourceManager(_config.get("Engine", "resource_path")) {
 
 	_window.set_callback([this](platform::Window::Event event) {
 		switch (event) {
@@ -95,4 +96,8 @@ const redox::Configuration& redox::Application::config() const {
 
 const redox::platform::Timer& redox::Application::timer() const {
 	return _timer;
+}
+
+const redox::ResourceManager& redox::Application::resource_manager() const {
+	return _resourceManager;
 }

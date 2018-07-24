@@ -28,26 +28,38 @@ SOFTWARE.
 #include "core\hashmap.h"
 #include "resource.h"
 
+#include "core/meta/type_hash.h"
+
 namespace redox {
 
-	template<class Derived, class ResourceType>
-	class ResourceFactory : public NonCopyable {
+	class ResourceManager {
 	public:
-		ResourceFactory() : _cache("__invalid_resource__") {}
+		ResourceManager(const String& resourcePath);
+		String resolve_path(const String& path) const;
 
-		ResourceHandle<ResourceType> load(const String& file) const {
-			auto lookup = _cache.get(file);
-			if (lookup != _cache.end())
-				return lookup->value;
+		template<class R>
+		void register_factory(IResourceFactory* factory) const {
+			_factories.push(
+				redox::reflection::type_to_hash<R>::hash, factory);
+		}
 
-			auto instance = static_cast<const Derived*>(this);
-			auto rx = instance->load_impl(file);
+		template<class R>
+		ResourceHandle<R> load(const String& path) const {
+			auto cit = _cache.get(path);
+			if (cit != _cache.end())
+				return std::static_pointer_cast<R>(cit->value);
 
-			_cache.push(file, rx);
-			return rx;
+			auto fit = _factories.get(redox::reflection::type_to_hash<R>::hash);
+			if (fit == _factories.end())
+				throw Exception("no suitable factory found");
+
+			return fit->value->load(resolve_path(path));
 		}
 
 	private:
-		mutable Hashmap<String, ResourceHandle<ResourceType>> _cache;
+		String _resourcePath;
+
+		mutable Hashmap<String, ResourceHandle<IResource>> _cache;
+		mutable Hashmap<redox::reflection::hash_type, IResourceFactory*> _factories;
 	};
 }

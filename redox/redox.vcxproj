@@ -187,6 +187,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\platform\window_win.cpp" />
     <ClCompile Include="src\resources\importer\gltf_importer.cpp" />
+    <ClCompile Include="src\resources\resource_manager.cpp" />
     <ClCompile Include="thirdparty\gltf\cgltf_stub.c" />
     <ClCompile Include="thirdparty\ini\ini.cpp" />
   </ItemGroup>
@@ -196,7 +197,6 @@
     <ClInclude Include="src\core\iterator.h" />
     <ClInclude Include="src\core\meta\reflection.h" />
     <ClInclude Include="src\core\meta\type_hash.h" />
-    <ClInclude Include="src\core\ref_counted.h" />
     <ClInclude Include="src\graphics\vulkan\descriptor_layout.h" />
     <ClInclude Include="src\graphics\vulkan\descriptor_pool.h" />
     <ClInclude Include="src\graphics\vulkan\buffer.h" />
@@ -234,7 +234,6 @@
     <ClInclude Include="src\core\logging\log.h" />
     <ClInclude Include="src\core\logging\log_win.hpp" />
     <ClInclude Include="src\core\profiling\profiler.h" />
-    <ClInclude Include="src\core\smart_ptr.h" />
     <ClInclude Include="src\core\non_copyable.h" />
     <ClInclude Include="src\core\platform.h" />
     <ClInclude Include="src\core\string.h" />
@@ -250,7 +249,7 @@
     <ClInclude Include="src\math\vec.h" />
     <ClInclude Include="src\redox.h" />
     <ClInclude Include="src\platform\window.h" />
-    <ClInclude Include="src\resources\factory.h" />
+    <ClInclude Include="src\resources\resource_manager.h" />
     <ClInclude Include="src\resources\importer\gltf_importer.h" />
     <ClInclude Include="src\resources\resource.h" />
     <ClInclude Include="thirdparty\ini\ini.h" />

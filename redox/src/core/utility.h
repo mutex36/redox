@@ -74,6 +74,14 @@ namespace redox {
 
 	template <class T, class M>
 	member_type_wrapper<M> member_type(M T:: *);
+
+	struct static_instance_wrapper {
+		template<class T>
+		static_instance_wrapper(T* this_ptr) {
+			T::instance = this_ptr;
+		}
+	};
+
 }
 
 //####UTIL####

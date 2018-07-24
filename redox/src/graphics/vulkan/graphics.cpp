@@ -26,16 +26,21 @@ SOFTWARE.
 #include "graphics.h"
 #include "core\utility.h"
 
-redox::graphics::Graphics* redox::graphics::Graphics::instance = nullptr;
+#include "core\application.h"
 
-redox::graphics::Graphics::Graphics(const platform::Window& window, const Configuration& config) :
-	_configRef(config) {
+redox::graphics::Graphics::Graphics(const platform::Window& window) :
+	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
+	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS) {
+
 	_init_instance();
 	_init_physical_device();
 	_init_surface(window);
 	_init_device();
 
-	Graphics::instance = this;
+	const auto& rm = Application::instance->resource_manager();
+	rm.register_factory<SampleTexture>(&_textureFactory);
+	rm.register_factory<Model>(&_modelFactory);
+	rm.register_factory<Shader>(&_shaderFactory);
 }
 
 redox::graphics::Graphics::~Graphics() {
@@ -97,7 +102,7 @@ VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 	redox::Buffer<VkPresentModeKHR> modes(count);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, modes.data());
 
-	if (_configRef.get("Engine", "vsync"))
+	if (Application::instance->config().get("Engine", "vsync"))
 		return VK_PRESENT_MODE_FIFO_KHR;
 
 	for (auto& mode : modes) {
@@ -127,12 +132,28 @@ VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
 	return formats[0];
 }
 
+const redox::graphics::CommandPool& redox::graphics::Graphics::aux_command_pool() const {
+	return _auxCommandPool;
+}
+
+const redox::graphics::DescriptorPool& redox::graphics::Graphics::descriptor_pool() const {
+	return _descriptorPool;
+}
+
+const redox::graphics::PipelineCache& redox::graphics::Graphics::pipeline_cache() const {
+	return _pipelineCache;
+}
+
+const redox::graphics::RenderPass& redox::graphics::Graphics::forward_render_pass() const {
+	return _forwardRenderPass;
+}
+
 void redox::graphics::Graphics::_init_instance() {
 	RDX_LOG("Initializing instance...");
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "Test";
+	appInfo.pApplicationName = "RedoxApp";
 	appInfo.pEngineName = "RedoxEngine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;

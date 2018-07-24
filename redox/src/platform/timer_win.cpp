@@ -35,7 +35,7 @@ struct redox::platform::Timer::internal {
 	LARGE_INTEGER freq;
 };
 
-redox::platform::Timer::Timer() : _internal(construct_tag{}) {
+redox::platform::Timer::Timer() : _internal(std::make_unique<internal>()) {
 	QueryPerformanceFrequency(&_internal->freq);
 }
 

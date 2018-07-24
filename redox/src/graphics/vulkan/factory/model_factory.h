@@ -24,29 +24,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "resources\factory.h"
+#include "resources\resource.h"
 #include "graphics\vulkan\resources\model.h"
 
 namespace redox::graphics {
 
-	class TextureFactory;
-	class PipelineCache;
-	class DescriptorPool;
-
-	class ModelFactory : public ResourceFactory<ModelFactory, Model> {
-		friend class ResourceFactory<ModelFactory, Model>;
-
+	class ModelFactory : public IResourceFactory {
 	public:
-		ModelFactory(const PipelineCache& pipelineCache,
-			const UniformBuffer& ubo, const TextureFactory& textureFactory, const DescriptorPool& dscPool);
-
-	protected:
-		ResourceHandle<Model> load_impl(const String& path) const;
-
-	private:
-		const UniformBuffer& _uboRef;
-		const PipelineCache& _pipelineCacheRef;
-		const TextureFactory& _textureFactoryRef;
-		const DescriptorPool& _descPoolRef;
+		ResourceHandle<IResource> load(const String & path) override;
 	};
 }

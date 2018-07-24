@@ -29,8 +29,7 @@ SOFTWARE.
 #include "core\config\config.h"
 #include "platform\timer.h"
 #include "input\input_system.h"
-
-#include <atomic>
+#include "resources\resource_manager.h"
 
 namespace redox {
 	class Application {
@@ -38,10 +37,7 @@ namespace redox {
 		Application();
 		~Application();
 
-		static Application& instance() {
-			static Application app;
-			return app;
-		}
+		static Application* instance;
 
 		enum class State {
 			RUNNING, PAUSED, TERMINATED
@@ -52,9 +48,13 @@ namespace redox {
 
 		const Configuration& config() const;
 		const platform::Timer& timer() const;
+		const ResourceManager& resource_manager() const;
 
 	private:
+		static_instance_wrapper _iw{ this };
+
 		Configuration _config;
+		ResourceManager _resourceManager;
 		platform::Window _window;
 		platform::Timer _timer;
 

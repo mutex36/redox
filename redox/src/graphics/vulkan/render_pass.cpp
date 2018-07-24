@@ -92,12 +92,11 @@ redox::graphics::RenderPass::~RenderPass() {
 	vkDestroyRenderPass(Graphics::instance->device(), _handle, nullptr);
 }
 
-void redox::graphics::RenderPass::resize_attachments(const CommandBuffer& cbo, const VkExtent2D & extent) {
+void redox::graphics::RenderPass::resize_attachments(const VkExtent2D& extent) {
 	_depthTexture.resize(extent);
-	_depthTexture.prepare_layout(cbo);
 }
 
-void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, const CommandBuffer& commandBuffer) {
+void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) const {
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -116,7 +115,7 @@ void redox::graphics::RenderPass::begin(const Framebuffer& frameBuffer, const Co
 	vkCmdBeginRenderPass(commandBuffer.handle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void redox::graphics::RenderPass::end(const CommandBuffer& commandBuffer) const {
+void redox::graphics::RenderPass::end(const CommandBufferView& commandBuffer) const {
 	vkCmdEndRenderPass(commandBuffer.handle());
 }
 

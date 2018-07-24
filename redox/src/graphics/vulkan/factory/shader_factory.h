@@ -24,17 +24,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "resources\factory.h"
+#include "resources\resource.h"
 #include "graphics\vulkan\resources\shader.h"
 
 namespace redox::graphics {
 	class Graphics;
 
-	class ShaderFactory : public ResourceFactory<ShaderFactory, Shader> {
-		friend class ResourceFactory<ShaderFactory, Shader>;
-
-	protected:
-		ResourceHandle<Shader> load_impl(const String& path) const;
-
+	class ShaderFactory : public IResourceFactory {
+	public:
+		ResourceHandle<IResource> load(const String& path) override;
 	};
 }
