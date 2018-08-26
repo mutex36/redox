@@ -36,7 +36,6 @@ SOFTWARE.
 
 redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
 	_graphics(window),
-	_swapchain(std::bind(&RenderSystem::_swapchain_event_create, this)),
 	_mvpBuffer(sizeof(mvp_uniform)),
 	_demoModel(Application::instance->
 		resource_manager().load<Model>("meshes\\centurion.gltf")) {
@@ -48,11 +47,13 @@ redox::graphics::RenderSystem::~RenderSystem() {
 }
 
 void redox::graphics::RenderSystem::_demo_draw() {
+	const auto& sc = _graphics.swap_chain();
 
-	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
+	sc.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
-			const auto& fwdPass = Graphics::instance->forward_render_pass();
-			fwdPass.begin(frameBuffer, commandBuffer);
+
+			const auto& rp = _graphics.forward_render_pass();
+			rp.begin(frameBuffer, commandBuffer);
 
 			auto mesh = _demoModel->meshes()[0];
 			for (const auto& sm : mesh->submeshes()) {
@@ -65,7 +66,7 @@ void redox::graphics::RenderSystem::_demo_draw() {
 				commandBuffer.submit(drawCmd);
 			}
 
-			fwdPass.end(commandBuffer);
+			rp.end(commandBuffer);
 		});
 	});
 
@@ -74,7 +75,7 @@ void redox::graphics::RenderSystem::_demo_draw() {
 void redox::graphics::RenderSystem::render() {
 
 	_mvpBuffer.map([this](void* data) {
-		auto extent = _swapchain.extent();
+		auto extent = _graphics.swap_chain().extent();
 		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
 
 		static float k = 0.0;
@@ -87,16 +88,5 @@ void redox::graphics::RenderSystem::render() {
 	});
 	
 	_mvpBuffer.upload();
-	_swapchain.present();
-}
-
-void redox::graphics::RenderSystem::_swapchain_event_create() {
-
-	//for (auto& pipelineIt : Graphics::instance->pipeline_cache())
-	//	pipelineIt.value->set_viewport(_swapchain.extent());
-	//
-	const auto& rp = Graphics::instance->forward_render_pass(); 
-	//rp.resize_attachments(_swapchain.extent());
-	_swapchain.create_fbs(rp);
-	_demo_draw();
+	_graphics.present();
 }

@@ -32,7 +32,6 @@ SOFTWARE.
 #include "platform\window.h"
 
 #include "graphics.h"
-#include "swapchain.h"
 #include "render_pass.h"
 
 #include "math\math.h"
@@ -47,8 +46,6 @@ namespace redox::graphics {
 		void render();
 
 	private:
-		void _swapchain_event_create();
-
 		struct mvp_uniform {
 			math::Mat44f model;
 			math::Mat44f view;
@@ -62,7 +59,5 @@ namespace redox::graphics {
 		ResourceHandle<Model> _demoModel;
 		void _demo_draw();
 		//@@@
-
-		Swapchain _swapchain;
 	};
 }

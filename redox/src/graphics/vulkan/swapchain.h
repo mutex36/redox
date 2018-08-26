@@ -29,7 +29,6 @@ SOFTWARE.
 #include "core\non_copyable.h"
 
 #include "vulkan.h"
-#include "graphics.h"
 #include "command_pool.h"
 #include "render_pass.h"
 #include "framebuffer.h"
@@ -38,6 +37,8 @@ SOFTWARE.
 #include <thirdparty/function_ref/function_ref.hpp>
 
 namespace redox::graphics {
+	class Graphics;
+
 	class Swapchain : public NonCopyable {
 	public:
 		using CreateCallback = std::function<void()>;
@@ -46,8 +47,8 @@ namespace redox::graphics {
 		~Swapchain();
 
 		void create_fbs(const RenderPass& renderPass);
-		void visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn);
-		void present();
+		void visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) const;
+		void present() const;
 
 		VkSwapchainKHR handle() const;
 		VkExtent2D extent() const;

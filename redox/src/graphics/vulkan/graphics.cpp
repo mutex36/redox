@@ -30,7 +30,8 @@ SOFTWARE.
 
 redox::graphics::Graphics::Graphics(const platform::Window& window) :
 	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
-	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS) {
+	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS),
+	_swapchain(std::bind(&Graphics::_swapchain_event_create, this)) {
 
 	_init_instance();
 	_init_physical_device();
@@ -78,6 +79,10 @@ VkQueue redox::graphics::Graphics::present_queue() const {
 
 uint32_t redox::graphics::Graphics::queue_family() const {
 	return _queueFamily;
+}
+
+void redox::graphics::Graphics::present() const {
+	_swapchain.present();
 }
 
 void redox::graphics::Graphics::wait_pending() const {
@@ -146,6 +151,17 @@ const redox::graphics::PipelineCache& redox::graphics::Graphics::pipeline_cache(
 
 const redox::graphics::RenderPass& redox::graphics::Graphics::forward_render_pass() const {
 	return _forwardRenderPass;
+}
+
+const redox::graphics::Swapchain& redox::graphics::Graphics::swap_chain() const {
+	return _swapchain;
+}
+
+void redox::graphics::Graphics::_swapchain_event_create() {
+
+	_forwardRenderPass.resize_attachments(_swapchain.extent());
+	_swapchain.create_fbs(_forwardRenderPass);
+
 }
 
 void redox::graphics::Graphics::_init_instance() {

@@ -32,6 +32,7 @@ SOFTWARE.
 #include "command_pool.h"
 #include "pipeline_cache.h"
 #include "render_pass.h"
+#include "swapchain.h"
 
 #include "factory/model_factory.h"
 #include "factory/shader_factory.h"
@@ -54,6 +55,7 @@ namespace redox::graphics {
 		VkQueue present_queue() const;
 		uint32_t queue_family() const;
 
+		void present() const;
 		void wait_pending() const;
 
 		std::optional<uint32_t> pick_memory_type(
@@ -66,8 +68,11 @@ namespace redox::graphics {
 		const DescriptorPool& descriptor_pool() const;
 		const PipelineCache& pipeline_cache() const;
 		const RenderPass& forward_render_pass() const;
+		const Swapchain& swap_chain() const;
 
 	private:
+		void _swapchain_event_create();
+
 		void _init_instance();
 		void _init_physical_device();
 		void _init_surface(const platform::Window& window);
@@ -79,6 +84,7 @@ namespace redox::graphics {
 		static_instance_wrapper _iw{ this };
 
 		RenderPass _forwardRenderPass;
+		Swapchain _swapchain;
 
 		ModelFactory _modelFactory;
 		TextureFactory _textureFactory;

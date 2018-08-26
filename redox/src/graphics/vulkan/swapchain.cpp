@@ -28,6 +28,8 @@ SOFTWARE.
 #include "core\profiling\profiler.h"
 #include <limits> //std::numeric_limits
 
+#include "graphics.h"
+
 redox::graphics::Swapchain::Swapchain(CreateCallback&& createCallback) :
 	_createCallback(std::move(createCallback)) {
 	_init();
@@ -58,12 +60,12 @@ void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 		_frameBuffers.emplace(renderPass, _imageViews[i], _extent);
 }
 
-void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) {
+void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) const {
 	for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
 		fn(_frameBuffers[index], _commandPool[index]);
 }
 
-void redox::graphics::Swapchain::present() {
+void redox::graphics::Swapchain::present() const {
 	vkQueueWaitIdle(Graphics::instance->present_queue());
 
 	uint32_t imageIndex;
@@ -97,9 +99,9 @@ void redox::graphics::Swapchain::present() {
 	presentInfo.pSwapchains = swapchains;
 	presentInfo.pImageIndices = &imageIndex;
 
-	auto result = vkQueuePresentKHR(Graphics::instance->present_queue(), &presentInfo);
-	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
-		_reload();
+	//auto result = vkQueuePresentKHR(Graphics::instance->present_queue(), &presentInfo);
+	//if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
+	//	_reload();
 }
 
 void redox::graphics::Swapchain::_reload() {
