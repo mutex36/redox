@@ -29,19 +29,19 @@ SOFTWARE.
 redox::graphics::CommandPool::CommandPool(VkCommandPoolCreateFlags flags) {
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = Graphics::instance->queue_family();
+	poolInfo.queueFamilyIndex = Graphics::instance().queue_family();
 	poolInfo.flags = flags; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-	if (vkCreateCommandPool(Graphics::instance->device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateCommandPool(Graphics::instance().device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create commandpool");
 }
 
 redox::graphics::CommandPool::~CommandPool() {
-	vkDestroyCommandPool(Graphics::instance->device(), _handle, nullptr);
+	vkDestroyCommandPool(Graphics::instance().device(), _handle, nullptr);
 }
 
 void redox::graphics::CommandPool::free_all() {
-	vkFreeCommandBuffers(Graphics::instance->device(),
+	vkFreeCommandBuffers(Graphics::instance().device(),
 		_handle, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
 }
 
@@ -54,11 +54,13 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = static_cast<uint32_t>(_commandBuffers.size());
 
-	if (vkAllocateCommandBuffers(Graphics::instance->device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(Graphics::instance().device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
 		throw Exception("failed to create commandbuffers");
 }
 
 void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const CommandBufferView&)> fn) const {
+
+	//TODO: Optimize
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -67,7 +69,7 @@ void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const Comm
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(Graphics::instance->device(), &allocInfo, &commandBuffer);
+	vkAllocateCommandBuffers(Graphics::instance().device(), &allocInfo, &commandBuffer);
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -85,12 +87,12 @@ void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const Comm
 	VkFence fence;
 	VkFenceCreateInfo fenceInfo{};
 	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	vkCreateFence(Graphics::instance->device(), &fenceInfo, VK_NULL_HANDLE, &fence);
+	vkCreateFence(Graphics::instance().device(), &fenceInfo, VK_NULL_HANDLE, &fence);
 
-	vkQueueSubmit(Graphics::instance->graphics_queue(), 1, &submitInfo, fence);
-	vkWaitForFences(Graphics::instance->device(), 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkFreeCommandBuffers(Graphics::instance->device(), _handle, 1, &commandBuffer);
-	vkDestroyFence(Graphics::instance->device(), fence, VK_NULL_HANDLE);
+	vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, fence);
+	vkWaitForFences(Graphics::instance().device(), 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkFreeCommandBuffers(Graphics::instance().device(), _handle, 1, &commandBuffer);
+	vkDestroyFence(Graphics::instance().device(), fence, VK_NULL_HANDLE);
 }
 
 redox::graphics::CommandBufferView redox::graphics::CommandPool::operator[](std::size_t index) const {

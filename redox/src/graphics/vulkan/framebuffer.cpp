@@ -40,12 +40,12 @@ redox::graphics::Framebuffer::Framebuffer(const RenderPass& rp, VkImageView imag
 	framebufferInfo.height = extent.height;
 	framebufferInfo.layers = 1;
 
-	if (vkCreateFramebuffer(Graphics::instance->device(), &framebufferInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateFramebuffer(Graphics::instance().device(), &framebufferInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create frambuffer");
 }
 
 redox::graphics::Framebuffer::~Framebuffer() {
-	vkDestroyFramebuffer(Graphics::instance->device(), _handle, nullptr);
+	vkDestroyFramebuffer(Graphics::instance().device(), _handle, nullptr);
 }
 
 redox::graphics::Framebuffer::Framebuffer(Framebuffer&& ref) :

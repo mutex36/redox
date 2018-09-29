@@ -43,7 +43,7 @@ SOFTWARE.
 namespace redox::graphics {
 	class Graphics {
 	public:
-		static Graphics* instance;
+		static const Graphics& instance();
 
 		Graphics(const platform::Window& window);
 		~Graphics();
@@ -55,7 +55,6 @@ namespace redox::graphics {
 		VkQueue present_queue() const;
 		uint32_t queue_family() const;
 
-		void present() const;
 		void wait_pending() const;
 
 		std::optional<uint32_t> pick_memory_type(
@@ -64,15 +63,7 @@ namespace redox::graphics {
 		VkPresentModeKHR pick_presentation_mode() const;
 		VkSurfaceFormatKHR pick_surface_format() const;
 
-		const CommandPool& aux_command_pool() const;
-		const DescriptorPool& descriptor_pool() const;
-		const PipelineCache& pipeline_cache() const;
-		const RenderPass& forward_render_pass() const;
-		const Swapchain& swap_chain() const;
-
 	private:
-		void _swapchain_event_create();
-
 		void _init_instance();
 		void _init_physical_device();
 		void _init_surface(const platform::Window& window);
@@ -81,18 +72,9 @@ namespace redox::graphics {
 		std::optional<VkPhysicalDevice> _pick_device();
 		std::optional<uint32_t> _pick_queue_family();
 
-		static_instance_wrapper _iw{ this };
-
-		RenderPass _forwardRenderPass;
-		Swapchain _swapchain;
-
 		ModelFactory _modelFactory;
 		TextureFactory _textureFactory;
 		ShaderFactory  _shaderFactory;
-
-		CommandPool _auxCommandPool;
-		DescriptorPool _descriptorPool;
-		PipelineCache _pipelineCache;
 
 		uint32_t _queueFamily;
 		VkQueue _graphicsQueue;

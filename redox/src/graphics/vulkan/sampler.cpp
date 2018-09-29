@@ -46,12 +46,12 @@ redox::graphics::Sampler::Sampler() {
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
 
-	if (vkCreateSampler(Graphics::instance->device() , &samplerInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateSampler(Graphics::instance().device() , &samplerInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create texture sampler");
 }
 
 redox::graphics::Sampler::~Sampler() {
-	vkDestroySampler(Graphics::instance->device(), _handle, nullptr);
+	vkDestroySampler(Graphics::instance().device(), _handle, nullptr);
 }
 
 VkSampler redox::graphics::Sampler::handle() const {

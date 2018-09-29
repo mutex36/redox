@@ -34,11 +34,17 @@ SOFTWARE.
 
 #define RDX_LOG_TAG "RenderSystem"
 
+const redox::graphics::RenderSystem& redox::graphics::RenderSystem::instance() {
+	return Application::instance->render_system();
+}
+
 redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
 	_graphics(window),
 	_mvpBuffer(sizeof(mvp_uniform)),
-	_demoModel(Application::instance->
-		resource_manager().load<Model>("meshes\\centurion.gltf")) {
+	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
+	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS),
+	_demoModel(ResourceManager::instance().load<Model>("meshes\\centurion.gltf")),
+	_swapchain(std::bind(&RenderSystem::_swapchain_event_create, this)) {
 
 }
 
@@ -47,37 +53,31 @@ redox::graphics::RenderSystem::~RenderSystem() {
 }
 
 void redox::graphics::RenderSystem::_demo_draw() {
-	const auto& sc = _graphics.swap_chain();
-
-	sc.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
+	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
 
-			const auto& rp = _graphics.forward_render_pass();
-			rp.begin(frameBuffer, commandBuffer);
+			_forwardRenderPass.begin(frameBuffer, commandBuffer);
 
+			//###DEMO###
 			auto mesh = _demoModel->meshes()[0];
 			for (const auto& sm : mesh->submeshes()) {
-				IndexedDraw drawCmd;
-				drawCmd.mesh = mesh;
-				drawCmd.material = _demoModel->materials()[sm.materialIndex];
-				drawCmd.range.start = sm.vertexOffset;
-				drawCmd.range.end = sm.vertexCount;
-
-				commandBuffer.submit(drawCmd);
+				auto material = _demoModel->materials()[sm.materialIndex];
+				commandBuffer.submit({ mesh, material, {sm.vertexOffset, sm.vertexCount} });
 			}
+			//##########
 
-			rp.end(commandBuffer);
+			_forwardRenderPass.end(commandBuffer);
 		});
 	});
-
 }
 
 void redox::graphics::RenderSystem::render() {
 
 	_mvpBuffer.map([this](void* data) {
-		auto extent = _graphics.swap_chain().extent();
+		auto extent = _swapchain.extent();
 		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
 
+		//###DEMO###
 		static float k = 0.0;
 		k += 0.02f;
 
@@ -85,8 +85,42 @@ void redox::graphics::RenderSystem::render() {
 		bf->model = math::Mat44f::rotate_y(k);
 		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
 		bf->view = math::Mat44f::translate({0,0,-3});
+		//##########
 	});
 	
 	_mvpBuffer.upload();
-	_graphics.present();
+	_swapchain.present();
+}
+
+const redox::graphics::Graphics& redox::graphics::RenderSystem::graphics() const {
+	return _graphics;
+}
+
+const redox::graphics::CommandPool& redox::graphics::RenderSystem::aux_command_pool() const {
+	return _auxCommandPool;
+}
+
+const redox::graphics::DescriptorPool & redox::graphics::RenderSystem::descriptor_pool() const {
+	return _descriptorPool;
+}
+
+const redox::graphics::PipelineCache & redox::graphics::RenderSystem::pipeline_cache() const {
+	return _pipelineCache;
+}
+
+const redox::graphics::RenderPass & redox::graphics::RenderSystem::forward_render_pass() const {
+	return _forwardRenderPass;
+}
+
+const redox::graphics::Swapchain & redox::graphics::RenderSystem::swap_chain() const {
+	return _swapchain;
+}
+
+void redox::graphics::RenderSystem::_swapchain_event_create() {
+	for (const auto& p : _pipelineCache)
+		p.value->set_viewport(_swapchain.extent());
+
+	_forwardRenderPass.resize_attachments(_swapchain.extent());
+	_swapchain.create_fbs(_forwardRenderPass);
+	_demo_draw();
 }

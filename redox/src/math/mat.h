@@ -137,7 +137,7 @@ namespace redox::math {
 		}
 		
 		_RDX_INLINE static Mat44 lookat(const vec3_type& eye, const vec3_type& center, const vec3_type& up) {
-
+			//TODO: Optimize
 			auto f = (center - eye).normalize();
 			auto s = f.cross(up.normalize()).normalize();
 			auto u = s.cross(f);

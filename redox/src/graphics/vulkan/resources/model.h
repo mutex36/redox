@@ -37,7 +37,7 @@ namespace redox::graphics {
 		using mesh_buffer = redox::Buffer<ResourceHandle<Mesh>>;
 		using material_buffer = redox::Buffer<ResourceHandle<Material>>;
 
-		Model(mesh_buffer&& meshBuffer, material_buffer&& materialBuffer);
+		Model(mesh_buffer meshBuffer, material_buffer materialBuffer);
 
 		void upload() override;
 

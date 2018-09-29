@@ -35,12 +35,12 @@ redox::graphics::Shader::Shader(const redox::Buffer<i8>& buffer) {
 	createInfo.codeSize = buffer.size();
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.data());
 
-	if (vkCreateShaderModule(Graphics::instance->device(), &createInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateShaderModule(Graphics::instance().device(), &createInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create shader module");
 }
 
 redox::graphics::Shader::~Shader() {
-	vkDestroyShaderModule(Graphics::instance->device(), _handle, nullptr);
+	vkDestroyShaderModule(Graphics::instance().device(), _handle, nullptr);
 }
 
 VkShaderModule redox::graphics::Shader::handle() const {

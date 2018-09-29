@@ -49,6 +49,7 @@ namespace redox {
 		const Configuration& config() const;
 		const platform::Timer& timer() const;
 		const ResourceManager& resource_manager() const;
+		const graphics::RenderSystem& render_system() const;
 
 	private:
 		static_instance_wrapper _iw{ this };

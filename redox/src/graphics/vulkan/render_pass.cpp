@@ -84,12 +84,12 @@ redox::graphics::RenderPass::RenderPass() :
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(Graphics::instance->device(), &renderPassInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateRenderPass(Graphics::instance().device(), &renderPassInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create render pass");
 }
 
 redox::graphics::RenderPass::~RenderPass() {
-	vkDestroyRenderPass(Graphics::instance->device(), _handle, nullptr);
+	vkDestroyRenderPass(Graphics::instance().device(), _handle, nullptr);
 }
 
 void redox::graphics::RenderPass::resize_attachments(const VkExtent2D& extent) {

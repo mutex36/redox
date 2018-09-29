@@ -19,7 +19,7 @@ TEST(Buffer, Push) {
 }
 
 TEST(String, Construct) {
-	const char test_str[] = "abcdefgh123";
+	const auto& test_str = "abcdefgh123";
 	redox::String str1(test_str);
 	ASSERT_STREQ(str1.cstr(), test_str);
 	ASSERT_EQ(str1.size(), sizeof(test_str) - 1);
@@ -122,43 +122,6 @@ TEST(Hashmap, SetGet) {
 	--it;
 	ASSERT_EQ(it->value, 2);
 
-}
-
-struct Foo {
-	Foo(int _a, int _b) : a(_a), b(_b) {}
-	int a, b;
-};
-
-TEST(SmartPtr, Construct) {
-	redox::SmartPtr<Foo> original(redox::construct_tag{}, 12, 44);
-
-	ASSERT_EQ(original->a, 12);
-	ASSERT_EQ(original->b, 44);
-
-	auto copy = std::move(original);
-
-	ASSERT_EQ(copy->a, 12);
-	ASSERT_EQ(copy->b, 44);
-}
-
-TEST(RefCounted, Construct) {
-	redox::RefCounted<Foo> dd(redox::construct_tag{}, 12, 44);
-
-	auto copy1 = dd;
-	ASSERT_EQ(copy1.ref_count(), 2);
-
-	auto copy2(std::move(copy1));
-	ASSERT_EQ(copy2.ref_count(), 2);
-
-	auto copy3 = copy2;
-	ASSERT_EQ(copy3.ref_count(), 3);
-
-	redox::RefCounted<Foo> empty;
-	empty = copy3;
-	ASSERT_EQ(copy3.ref_count(), 4);
-
-	ASSERT_EQ(copy3->a, 12);
-	ASSERT_EQ(copy3->b, 44);
 }
 
 TEST(Vec, Ops) {

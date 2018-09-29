@@ -50,3 +50,12 @@ redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(co
 	return std::make_shared<SampleTexture>(
 		std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions);
 }
+
+bool redox::graphics::TextureFactory::supports_ext(const String& ext) {
+	const StringView supportedExts[] = { ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
+	for (const auto& sxt : supportedExts)
+		if (sxt == ext)
+			return true;
+
+	return false;
+}

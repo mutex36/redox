@@ -1,11 +1,20 @@
 #include "resource_manager.h"
 
-redox::ResourceManager::ResourceManager(const String& resourcePath) :
+#include "core/application.h"
+
+redox::ResourceManager::ResourceManager() :
 	_cache("0"),
-	_factories(0xFFFF),
-	_resourcePath(resourcePath) {
+	_resourcePath("resources\\") {
+}
+
+const redox::ResourceManager& redox::ResourceManager::instance() {
+	return Application::instance->resource_manager();
 }
 
 redox::String redox::ResourceManager::resolve_path(const String& path) const{
 	return _resourcePath + path;
+}
+
+void redox::ResourceManager::register_factory(IResourceFactory* factory) const {
+	_factories.push(factory);
 }

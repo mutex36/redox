@@ -40,11 +40,11 @@ redox::graphics::Swapchain::Swapchain(CreateCallback&& createCallback) :
 
 void redox::graphics::Swapchain::_destroy() {
 	for (auto& iv : _imageViews)
-		vkDestroyImageView(Graphics::instance->device(), iv, nullptr);
+		vkDestroyImageView(Graphics::instance().device(), iv, nullptr);
 
-	vkDestroySwapchainKHR(Graphics::instance->device(), _handle, nullptr);
-	vkDestroySemaphore(Graphics::instance->device(), _renderFinishedSemaphore, nullptr);
-	vkDestroySemaphore(Graphics::instance->device(), _imageAvailableSemaphore, nullptr);
+	vkDestroySwapchainKHR(Graphics::instance().device(), _handle, nullptr);
+	vkDestroySemaphore(Graphics::instance().device(), _renderFinishedSemaphore, nullptr);
+	vkDestroySemaphore(Graphics::instance().device(), _imageAvailableSemaphore, nullptr);
 }
 
 redox::graphics::Swapchain::~Swapchain() {
@@ -66,10 +66,10 @@ void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&,
 }
 
 void redox::graphics::Swapchain::present() const {
-	vkQueueWaitIdle(Graphics::instance->present_queue());
+	vkQueueWaitIdle(Graphics::instance().present_queue());
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(Graphics::instance->device(), _handle,
+	vkAcquireNextImageKHR(Graphics::instance().device(), _handle,
 		std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -88,7 +88,7 @@ void redox::graphics::Swapchain::present() const {
 	submitInfo.signalSemaphoreCount = util::array_size<uint32_t>(signalSemaphores);
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(Graphics::instance->graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+	if (vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
 		throw Exception("failed to submit queue");
 
 	VkPresentInfoKHR presentInfo{};
@@ -99,13 +99,13 @@ void redox::graphics::Swapchain::present() const {
 	presentInfo.pSwapchains = swapchains;
 	presentInfo.pImageIndices = &imageIndex;
 
-	//auto result = vkQueuePresentKHR(Graphics::instance->present_queue(), &presentInfo);
+	//auto result = vkQueuePresentKHR(Graphics::instance().present_queue(), &presentInfo);
 	//if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
 	//	_reload();
 }
 
 void redox::graphics::Swapchain::_reload() {
-	Graphics::instance->wait_pending();
+	Graphics::instance().wait_pending();
 
 	_destroy();
 	_init();
@@ -126,8 +126,8 @@ void redox::graphics::Swapchain::_init_semaphores() {
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-	if (vkCreateSemaphore(Graphics::instance->device(), &semaphoreInfo, nullptr, &_imageAvailableSemaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(Graphics::instance->device(), &semaphoreInfo, nullptr, &_renderFinishedSemaphore) != VK_SUCCESS) {
+	if (vkCreateSemaphore(Graphics::instance().device(), &semaphoreInfo, nullptr, &_imageAvailableSemaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(Graphics::instance().device(), &semaphoreInfo, nullptr, &_renderFinishedSemaphore) != VK_SUCCESS) {
 
 		throw Exception("failed to create semaphores");
 	}
@@ -137,10 +137,10 @@ void redox::graphics::Swapchain::_init() {
 
 	VkSurfaceCapabilitiesKHR scp;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-		Graphics::instance->physical_device(), Graphics::instance->surface(), &scp);
+		Graphics::instance().physical_device(), Graphics::instance().surface(), &scp);
 
-	_surfaceFormat = Graphics::instance->pick_surface_format();
-	_presentMode = Graphics::instance->pick_presentation_mode();
+	_surfaceFormat = Graphics::instance().pick_surface_format();
+	_presentMode = Graphics::instance().pick_presentation_mode();
 	_extent.width = std::clamp(scp.currentExtent.width,
 		scp.minImageExtent.width, scp.maxImageExtent.width);
 	_extent.height = std::clamp(scp.currentExtent.height,
@@ -148,7 +148,7 @@ void redox::graphics::Swapchain::_init() {
 
 	VkSwapchainCreateInfoKHR createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = Graphics::instance->surface();
+	createInfo.surface = Graphics::instance().surface();
 	createInfo.minImageCount = scp.minImageCount;
 	createInfo.imageFormat = _surfaceFormat.format;
 	createInfo.imageColorSpace = _surfaceFormat.colorSpace;
@@ -162,7 +162,7 @@ void redox::graphics::Swapchain::_init() {
 	createInfo.clipped = VK_TRUE;
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-	if (vkCreateSwapchainKHR(Graphics::instance->device(), &createInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateSwapchainKHR(Graphics::instance().device(), &createInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create swapchain");
 }
 
@@ -170,10 +170,10 @@ void redox::graphics::Swapchain::_init_images() {
 	_RDX_PROFILE;
 
 	uint32_t imageCount;
-	vkGetSwapchainImagesKHR(Graphics::instance->device(), _handle, &imageCount, nullptr);
+	vkGetSwapchainImagesKHR(Graphics::instance().device(), _handle, &imageCount, nullptr);
 
 	redox::Buffer<VkImage> images(imageCount);
-	vkGetSwapchainImagesKHR(Graphics::instance->device(), _handle, &imageCount, images.data());
+	vkGetSwapchainImagesKHR(Graphics::instance().device(), _handle, &imageCount, images.data());
 
 	_imageViews.resize(imageCount);
 	_commandPool.free_all();
@@ -195,7 +195,7 @@ void redox::graphics::Swapchain::_init_images() {
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 
-		if (vkCreateImageView(Graphics::instance->device(), &createInfo, nullptr, &_imageViews[i]) != VK_SUCCESS)
+		if (vkCreateImageView(Graphics::instance().device(), &createInfo, nullptr, &_imageViews[i]) != VK_SUCCESS)
 			throw Exception("failed to create image view");
 	}
 }

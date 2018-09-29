@@ -31,13 +31,15 @@ SOFTWARE.
 #include <stdlib.h> //std::strtof, std::strtoll
 #include <cstdlib> //std::itoa
 
+#include <charconv>
+
 namespace redox {
 
 	template<class T>
 	_RDX_INLINE T parse(StringView expr) = delete;
 
 	template<>
-	_RDX_INLINE StringView parse(StringView expr) {
+	_RDX_INLINE String parse(StringView expr) {
 		return expr;
 	}
 
@@ -73,14 +75,13 @@ namespace redox {
 
 	template<>
 	_RDX_INLINE bool parse(StringView expr) {
-		if (expr.empty())
-			throw Exception("parsing error");
+		if (!expr.empty()) {
+			if (expr[0] == '1' || expr == "true")
+				return true;
 
-		if (expr[0] == '1' || expr == "true")
-			return true;
-
-		if (expr[0] == '0' || expr == "false")
-			return false;
+			if (expr[0] == '0' || expr == "false")
+				return false;
+		}
 
 		throw Exception("parsing error");
 	}

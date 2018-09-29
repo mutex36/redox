@@ -40,10 +40,19 @@ namespace redox::graphics {
 
 	class RenderSystem : public NonCopyable {
 	public:
+		static const RenderSystem& instance();
+
 		RenderSystem(const platform::Window& window);
 		~RenderSystem();
 
 		void render();
+
+		const Graphics& graphics() const;
+		const CommandPool& aux_command_pool() const;
+		const DescriptorPool& descriptor_pool() const;
+		const PipelineCache& pipeline_cache() const;
+		const RenderPass& forward_render_pass() const;
+		const Swapchain& swap_chain() const;
 
 	private:
 		struct mvp_uniform {
@@ -51,13 +60,21 @@ namespace redox::graphics {
 			math::Mat44f view;
 			math::Mat44f projection;
 		};
+		
+		void _swapchain_event_create();
 
 		Graphics _graphics;
 		UniformBuffer _mvpBuffer;
+		CommandPool _auxCommandPool;
+		RenderPass _forwardRenderPass;
+		DescriptorPool _descriptorPool;
+		PipelineCache _pipelineCache;
 
 		//@DEMO
 		ResourceHandle<Model> _demoModel;
 		void _demo_draw();
 		//@@@
+
+		Swapchain _swapchain;
 	};
 }

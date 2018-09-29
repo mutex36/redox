@@ -87,8 +87,7 @@ redox::platform::Window::Window(const String& title) :
 	const auto& config = Application::instance->config();
 	const auto& resources = Application::instance->resource_manager();
 
-	String iconFile = resources.resolve_path(
-		config.get("Surface", "icon"));
+	String iconFile = resources.resolve_path(config.get("Surface", "icon"));
 
 	auto icon = (HICON)LoadImage(NULL, iconFile.cstr(), IMAGE_ICON,
 		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);

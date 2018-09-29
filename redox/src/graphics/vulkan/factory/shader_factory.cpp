@@ -32,3 +32,7 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(con
 
 	return std::make_shared<Shader>(std::move(buffer));
 }
+
+bool redox::graphics::ShaderFactory::supports_ext(const String& ext) {
+	return ext == ".spv";
+}

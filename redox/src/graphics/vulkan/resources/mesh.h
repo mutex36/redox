@@ -47,7 +47,7 @@ namespace redox::graphics {
 	class Mesh : public IResource {
 	public:
 		Mesh(const redox::Buffer<MeshVertex>& vertices, 
-			const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes);
+			const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh> submeshes);
 		~Mesh() = default;
 
 		void bind(const CommandBufferView& commandBuffer);

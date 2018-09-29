@@ -24,18 +24,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "config.h"
-#include "platform\filesystem.h"
-
-#include "core\logging\log.h"
 
 redox::Configuration::Configuration(const String& file) {
 	_config = ini_load(file.cstr());
+	if (_config == nullptr)
+		throw Exception("failed to load ini config");
 }
 
 redox::Configuration::~Configuration() {
 	ini_free(_config);
 }
 
-redox::Configuration::value_proxy redox::Configuration::get(StringView group, StringView value) const {
+redox::detail::value_proxy redox::Configuration::get(StringView group, StringView value) const {
 	return { _config, group, value };
 }

@@ -88,13 +88,11 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_
 	vLayout.attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
 	vLayout.attribs[2].offset = util::offset_of<uint32_t>(&MeshVertex::uv);
 
-	const auto& resources = Application::instance->resource_manager();
-	
-	auto vs = resources.load<Shader>("shader\\vert.spv");
-	auto fs = resources.load<Shader>("shader\\frag.spv");
+	auto vs = ResourceManager::instance().load<Shader>("shader\\vert.spv");
+	auto fs = ResourceManager::instance().load<Shader>("shader\\frag.spv");
 
-	auto pipeline = std::make_shared<Pipeline>(
-		Graphics::instance->forward_render_pass(), vLayout, dLayout, std::move(vs), std::move(fs));
+	auto pipeline = std::make_shared<Pipeline>(RenderSystem::instance().forward_render_pass(),
+		vLayout, dLayout, std::move(vs), std::move(fs));
 
 	return _pipelines.emplace(PipelineType::DEFAULT_MESH_PIPELINE, std::move(pipeline));
 }

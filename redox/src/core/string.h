@@ -27,7 +27,6 @@ SOFTWARE.
 #include "core.h"
 #include "allocation\default_allocator.h"
 
-#include <type_traits> //std::aligned_storage
 #include <cstring> //std::strlen, std::memcpy
 
 namespace redox {
@@ -38,10 +37,6 @@ namespace redox {
 		using char_type = char;
 
 		StringView() : _data(nullptr), _size(0) {}
-
-		//template<size_type Length>
-		//StringView(const char_type(&literal)[Length]) :
-		//	_data(literal), _size(Length - 1) {}
 
 		StringView(const char_type* str) :
 			_data(str), _size(std::strlen(str)) {}
@@ -179,7 +174,9 @@ namespace redox {
 			return std::memcmp(_data, ref._data, _size) != 0;
 		}
 
-		_RDX_INLINE operator StringView() const {
+		_RDX_INLINE operator StringView() const && = delete;
+
+		_RDX_INLINE operator StringView() const & {
 			return { _data, _size };
 		}
 
@@ -217,6 +214,14 @@ namespace redox {
 
 		_RDX_INLINE bool empty() const {
 			return _size == 0;
+		}
+
+		_RDX_INLINE char_type* data() {
+			return _data;
+		}
+
+		_RDX_INLINE const char_type* data() const {
+			return _data;
 		}
 
 		_RDX_INLINE const char_type* cstr() const {

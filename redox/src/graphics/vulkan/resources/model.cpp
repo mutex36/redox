@@ -25,7 +25,7 @@ SOFTWARE.
 */
 #include "model.h"
 
-redox::graphics::Model::Model(mesh_buffer&& meshBuffer, material_buffer&& materialBuffer) : 
+redox::graphics::Model::Model(mesh_buffer meshBuffer, material_buffer materialBuffer) : 
 	_meshes(std::move(meshBuffer)),
 	_materials(std::move(materialBuffer)) {
 }

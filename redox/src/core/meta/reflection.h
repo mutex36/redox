@@ -101,8 +101,7 @@ namespace redox::reflection {
 
 	template<typename T>
 	struct Reflect {
-		//static_assert(std::is_pod_v<T>, 
-		//	"reflected type is not a POD");
+		//T needs to be "constexpr aggregate initializable"
 
 		constexpr auto field_count() const noexcept {
 			return detail::count_fields<T>();

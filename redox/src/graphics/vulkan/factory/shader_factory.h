@@ -28,10 +28,9 @@ SOFTWARE.
 #include "graphics\vulkan\resources\shader.h"
 
 namespace redox::graphics {
-	class Graphics;
-
 	class ShaderFactory : public IResourceFactory {
 	public:
 		ResourceHandle<IResource> load(const String& path) override;
+		bool supports_ext(const String& ext) override;
 	};
 }

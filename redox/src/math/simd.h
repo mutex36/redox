@@ -28,7 +28,7 @@ SOFTWARE.
 
 #ifdef RDX_COMPILER_MSVC
 #include <intrin.h>
-#elif defined RDX_COMPILER_GCC || RDX_COMPILER_CLANG
+#elif defined RDX_COMPILER_GCC || defined RDX_COMPILER_CLANG
 #include <x86intrin.h>
 #endif
 
@@ -38,30 +38,6 @@ namespace redox::simd {
 	typedef __m128i i32x4;
 
 	constexpr std::size_t alignment = 16;
-
-	template<class Scalar, class XMM, u32 Index>
-	struct accessor {
-		_RDX_INLINE operator Scalar() const noexcept {
-			return extract_by_index<Index>(_xmm);
-		}
-
-		_RDX_INLINE accessor& operator=(const Scalar value) noexcept {
-			_xmm = set_by_index<Index>(value, _xmm);
-			return *this;
-		}
-
-		XMM _xmm;
-	};
-
-	template<u32 Index, class XMM>
-	_RDX_INLINE auto extract_by_index(XMM xmm) {
-		return extract_lower(swizzle1<Index>(xmm));
-	}
-
-	template<u32 Index, class Scalar, class XMM>
-	_RDX_INLINE auto set_by_index(const Scalar value, XMM xmm) {
-		return blend<(0x1 << Index)>(xmm, set_all(value));
-	}
 
 	template<u32 imm8>
 	_RDX_INLINE f32x4 blend(f32x4 lhs, f32x4 rhs) {
@@ -133,4 +109,29 @@ namespace redox::simd {
 	_RDX_INLINE f32x4 rsqrt_lower(f32x4 xmm) {
 		return _mm_rsqrt_ss(xmm);
 	}
+
+	template<u32 Index, class XMM>
+	_RDX_INLINE auto extract_by_index(XMM xmm) {
+		return extract_lower(swizzle1<Index>(xmm));
+	}
+
+	template<u32 Index, class Scalar, class XMM>
+	_RDX_INLINE auto set_by_index(const Scalar value, XMM xmm) {
+		return blend<(0x1 << Index)>(xmm, set_all(value));
+	}
+
+	template<class Scalar, class XMM, u32 Index>
+	struct accessor {
+		_RDX_INLINE operator Scalar() const noexcept {
+			return extract_by_index<Index>(_xmm);
+		}
+
+		_RDX_INLINE accessor& operator=(const Scalar value) noexcept {
+			_xmm = set_by_index<Index>(value, _xmm);
+			return *this;
+		}
+
+		XMM _xmm;
+	};
+
 }

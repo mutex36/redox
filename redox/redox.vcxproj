@@ -104,7 +104,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir);$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src;%(AdditionalIncludeDirectories);$(VULKAN_SDK)\Include\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -144,7 +144,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include\;$(ProjectDir);$(ProjectDir)src;$(ProjectDir)thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)src;$(ProjectDir)thirdparty;%(AdditionalIncludeDirectories);$(VULKAN_SDK)\Include\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <EnablePREfast>false</EnablePREfast>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>

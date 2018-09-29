@@ -25,6 +25,7 @@ SOFTWARE.
 */
 #include "texture.h"
 #include "graphics\vulkan\graphics.h"
+#include "graphics\vulkan\render_system.h"
 #include "graphics\vulkan\command_pool.h"
 
 redox::graphics::Texture::Texture(VkFormat format, const VkExtent2D& size,
@@ -43,9 +44,9 @@ redox::graphics::Texture::~Texture() {
 }
 
 void redox::graphics::Texture::_destroy() {
-	vkDestroyImage(Graphics::instance->device(), _handle, nullptr);
-	vkFreeMemory(Graphics::instance->device(), _memory, nullptr);
-	vkDestroyImageView(Graphics::instance->device(), _view, nullptr);
+	vkDestroyImage(Graphics::instance().device(), _handle, nullptr);
+	vkFreeMemory(Graphics::instance().device(), _memory, nullptr);
+	vkDestroyImageView(Graphics::instance().device(), _view, nullptr);
 }
 
 VkImage redox::graphics::Texture::handle() const {
@@ -85,24 +86,24 @@ void redox::graphics::Texture::_init() {
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
-	if (vkCreateImage(Graphics::instance->device(), &imageInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateImage(Graphics::instance().device(), &imageInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create image");
 
 	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(Graphics::instance->device(), _handle, &memRequirements);
+	vkGetImageMemoryRequirements(Graphics::instance().device(), _handle, &memRequirements);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	auto memType = Graphics::instance->pick_memory_type(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	auto memType = Graphics::instance().pick_memory_type(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	if (!memType)
 		throw Exception("could not find suitable memory type");
 	allocInfo.memoryTypeIndex = memType.value();
 
-	if (vkAllocateMemory(Graphics::instance->device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
+	if (vkAllocateMemory(Graphics::instance().device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
 		throw Exception("failed to allocate image memory");
 
-	vkBindImageMemory(Graphics::instance->device(), _handle, _memory, 0);
+	vkBindImageMemory(Graphics::instance().device(), _handle, _memory, 0);
 }
 
 void redox::graphics::Texture::_init_view() {
@@ -117,7 +118,7 @@ void redox::graphics::Texture::_init_view() {
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	if (vkCreateImageView(Graphics::instance->device(), &viewInfo, nullptr, &_view) != VK_SUCCESS)
+	if (vkCreateImageView(Graphics::instance().device(), &viewInfo, nullptr, &_view) != VK_SUCCESS)
 		throw Exception("failed to create texture image view");
 }
 
@@ -166,7 +167,7 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 	}
 	else throw Exception("unsupported layout transition");
 
-	Graphics::instance->aux_command_pool().quick_submit(
+	RenderSystem::instance().aux_command_pool().quick_submit(
 	[sourceStage, destinationStage, &barrier](CommandBufferView cbo) {
 		vkCmdPipelineBarrier(cbo.handle(), sourceStage, destinationStage,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);

@@ -50,6 +50,9 @@ namespace redox::io {
 		struct internal;
 		std::unique_ptr<internal> _internal;
 	};
+
+	String extension(const String& str);
+	String directory(const String& str);
 }
 
 RDX_ENABLE_ENUM_FLAGS(::redox::io::File::Mode);

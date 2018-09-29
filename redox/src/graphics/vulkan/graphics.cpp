@@ -28,20 +28,19 @@ SOFTWARE.
 
 #include "core\application.h"
 
-redox::graphics::Graphics::Graphics(const platform::Window& window) :
-	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
-	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS),
-	_swapchain(std::bind(&Graphics::_swapchain_event_create, this)) {
+const redox::graphics::Graphics& redox::graphics::Graphics::instance() {
+	return Application::instance->render_system().graphics();
+}
 
+redox::graphics::Graphics::Graphics(const platform::Window& window) {
 	_init_instance();
 	_init_physical_device();
 	_init_surface(window);
 	_init_device();
 
-	const auto& rm = Application::instance->resource_manager();
-	rm.register_factory<SampleTexture>(&_textureFactory);
-	rm.register_factory<Model>(&_modelFactory);
-	rm.register_factory<Shader>(&_shaderFactory);
+	ResourceManager::instance().register_factory(&_textureFactory);
+	ResourceManager::instance().register_factory(&_modelFactory);
+	ResourceManager::instance().register_factory(&_shaderFactory);
 }
 
 redox::graphics::Graphics::~Graphics() {
@@ -79,10 +78,6 @@ VkQueue redox::graphics::Graphics::present_queue() const {
 
 uint32_t redox::graphics::Graphics::queue_family() const {
 	return _queueFamily;
-}
-
-void redox::graphics::Graphics::present() const {
-	_swapchain.present();
 }
 
 void redox::graphics::Graphics::wait_pending() const {
@@ -135,33 +130,6 @@ VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
 	}
 
 	return formats[0];
-}
-
-const redox::graphics::CommandPool& redox::graphics::Graphics::aux_command_pool() const {
-	return _auxCommandPool;
-}
-
-const redox::graphics::DescriptorPool& redox::graphics::Graphics::descriptor_pool() const {
-	return _descriptorPool;
-}
-
-const redox::graphics::PipelineCache& redox::graphics::Graphics::pipeline_cache() const {
-	return _pipelineCache;
-}
-
-const redox::graphics::RenderPass& redox::graphics::Graphics::forward_render_pass() const {
-	return _forwardRenderPass;
-}
-
-const redox::graphics::Swapchain& redox::graphics::Graphics::swap_chain() const {
-	return _swapchain;
-}
-
-void redox::graphics::Graphics::_swapchain_event_create() {
-
-	_forwardRenderPass.resize_attachments(_swapchain.extent());
-	_swapchain.create_fbs(_forwardRenderPass);
-
 }
 
 void redox::graphics::Graphics::_init_instance() {

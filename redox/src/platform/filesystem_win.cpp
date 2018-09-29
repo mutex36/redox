@@ -27,6 +27,7 @@ SOFTWARE.
 
 #ifdef RDX_PLATFORM_WINDOWS
 #include "filesystem.h"
+
 #include "platform\windows.h"
 
 struct redox::io::File::internal {
@@ -67,6 +68,18 @@ redox::Buffer<redox::i8> redox::io::File::read() {
 		throw Exception("failed to read file");
 
 	return out;
+}
+
+redox::String redox::io::extension(const String& str) {
+	char ext[10];
+	_splitpath(str.cstr(), NULL, NULL, NULL, ext);
+	return ext;
+}
+
+redox::String redox::io::directory(const String& str) {
+	char dir[MAX_PATH];
+	_splitpath(str.cstr(), NULL, dir, NULL, NULL);
+	return dir;
 }
 
 #endif

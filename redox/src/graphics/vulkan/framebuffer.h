@@ -36,7 +36,6 @@ namespace redox::graphics {
 		~Framebuffer();
 
 		Framebuffer(Framebuffer&&);
-		Framebuffer& operator=(Framebuffer&&) = delete;
 
 		VkFramebuffer handle() const;
 		const VkExtent2D& extent() const;

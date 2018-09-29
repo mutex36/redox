@@ -26,6 +26,7 @@ SOFTWARE.
 #include "buffer.h"
 
 #include "graphics.h"
+#include "render_system.h"
 #include "command_pool.h"
 #include "resources\texture.h"
 
@@ -38,31 +39,31 @@ redox::graphics::Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(Graphics::instance->device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateBuffer(Graphics::instance().device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create buffer");
 
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(Graphics::instance->device(), _handle, &memRequirements);
+	vkGetBufferMemoryRequirements(Graphics::instance().device(), _handle, &memRequirements);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
 
-	auto memType = Graphics::instance->pick_memory_type(memRequirements.memoryTypeBits, memFlags);
+	auto memType = Graphics::instance().pick_memory_type(memRequirements.memoryTypeBits, memFlags);
 	if (!memType)
 		throw Exception("failed to determine memory type");
 
 	allocInfo.memoryTypeIndex = memType.value();
 
-	if (vkAllocateMemory(Graphics::instance->device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
+	if (vkAllocateMemory(Graphics::instance().device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
 		throw Exception("failed to allocate vertex buffer memory");
 
-	vkBindBufferMemory(Graphics::instance->device(), _handle, _memory, 0);
+	vkBindBufferMemory(Graphics::instance().device(), _handle, _memory, 0);
 }
 
 redox::graphics::Buffer::~Buffer() {
-	vkDestroyBuffer(Graphics::instance->device(), _handle, nullptr);
-	vkFreeMemory(Graphics::instance->device(), _memory, nullptr);
+	vkDestroyBuffer(Graphics::instance().device(), _handle, nullptr);
+	vkFreeMemory(Graphics::instance().device(), _memory, nullptr);
 }
 
 VkDeviceSize redox::graphics::Buffer::size() const {
@@ -75,15 +76,15 @@ VkBuffer redox::graphics::Buffer::handle() const {
 
 void redox::graphics::Buffer::map(tl::function_ref<void(void*)> fn) const {
 	void* data;
-	vkMapMemory(Graphics::instance->device(), _memory, 0, _size, 0, &data);
+	vkMapMemory(Graphics::instance().device(), _memory, 0, _size, 0, &data);
 	fn(data);
-	vkUnmapMemory(Graphics::instance->device(), _memory);
+	vkUnmapMemory(Graphics::instance().device(), _memory);
 }
 
 void redox::graphics::Buffer::copy_to(const Buffer& other) {
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _size;
-	Graphics::instance->aux_command_pool().quick_submit([this, &other, &copyRegion](CommandBufferView cbo) {
+	RenderSystem::instance().aux_command_pool().quick_submit([this, &other, &copyRegion](CommandBufferView cbo) {
 		vkCmdCopyBuffer(cbo.handle(), _handle, other.handle(), 1, &copyRegion);
 	});
 }
@@ -103,7 +104,7 @@ void redox::graphics::Buffer::copy_to(const Texture& texture) {
 	const auto& ts = texture.dimension();
 	region.imageExtent = { ts.width, ts.height, 1 };
 
-	Graphics::instance->aux_command_pool().quick_submit([this, &texture, &region](CommandBufferView cbo) {
+	RenderSystem::instance().aux_command_pool().quick_submit([this, &texture, &region](CommandBufferView cbo) {
 		vkCmdCopyBufferToImage(cbo.handle(), _handle, texture.handle(),
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	});

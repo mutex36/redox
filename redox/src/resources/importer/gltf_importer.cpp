@@ -28,7 +28,9 @@ SOFTWARE.
 #define RDX_LOG_TAG "Importer"
 #include "core/logging/log.h"
 
-redox::GLTFImporter::GLTFImporter(const String& path)  : _buffers("__invalid_buffer__") {
+redox::GLTFImporter::GLTFImporter(const String& path) :
+	_buffers("0"),
+	_searchPath(io::directory(path)) {
 	io::File file(path, io::File::Mode::READ);
 	auto buffer = file.read();
 

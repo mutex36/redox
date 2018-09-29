@@ -38,9 +38,9 @@ redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass, const VertexLa
 }
 
 redox::graphics::Pipeline::~Pipeline() {
-	vkDestroyDescriptorSetLayout(Graphics::instance->device(), _descriptorSetLayout, nullptr);
-	vkDestroyPipeline(Graphics::instance->device(), _handle, nullptr);
-	vkDestroyPipelineLayout(Graphics::instance->device(), _layout, nullptr);
+	vkDestroyDescriptorSetLayout(Graphics::instance().device(), _descriptorSetLayout, nullptr);
+	vkDestroyPipeline(Graphics::instance().device(), _handle, nullptr);
+	vkDestroyPipelineLayout(Graphics::instance().device(), _layout, nullptr);
 }
 
 void redox::graphics::Pipeline::bind(const CommandBufferView& commandBuffer) {
@@ -126,7 +126,7 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	pipelineLayoutInfo.setLayoutCount = 1;
 	pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
 
-	if (vkCreatePipelineLayout(Graphics::instance->device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(Graphics::instance().device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS)
 		throw Exception("failed to create pipeline layout");
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -169,7 +169,7 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(
-		Graphics::instance->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS)
+		Graphics::instance().device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS)
 			throw Exception("failed to create pipeline");
 }
 
@@ -181,7 +181,7 @@ void redox::graphics::Pipeline::_init_desriptors(const DescriptorLayout& dLayout
 	layoutInfo.pBindings = dLayout.bindings.data();
 	//VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 
-	if (vkCreateDescriptorSetLayout(Graphics::instance->device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
+	if (vkCreateDescriptorSetLayout(Graphics::instance().device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
 		throw Exception("failed to create descriptor set layout");
 }
 

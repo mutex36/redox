@@ -43,12 +43,12 @@ redox::graphics::DescriptorPool::DescriptorPool(uint32_t maxSets, uint32_t maxIm
 	poolInfo.pPoolSizes = poolSizes;
 	poolInfo.maxSets = maxSets;
 
-	if (vkCreateDescriptorPool(Graphics::instance->device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateDescriptorPool(Graphics::instance().device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
 		throw Exception("failed to create descriptor pool");
 }
 
 redox::graphics::DescriptorPool::~DescriptorPool() {
-	vkDestroyDescriptorPool(Graphics::instance->device(), _handle, nullptr);
+	vkDestroyDescriptorPool(Graphics::instance().device(), _handle, nullptr);
 }
 
 redox::graphics::DescriptorSetView redox::graphics::DescriptorPool::allocate(VkDescriptorSetLayout layout) const {
@@ -59,7 +59,7 @@ redox::graphics::DescriptorSetView redox::graphics::DescriptorPool::allocate(VkD
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &layout;
 
-	if (vkAllocateDescriptorSets(Graphics::instance->device(), &allocInfo, &set) != VK_SUCCESS)
+	if (vkAllocateDescriptorSets(Graphics::instance().device(), &allocInfo, &set) != VK_SUCCESS)
 		throw Exception("failed to allocate descriptor set");
 
 	return set;
@@ -89,7 +89,7 @@ void redox::graphics::DescriptorSetView::bind_resource(const Texture& texture, u
 	writeSet.descriptorCount = 1;
 	writeSet.pImageInfo = &imageInfo;
 
-	vkUpdateDescriptorSets(Graphics::instance->device(), 1, &writeSet, 0, nullptr);
+	vkUpdateDescriptorSets(Graphics::instance().device(), 1, &writeSet, 0, nullptr);
 }
 
 void redox::graphics::DescriptorSetView::bind_resource(const UniformBuffer& ubo, uint32_t bindingPoint) {
@@ -108,5 +108,5 @@ void redox::graphics::DescriptorSetView::bind_resource(const UniformBuffer& ubo,
 	writeSet.descriptorCount = 1;
 	writeSet.pBufferInfo = &bufferInfo;
 
-	vkUpdateDescriptorSets(Graphics::instance->device(), 1, &writeSet, 0, nullptr);
+	vkUpdateDescriptorSets(Graphics::instance().device(), 1, &writeSet, 0, nullptr);
 }

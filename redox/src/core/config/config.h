@@ -31,8 +31,7 @@ SOFTWARE.
 #include <thirdparty/ini/ini.h>
 
 namespace redox {
-	class Configuration {
-	public:
+	namespace detail {
 		class value_proxy {
 		public:
 			value_proxy(ini_t* conf, StringView group, StringView value) {
@@ -40,22 +39,26 @@ namespace redox {
 			}
 
 			template<class T>
-			operator T() const {
-				return parse<T>(_ini_val);
+			auto as() const {
+				return redox::parse<T>(_ini_val);
 			}
 
-			operator bool() const{
-				return parse<bool>(_ini_val);
+			template<class T>
+			operator T() const {
+				return as<T>();
 			}
 
 		private:
 			const char* _ini_val;
 		};
+	}
 
+	class Configuration {
+	public:
 		Configuration(const String& file);
 		~Configuration();
 
-		value_proxy get(StringView group, StringView value) const;
+		detail::value_proxy get(StringView group, StringView value) const;
 
 	private:
 		ini_t* _config;

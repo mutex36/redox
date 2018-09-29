@@ -28,7 +28,7 @@ SOFTWARE.
 #include "graphics\vulkan\command_pool.h"
 
 redox::graphics::Mesh::Mesh(const redox::Buffer<MeshVertex>& vertices,
-	const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh>&& submeshes) :
+	const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh> submeshes) :
 	_vertexCount(vertices.size()),
 	_indexCount(indices.size()),
 	_submeshes(std::move(submeshes)),

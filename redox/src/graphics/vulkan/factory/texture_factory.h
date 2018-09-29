@@ -32,7 +32,7 @@ namespace redox::graphics {
 	class TextureFactory : public IResourceFactory {
 	public:
 		ResourceHandle<IResource> load(const String& path) override;
-
+		bool supports_ext(const String& ext) override;
 	};
 
 }
