@@ -44,7 +44,7 @@ redox::io::File::File(const redox::String& file, const Mode mode) :
 	if ((mode & Mode::WRITE) == Mode::WRITE)
 		access |= GENERIC_WRITE;
 
-	_internal->handle = CreateFile(file.cstr(), access, 0, NULL,
+	_internal->handle = CreateFile(file.c_str(), access, 0, NULL,
 		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if (_internal->handle == INVALID_HANDLE_VALUE)
@@ -72,13 +72,13 @@ redox::Buffer<redox::i8> redox::io::File::read() {
 
 redox::String redox::io::extension(const String& str) {
 	char ext[10];
-	_splitpath(str.cstr(), NULL, NULL, NULL, ext);
+	_splitpath(str.c_str(), NULL, NULL, NULL, ext);
 	return ext;
 }
 
 redox::String redox::io::directory(const String& str) {
 	char dir[MAX_PATH];
-	_splitpath(str.cstr(), NULL, dir, NULL, NULL);
+	_splitpath(str.c_str(), NULL, dir, NULL, NULL);
 	return dir;
 }
 

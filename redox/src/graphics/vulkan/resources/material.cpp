@@ -28,8 +28,7 @@ SOFTWARE.
 
 redox::graphics::Material::Material(PipelineHandle pipeline, DescriptorSetView descSet) :
 	_pipeline(std::move(pipeline)),
-	_descSet(descSet),
-	_textures(TextureKeys::INVALID) {
+	_descSet(descSet) {
 }
 
 void redox::graphics::Material::bind(const CommandBufferView& commandBuffer) {
@@ -39,7 +38,7 @@ void redox::graphics::Material::bind(const CommandBufferView& commandBuffer) {
 
 void redox::graphics::Material::upload() {
 	for (auto& it : _textures)
-		it.value->upload();
+		it.second->upload();
 }
 
 void redox::graphics::Material::set_buffer(BufferKeys key, const UniformBuffer& buffer) {
@@ -59,5 +58,5 @@ void redox::graphics::Material::set_texture(TextureKeys key, ResourceHandle<Samp
 		break;
 	}
 
-	_textures.push(key, std::move(texture));
+	_textures.insert({ key, std::move(texture) });
 }

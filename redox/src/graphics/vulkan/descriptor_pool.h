@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include "core\non_copyable.h"
 #include "vulkan.h"
 
 namespace redox::graphics {

@@ -28,8 +28,6 @@ SOFTWARE.
 #include "resources\resource.h"
 
 #include "core\core.h"
-#include "core\string.h"
-
 #include "platform\filesystem.h"
 
 namespace redox::graphics {

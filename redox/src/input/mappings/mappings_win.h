@@ -27,14 +27,13 @@ SOFTWARE.
 #include "core\core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
-#include "core\hashmap.h"
 #include "input\keys.h"
 
 #include "platform\windows.h"
 
 namespace redox::input {
 	//http://www.kbdedit.com/manual/low_level_vk_list.html
-	static const redox::Hashmap<UINT, Keys> g_vkey_mappings(0x0, 
+	static const redox::Hashmap<UINT, Keys> g_vkey_mappings(
 		{{ 0x41, Keys::A },
 		{ 0x42, Keys::B },
 		{ 0x43, Keys::C },

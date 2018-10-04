@@ -24,10 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core/hashmap.h"
 #include "pipeline.h"
-
-#include <memory> //std::shared_ptr
 
 namespace redox::graphics {
 	class RenderPass;
@@ -36,11 +33,10 @@ namespace redox::graphics {
 		DEFAULT_MESH_PIPELINE,
 		SKINNED_MESH_PIPELINE,
 		DEFAULT_2D_PIPELINE,
-		TERRAIN_PIPELINE,
-		INVALID
+		TERRAIN_PIPELINE
 	};
 
-	using PipelineHandle = std::shared_ptr<Pipeline>;
+	using PipelineHandle = SharedPtr<Pipeline>;
 
 	class PipelineCache : public NonCopyable {
 	public:

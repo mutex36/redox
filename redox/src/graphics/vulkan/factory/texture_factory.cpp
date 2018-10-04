@@ -31,14 +31,14 @@ SOFTWARE.
 redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(const String& path) {
 	
 	i32 chan, width, height;
-	stbi_uc* pixels = stbi_load(path.cstr(),
+	stbi_uc* pixels = stbi_load(path.c_str(),
 		&width, &height, &chan, STBI_rgb_alpha);
 
 	if (pixels == nullptr)
 		throw Exception("failed to load texture");
 
 	auto size = width * height * 4;
-	redox::Buffer<byte> buffer(pixels, size);
+	redox::Buffer<byte> buffer(pixels, pixels + size);
 
 	stbi_image_free(pixels);
 

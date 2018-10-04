@@ -3,7 +3,6 @@
 #include "core/application.h"
 
 redox::ResourceManager::ResourceManager() :
-	_cache("0"),
 	_resourcePath("resources\\") {
 }
 
@@ -16,5 +15,5 @@ redox::String redox::ResourceManager::resolve_path(const String& path) const{
 }
 
 void redox::ResourceManager::register_factory(IResourceFactory* factory) const {
-	_factories.push(factory);
+	_factories.push_back(factory);
 }

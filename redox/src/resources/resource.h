@@ -24,9 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\string.h"
-
-#include <memory>
+#include "core/core.h"
 
 namespace redox {
 	
@@ -35,7 +33,7 @@ namespace redox {
 	};
 
 	template<class T>
-	using ResourceHandle = std::shared_ptr<T>;
+	using ResourceHandle = SharedPtr<T>;
 
 	struct IResourceFactory {
 		virtual ResourceHandle<IResource> load(const String& path) = 0;

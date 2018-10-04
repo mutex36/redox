@@ -26,7 +26,6 @@ SOFTWARE.
 #pragma once
 #include "platform/filesystem.h"
 #include "graphics/vulkan/resources/mesh.h"
-#include "core/hashmap.h"
 #include "resources/resource.h"
 
 #include <thirdparty/gltf/cgltf.h>
@@ -70,11 +69,11 @@ namespace redox {
 	private:
 		template<class ParseType, class Fn>
 		void read_buffer(cgltf_buffer_view* bufferView, cgltf_accessor* accessor, Fn&& fn) {
-			auto it = _buffers.get(bufferView->buffer->uri);
+			auto it = _buffers.find(bufferView->buffer->uri);
 			if (it == _buffers.end()) {
 				io::File blobFile(_searchPath + bufferView->buffer->uri, io::File::Mode::READ);
 
-				it = _buffers.push(bufferView->buffer->uri, blobFile.read());
+				std::tie(it, std::ignore) = _buffers.insert({ bufferView->buffer->uri, blobFile.read() });
 			}
 
 			auto readOffset = bufferView->offset + accessor->offset;
@@ -82,7 +81,7 @@ namespace redox {
 
 			for (size_t bufferIndex = readOffset;
 				bufferIndex < readOffset + readSize; bufferIndex += sizeof(ParseType)) {
-				fn(reinterpret_cast<const ParseType&>(it->value[bufferIndex]));
+				fn(reinterpret_cast<const ParseType&>(it->second[bufferIndex]));
 			}
 		}
 

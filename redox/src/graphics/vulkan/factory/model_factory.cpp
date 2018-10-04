@@ -43,7 +43,7 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 		vertices.reserve(mesh.vertexCount);
 
 		for (std::size_t i = 0; i < vertices.capacity(); ++i) {
-			vertices.push({
+			vertices.push_back({
 				{ mesh.positions[i * 3 + 0], mesh.positions[i * 3 + 1], mesh.positions[i * 3 + 2] },
 				{ mesh.normals[i * 3 + 0], mesh.normals[i * 3 + 1], mesh.normals[i * 3 + 2] },
 				{ mesh.texcoords[i * 2 + 0], mesh.texcoords[i * 2 + 1] }
@@ -59,10 +59,10 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 			submesh.vertexCount = static_cast<uint32_t>(sm.indexCount);
 			submesh.vertexOffset = static_cast<uint32_t>(sm.indexOffset);
 
-			submeshes.push(submesh);
+			submeshes.push_back(submesh);
 		}
 
-		meshes.push(std::make_shared<Mesh>(
+		meshes.push_back(std::make_shared<Mesh>(
 			std::move(vertices), std::move(mesh.indices), std::move(submeshes)));
 	}
 
@@ -79,7 +79,7 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 		auto pipeline = pipelineCache.load(PipelineType::DEFAULT_MESH_PIPELINE);
 		auto dset = descPool.allocate(pipeline->descriptorLayout());
 
-		auto& material = materials.emplace(std::make_shared<Material>(pipeline, dset));
+		auto& material = materials.emplace_back(std::make_shared<Material>(pipeline, dset));
 
 		material->set_texture(TextureKeys::ALBEDO,
 			ResourceManager::instance().load<SampleTexture>(redox::String("textures\\") + impMat.albedoMap));

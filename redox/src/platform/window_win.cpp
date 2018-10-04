@@ -89,7 +89,7 @@ redox::platform::Window::Window(const String& title) :
 
 	String iconFile = resources.resolve_path(config.get("Surface", "icon"));
 
-	auto icon = (HICON)LoadImage(NULL, iconFile.cstr(), IMAGE_ICON,
+	auto icon = (HICON)LoadImage(NULL, iconFile.c_str(), IMAGE_ICON,
 		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
 
 	WNDCLASS wndClass{};
@@ -99,7 +99,7 @@ redox::platform::Window::Window(const String& title) :
 	wndClass.hIcon = icon;
 	wndClass.hCursor = LoadCursor(NULL, IDC_HAND);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wndClass.lpszClassName = _internal->classname.cstr();
+	wndClass.lpszClassName = _internal->classname.c_str();
 
 	RegisterClass(&wndClass);
 
@@ -121,7 +121,7 @@ redox::platform::Window::Window(const String& title) :
 	}
 
 	_internal->handle = CreateWindowEx(
-		NULL, _internal->classname.cstr(), title.cstr(), dwStyle,
+		NULL, _internal->classname.c_str(), title.c_str(), dwStyle,
 		windowRect.left, windowRect.left, 
 		windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
 		NULL, NULL, _internal->instance, this);
@@ -129,7 +129,7 @@ redox::platform::Window::Window(const String& title) :
 
 redox::platform::Window::~Window() {
 	DestroyWindow(_internal->handle);
-	UnregisterClass(_internal->classname.cstr(), _internal->instance);
+	UnregisterClass(_internal->classname.c_str(), _internal->instance);
 }
 
 void redox::platform::Window::show() const {
@@ -158,7 +158,7 @@ void redox::platform::Window::hide() const {
 }
 
 void redox::platform::Window::set_title(const String& title) {
-	SetWindowText(_internal->handle, title.cstr());
+	SetWindowText(_internal->handle, title.c_str());
 }
 
 void redox::platform::Window::set_callback(EventFn && fn) {

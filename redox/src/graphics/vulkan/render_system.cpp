@@ -24,9 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "render_system.h"
-
-#include "core\buffer.h"
-#include "core\string.h"
 #include "core\utility.h"
 
 #include "core\profiling\profiler.h"
@@ -77,7 +74,6 @@ void redox::graphics::RenderSystem::render() {
 		auto extent = _swapchain.extent();
 		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
 
-		//###DEMO###
 		static float k = 0.0;
 		k += 0.02f;
 
@@ -85,7 +81,6 @@ void redox::graphics::RenderSystem::render() {
 		bf->model = math::Mat44f::rotate_y(k);
 		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
 		bf->view = math::Mat44f::translate({0,0,-3});
-		//##########
 	});
 	
 	_mvpBuffer.upload();
@@ -118,7 +113,7 @@ const redox::graphics::Swapchain & redox::graphics::RenderSystem::swap_chain() c
 
 void redox::graphics::RenderSystem::_swapchain_event_create() {
 	for (const auto& p : _pipelineCache)
-		p.value->set_viewport(_swapchain.extent());
+		p.second->set_viewport(_swapchain.extent());
 
 	_forwardRenderPass.resize_attachments(_swapchain.extent());
 	_swapchain.create_fbs(_forwardRenderPass);

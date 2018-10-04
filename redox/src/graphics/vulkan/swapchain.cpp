@@ -57,7 +57,7 @@ void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 	_frameBuffers.reserve(_imageViews.size());
 
 	for (size_t i = 0; i < _frameBuffers.capacity(); i++)
-		_frameBuffers.emplace(renderPass, _imageViews[i], _extent);
+		_frameBuffers.emplace_back(renderPass, _imageViews[i], _extent);
 }
 
 void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) const {
@@ -65,7 +65,7 @@ void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&,
 		fn(_frameBuffers[index], _commandPool[index]);
 }
 
-void redox::graphics::Swapchain::present() const {
+void redox::graphics::Swapchain::present() {
 	vkQueueWaitIdle(Graphics::instance().present_queue());
 
 	uint32_t imageIndex;
@@ -99,9 +99,9 @@ void redox::graphics::Swapchain::present() const {
 	presentInfo.pSwapchains = swapchains;
 	presentInfo.pImageIndices = &imageIndex;
 
-	//auto result = vkQueuePresentKHR(Graphics::instance().present_queue(), &presentInfo);
-	//if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
-	//	_reload();
+	auto result = vkQueuePresentKHR(Graphics::instance().present_queue(), &presentInfo);
+	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
+		_reload();
 }
 
 void redox::graphics::Swapchain::_reload() {

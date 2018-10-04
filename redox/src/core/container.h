@@ -25,48 +25,29 @@ SOFTWARE.
 */
 #pragma once
 
-namespace redox {
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include <memory>
+#include <functional>
 
-	template<class ElementType, class Derived>
-	class Iterator {
-	public:
-		Iterator(ElementType* ptr) : _ptr(ptr) {}
+namespace redox
+{
+	template<class T>
+	using Buffer = std::vector<T>;
 
-		Iterator& operator++() {
-			static_cast<Derived*>(this)->increment();
-			return *this;
-		}
+	template<class Key, class Value>
+	using Hashmap = std::unordered_map<Key, Value>;
 
-		Iterator& operator--() {
-			static_cast<Derived*>(this)->decrement();
-			return *this;
-		}
+	using String = std::string;
+	using StringView = std::string_view;
 
-		bool operator!=(const Iterator& rhs) {
-			return _ptr != rhs._ptr;
-		}
+	template<class T>
+	using UniquePtr = std::unique_ptr<T>;
 
-		bool operator==(const Iterator& rhs) {
-			return _ptr == rhs._ptr;
-		}
+	template<class T>
+	using SharedPtr = std::shared_ptr<T>;
 
-		ElementType& operator*() {
-			return *_ptr;
-		}
-
-		const ElementType& operator*() const {
-			return *_ptr;
-		}
-
-		ElementType* operator->() {
-			return _ptr;
-		}
-
-		const ElementType* operator->() const {
-			return _ptr;
-		}
-
-	protected:
-		ElementType * _ptr;
-	};
+	template<class S>
+	using Function = std::function<S>;
 }

@@ -29,8 +29,5 @@ SOFTWARE.
 
 namespace redox {
 
-	struct Exception : public std::runtime_error {
-		using std::runtime_error::runtime_error;
-	};
-
+	using Exception = std::runtime_error;
 }

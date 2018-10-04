@@ -26,7 +26,6 @@ SOFTWARE.
 #pragma once
 #include "vulkan.h"
 #include "core\core.h"
-#include "core\buffer.h"
 #include "core\non_copyable.h"
 
 #include "platform\window.h"

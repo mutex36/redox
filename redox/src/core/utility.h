@@ -82,6 +82,10 @@ namespace redox {
 		}
 	};
 
+	template<class Container>
+	auto byte_size(const Container& cnt) {
+		return cnt.size() * sizeof(Container::value_type);
+	}
 }
 
 //####UTIL####

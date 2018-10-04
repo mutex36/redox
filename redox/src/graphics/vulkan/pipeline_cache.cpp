@@ -28,15 +28,14 @@ SOFTWARE.
 #include "graphics.h"
 #include "core/application.h"
 
-redox::graphics::PipelineCache::PipelineCache() :
-	_pipelines(PipelineType::INVALID) {
+redox::graphics::PipelineCache::PipelineCache() {
 }
 
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) const {
-	auto hit = _pipelines.get(type);
+	auto hit = _pipelines.find(type);
 
 	if (hit != _pipelines.end())
-		return hit->value;
+		return hit->second;
 
 	return _create_pipeline(type);
 }
@@ -94,5 +93,5 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_
 	auto pipeline = std::make_shared<Pipeline>(RenderSystem::instance().forward_render_pass(),
 		vLayout, dLayout, std::move(vs), std::move(fs));
 
-	return _pipelines.emplace(PipelineType::DEFAULT_MESH_PIPELINE, std::move(pipeline));
+	return _pipelines.insert({ PipelineType::DEFAULT_MESH_PIPELINE, std::move(pipeline) }).first->second;
 }

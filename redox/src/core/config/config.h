@@ -24,8 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\string.h"
 #include "core\string_format.h"
 
 #include <thirdparty/ini/ini.h>
@@ -35,7 +33,7 @@ namespace redox {
 		class value_proxy {
 		public:
 			value_proxy(ini_t* conf, StringView group, StringView value) {
-				_ini_val = ini_get(conf, group.cstr(), value.cstr());
+				_ini_val = ini_get(conf, group.data(), value.data());
 			}
 
 			template<class T>

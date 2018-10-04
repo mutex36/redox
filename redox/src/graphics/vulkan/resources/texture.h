@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "core\non_copyable.h"
-#include "core\buffer.h"
 
 #include "graphics\vulkan\vulkan.h"
 #include "graphics\vulkan\buffer.h"

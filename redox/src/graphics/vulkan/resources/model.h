@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "core/core.h"
-#include "core/buffer.h"
 
 #include "mesh.h"
 #include "material.h"

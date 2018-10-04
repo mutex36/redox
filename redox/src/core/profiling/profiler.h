@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\string.h"
 #include "core\utility.h"
 #include "platform\timer.h"
 

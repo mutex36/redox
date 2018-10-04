@@ -25,11 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\string.h"
-#include "core\buffer.h"
 #include "core\utility.h"
-
-#include <memory> //std::unique_ptr
 
 namespace redox::io {
 
@@ -48,7 +44,7 @@ namespace redox::io {
 
 	private:
 		struct internal;
-		std::unique_ptr<internal> _internal;
+		UniquePtr<internal> _internal;
 	};
 
 	String extension(const String& str);

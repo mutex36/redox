@@ -24,9 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core/string.h"
 #include "core/non_copyable.h"
-#include "core/buffer.h"
 
 #include "graphics\vulkan\descriptor_pool.h"
 #include "graphics\vulkan\vulkan.h"
@@ -37,7 +35,7 @@ namespace redox::graphics {
 	class CommandBufferView;
 
 	enum class TextureKeys {
-		ALBEDO, ROUGHNESS_METALNESS, NORMAL, DISPLACEMENT, LIGHT, OCCLUSION, INVALID
+		ALBEDO, ROUGHNESS_METALNESS, NORMAL, DISPLACEMENT, LIGHT, OCCLUSION
 	};
 
 	enum class BufferKeys {

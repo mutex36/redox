@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\buffer.h"
 #include "core\non_copyable.h"
 
 #include "vulkan.h"
@@ -48,7 +47,7 @@ namespace redox::graphics {
 
 		void create_fbs(const RenderPass& renderPass);
 		void visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) const;
-		void present() const;
+		void present();
 
 		VkSwapchainKHR handle() const;
 		VkExtent2D extent() const;

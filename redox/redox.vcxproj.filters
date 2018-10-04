@@ -119,9 +119,6 @@
     <ClInclude Include="src\core\platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\string.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\core\non_copyable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -134,13 +131,7 @@
     <ClInclude Include="src\core\string_format.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\core\error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\hashmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\math\util.h">
@@ -171,9 +162,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\vulkan\command_pool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\math\constants.h">
@@ -219,9 +207,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\platform\misc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\bitset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\math\mat.h">
@@ -284,10 +269,10 @@
     <ClInclude Include="src\graphics\vulkan\descriptor_layout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\iterator.h">
+    <ClInclude Include="src\resources\resource_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\resources\resource_manager.h">
+    <ClInclude Include="src\core\container.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

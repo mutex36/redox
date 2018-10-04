@@ -34,7 +34,7 @@ SOFTWARE.
 
 #define RDX_LOG_TAG "InputSystem"
 
-redox::input::InputSystem::InputSystem(const platform::Window& window) : _keyStates(Keys::INVALID) {
+redox::input::InputSystem::InputSystem(const platform::Window& window) {
 	RDX_LOG("Registering input devices...");
 
 #ifdef RDX_INPUT_HIGH_DPI
@@ -76,7 +76,7 @@ void redox::input::InputSystem::poll() {
 			case RIM_TYPEKEYBOARD:
 			{
 				auto& kbData = raw->data.keyboard;
-				auto mappingIt = g_vkey_mappings.get(kbData.VKey);
+				auto mappingIt = g_vkey_mappings.find(kbData.VKey);
 
 				if (mappingIt == g_vkey_mappings.end()) {
 					RDX_LOG("Unknown VKey code: {0}", kbData.VKey);
@@ -85,10 +85,10 @@ void redox::input::InputSystem::poll() {
 
 				switch (kbData.Flags) {
 				case RI_KEY_MAKE:
-					_keyStates.push(mappingIt->value, KeyState::PRESSED);
+					_keyStates.insert({ mappingIt->second, KeyState::PRESSED });
 					break;
 				case RI_KEY_BREAK: {
-					_keyStates.push(mappingIt->value, KeyState::RELEASED);
+					_keyStates.insert({ mappingIt->second, KeyState::RELEASED });
 					break;
 				}}
 				break;
@@ -115,9 +115,9 @@ void redox::input::InputSystem::poll() {
 }
 
 redox::input::KeyState redox::input::InputSystem::key_state(Keys key) {
-	auto state = _keyStates.get(key);
+	auto state = _keyStates.find(key);
 	if (state != _keyStates.end())
-		return state->value;
+		return state->second;
 
 	return KeyState::NORMAL;
 }

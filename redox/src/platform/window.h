@@ -25,13 +25,9 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\string.h"
 #include "core\utility.h"
 
 #include "filesystem.h"
-
-#include <functional> //std::function
-#include <memory> //std::unique_ptr
 
 namespace redox::platform {
 	class Window {
@@ -40,7 +36,7 @@ namespace redox::platform {
 			CLOSE, MINIMIZE, LOSTFOCUS, GAINFOCUS
 		};
 
-		using EventFn = std::function<void(Event)>;
+		using EventFn = Function<void(Event)>;
 
 		Window(const String& name);
 		~Window();
@@ -60,6 +56,6 @@ namespace redox::platform {
 		EventFn _eventfn;
 
 		struct internal;
-		std::unique_ptr<internal> _internal;
+		UniquePtr<internal> _internal;
 	};
 }

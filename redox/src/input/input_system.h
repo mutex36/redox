@@ -24,13 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\string.h"
-#include "core\hashmap.h"
-
 #include "platform\window.h"
 #include "keys.h"
 
+//Uses raw DPI implementation
 #define RDX_INPUT_HIGH_DPI
+
 namespace redox::input {
 	enum class KeyState {
 		NORMAL, PRESSED, RELEASED

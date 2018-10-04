@@ -177,10 +177,10 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 redox::graphics::StagedTexture::StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size,
 	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags) :
 	Texture(format, size, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT, viewAspectFlags),
-	_stagingBuffer(pixels.byte_size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
+	_stagingBuffer(byte_size(pixels), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
 
 	_stagingBuffer.map([&pixels](void* data) {
-		std::memcpy(data, pixels.data(), pixels.byte_size());
+		std::memcpy(data, pixels.data(), byte_size(pixels));
 	});
 }
 

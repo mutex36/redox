@@ -26,7 +26,7 @@ SOFTWARE.
 #include "config.h"
 
 redox::Configuration::Configuration(const String& file) {
-	_config = ini_load(file.cstr());
+	_config = ini_load(file.c_str());
 	if (_config == nullptr)
 		throw Exception("failed to load ini config");
 }

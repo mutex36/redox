@@ -72,10 +72,10 @@ void redox::Application::run() {
 		_window.process_events();
 		_inputSystem.poll();
 
-		if (_state == State::PAUSED) {
-			RDX_SLEEP_MS(1);
-			continue;
-		}
+		//if (_state == State::PAUSED) {
+		//	RDX_SLEEP_MS(1);
+		//	continue;
+		//}
 
 		if (dt_ms >= timestep) {
 			_timer.reset();

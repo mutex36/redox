@@ -27,7 +27,6 @@ SOFTWARE.
 #include "core\core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
-#include "core\string.h"
 #include "core\string_format.h"
 #include "platform\windows.h"
 
@@ -37,7 +36,8 @@ namespace redox::detail {
 	template<class...Args>
 	_RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
-		WriteConsole(detail::std_handle, fmt.cstr(), 
+
+		WriteConsole(detail::std_handle, fmt.c_str(), 
 			static_cast<DWORD>(fmt.size()), NULL, NULL);
 	}
 
@@ -70,7 +70,7 @@ namespace redox::detail {
 	}
 
 	template<class...Args>
-	_RDX_INLINE void debug_log(const redox::StringView& fmts, const Args&...args) {
+	_RDX_INLINE void debug_log(redox::StringView fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
 		OutputDebugString(fmt.cstr());
 	}

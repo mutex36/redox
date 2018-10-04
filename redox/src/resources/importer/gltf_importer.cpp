@@ -29,8 +29,8 @@ SOFTWARE.
 #include "core/logging/log.h"
 
 redox::GLTFImporter::GLTFImporter(const String& path) :
-	_buffers("0"),
 	_searchPath(io::directory(path)) {
+
 	io::File file(path, io::File::Mode::READ);
 	auto buffer = file.read();
 
@@ -89,7 +89,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 		output.indices.reserve(primitive.indices->count);
 		read_buffer<uint16_t>(primitive.indices->buffer_view,
 			primitive.indices, [&output](const auto& value) {
-			output.indices.push(value);
+			output.indices.push_back(value);
 		});
 		submesh.indexCount = output.indices.size() - submesh.indexOffset;
 
@@ -106,7 +106,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 
 				output.positions.reserve(output.positions.capacity() + attribute.data->count * 3);
 				read_buffer<float_t>(bufferView, attribute.data, [&output](const auto& value) {
-					output.positions.push(value);
+					output.positions.push_back(value);
 				});
 
 				break;
@@ -115,7 +115,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 
 				output.normals.reserve(output.normals.capacity() + attribute.data->count * 3);
 				read_buffer<float_t>(bufferView, attribute.data, [&output](const auto& value) {
-					output.normals.push(value);
+					output.normals.push_back(value);
 				});
 
 				break;
@@ -125,7 +125,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 
 				output.texcoords.reserve(output.texcoords.capacity() + attribute.data->count * 2);
 				read_buffer<float_t>(bufferView, attribute.data, [&output](const auto& value) {
-					output.texcoords.push(value);
+					output.texcoords.push_back(value);
 				});
 
 				break;
@@ -135,7 +135,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 		submesh.attributeCount = output.positions.size() / 3 - submesh.attributeOffset;
 		submesh.materialIndex = primitive.material - _data.materials;
 
-		output.submeshes.push(std::move(submesh));
+		output.submeshes.push_back(std::move(submesh));
 	}
 
 	output.vertexCount = output.positions.size() / 3;

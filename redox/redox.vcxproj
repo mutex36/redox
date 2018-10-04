@@ -193,8 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\config\config.h" />
-    <ClInclude Include="src\core\hash.h" />
-    <ClInclude Include="src\core\iterator.h" />
+    <ClInclude Include="src\core\container.h" />
     <ClInclude Include="src\core\meta\reflection.h" />
     <ClInclude Include="src\core\meta\type_hash.h" />
     <ClInclude Include="src\graphics\vulkan\descriptor_layout.h" />
@@ -226,17 +225,13 @@
     <ClInclude Include="src\core\allocation\default_allocator.h" />
     <ClInclude Include="src\core\allocation\growth_policy.h" />
     <ClInclude Include="src\core\application.h" />
-    <ClInclude Include="src\core\buffer.h" />
     <ClInclude Include="src\core\core.h" />
-    <ClInclude Include="src\core\bitset.h" />
     <ClInclude Include="src\core\error.h" />
-    <ClInclude Include="src\core\hashmap.h" />
     <ClInclude Include="src\core\logging\log.h" />
     <ClInclude Include="src\core\logging\log_win.hpp" />
     <ClInclude Include="src\core\profiling\profiler.h" />
     <ClInclude Include="src\core\non_copyable.h" />
     <ClInclude Include="src\core\platform.h" />
-    <ClInclude Include="src\core\string.h" />
     <ClInclude Include="src\core\string_format.h" />
     <ClInclude Include="src\platform\windows.h" />
     <ClInclude Include="src\graphics\vulkan\render_system.h" />

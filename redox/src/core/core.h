@@ -42,6 +42,7 @@ namespace redox {
 
 #include "platform.h"
 #include "error.h"
+#include "container.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
 	#define _RDX_INLINE __forceinline

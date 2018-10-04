@@ -27,7 +27,4 @@ SOFTWARE.
 
 #include "core\core.h"
 #include "core\application.h"
-
-#include "core\buffer.h"
-#include "core\string.h"
 #include "core\string_format.h"

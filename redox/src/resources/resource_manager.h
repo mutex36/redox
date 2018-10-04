@@ -25,7 +25,7 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-#include "core\hashmap.h"
+#include "core\non_copyable.h"
 #include "resource.h"
 
 #include "platform/filesystem.h"
@@ -44,9 +44,9 @@ namespace redox {
 		ResourceHandle<R> load(const String& path) const {
 			static_assert(std::is_base_of_v<IResource, R>);
 
-			auto cit = _cache.get(path);
+			auto cit = _cache.find(path);
 			if (cit != _cache.end())
-				return std::static_pointer_cast<R>(cit->value);
+				return std::static_pointer_cast<R>(cit->second);
 
 			for (const auto& fac : _factories)
 				if (fac->supports_ext(io::extension(path)))
