@@ -32,7 +32,6 @@ SOFTWARE.
 #include "render_pass.h"
 #include "framebuffer.h"
 
-#include <functional> //std::function
 #include <thirdparty/function_ref/function_ref.hpp>
 
 namespace redox::graphics {
@@ -40,7 +39,7 @@ namespace redox::graphics {
 
 	class Swapchain : public NonCopyable {
 	public:
-		using CreateCallback = std::function<void()>;
+		using CreateCallback = Function<void()>;
 
 		Swapchain(CreateCallback&& recreateCallback);
 		~Swapchain();

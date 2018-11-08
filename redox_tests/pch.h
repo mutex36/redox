@@ -5,12 +5,9 @@
 
 #pragma once
 
-#include "gtest\gtest.h"
+#include <gtest/gtest.h>
 #include "redox.h"
 
-#include "core\hashmap.h"
-#include "core\bitset.h"
-
-#include "math\math.h"
+#include "math/math.h"
 
 #include "core/meta/reflection.h"

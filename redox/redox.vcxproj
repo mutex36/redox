@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{9A3A1FE3-74AF-49A1-8A30-686B2171FEC0}</ProjectGuid>
     <RootNamespace>redox</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -222,8 +222,6 @@
     <ClInclude Include="src\graphics\vulkan\graphics.h" />
     <ClInclude Include="src\graphics\vulkan\pipeline.h" />
     <ClInclude Include="src\graphics\vulkan\resources\shader.h" />
-    <ClInclude Include="src\core\allocation\default_allocator.h" />
-    <ClInclude Include="src\core\allocation\growth_policy.h" />
     <ClInclude Include="src\core\application.h" />
     <ClInclude Include="src\core\core.h" />
     <ClInclude Include="src\core\error.h" />

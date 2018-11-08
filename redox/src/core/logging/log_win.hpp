@@ -30,15 +30,33 @@ SOFTWARE.
 #include "core\string_format.h"
 #include "platform\windows.h"
 
+namespace redox {	
+	enum class ConsoleColor : WORD {
+		RED = 13, 
+		GREEN = 11, 
+		WHITE = 15
+	};
+}
+
 namespace redox::detail {
 	static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	template<class...Args>
 	_RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
-
 		WriteConsole(detail::std_handle, fmt.c_str(), 
 			static_cast<DWORD>(fmt.size()), NULL, NULL);
+	}
+
+	template<class...Args>
+	_RDX_INLINE void log(redox::StringView fmts, redox::ConsoleColor color, const Args&...args) {
+		CONSOLE_SCREEN_BUFFER_INFO restore{};
+		GetConsoleScreenBufferInfo(std_handle, &restore);
+
+		SetConsoleTextAttribute(std_handle, static_cast<WORD>(color));
+		log(fmts, args...);
+
+		SetConsoleTextAttribute(std_handle, restore.wAttributes);
 	}
 
 	template<class T1>

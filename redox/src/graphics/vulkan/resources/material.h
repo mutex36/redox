@@ -45,6 +45,7 @@ namespace redox::graphics {
 	class Material : public IResource {
 	public:
 		Material(PipelineHandle pipeline, DescriptorSetView descSet);
+		~Material() override = default;
 
 		void bind(const CommandBufferView& commandBuffer);
 		void upload() override;

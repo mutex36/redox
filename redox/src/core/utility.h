@@ -54,6 +54,12 @@ namespace redox {
 		return static_cast<Enum>(static_cast<ut>(a) & static_cast<ut>(b));
 	}
 
+	template<typename Enum>
+	constexpr void operator|= (Enum& a, const Enum& b) {
+		using ut = typename std::underlying_type_t<Enum>;
+		a = static_cast<Enum>(static_cast<ut>(a) | static_cast<ut>(b));
+	}
+
 	template<class Fn>
 	struct scope_guard {
 		scope_guard(Fn&& fn) : _fn(std::move(fn)) {}

@@ -24,12 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "platform\window.h"
-#include "graphics\vulkan\render_system.h"
-#include "core\config\config.h"
-#include "platform\timer.h"
-#include "input\input_system.h"
-#include "resources\resource_manager.h"
+#include <platform/window.h>
+#include <graphics/vulkan/render_system.h>
+#include <core/config/config.h>
+#include <platform/timer.h>
+#include <input/input_system.h>
+#include <resources/resource_manager.h>
 
 namespace redox {
 	class Application {
@@ -46,21 +46,20 @@ namespace redox {
 		void run();
 		void stop();
 
-		const Configuration& config() const;
-		const platform::Timer& timer() const;
-		const ResourceManager& resource_manager() const;
-		const graphics::RenderSystem& render_system() const;
+		const Configuration* config() const;
+		const platform::Timer* timer() const;
+		const ResourceManager* resource_manager() const;
+		const graphics::RenderSystem* render_system() const;
 
 	private:
 		static_instance_wrapper _iw{ this };
-
 		Configuration _config;
-		ResourceManager _resourceManager;
-		platform::Window _window;
-		platform::Timer _timer;
 
-		input::InputSystem _inputSystem;
-		graphics::RenderSystem _renderSystem;
+		UniquePtr<ResourceManager> _resourceManager;
+		UniquePtr<platform::Window> _window;
+		UniquePtr<platform::Timer> _timer;
+		UniquePtr<input::InputSystem> _inputSystem;
+		UniquePtr<graphics::RenderSystem> _renderSystem;
 
 		Application::State _state;
 	};

@@ -70,8 +70,8 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 	redox::Buffer<ResourceHandle<Material>> materials;
 	materials.reserve(importer.material_count());
 
-	const auto& descPool = RenderSystem::instance().descriptor_pool();
-	const auto& pipelineCache = RenderSystem::instance().pipeline_cache();
+	const auto& descPool = RenderSystem::instance()->descriptor_pool();
+	const auto& pipelineCache = RenderSystem::instance()->pipeline_cache();
 
 	for (std::size_t i = 0; i < importer.material_count(); i++) {
 		auto impMat = importer.import_material(i);
@@ -82,7 +82,7 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 		auto& material = materials.emplace_back(std::make_shared<Material>(pipeline, dset));
 
 		material->set_texture(TextureKeys::ALBEDO,
-			ResourceManager::instance().load<SampleTexture>(redox::String("textures\\") + impMat.albedoMap));
+			ResourceManager::instance()->load<SampleTexture>(redox::String("textures\\") + impMat.albedoMap));
 	}
 
 	return std::make_shared<Model>(std::move(meshes), std::move(materials));

@@ -24,8 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "gltf_importer.h"
-
-#define RDX_LOG_TAG "Importer"
 #include "core/logging/log.h"
 
 redox::GLTFImporter::GLTFImporter(const String& path) :

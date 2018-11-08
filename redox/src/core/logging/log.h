@@ -30,7 +30,7 @@ SOFTWARE.
 #include "log_win.hpp"
 #endif
 
-#define RDX_LOG(fmt, ...) redox::detail::log(RDX_LOG_TAG##": "##fmt##"\n",  __VA_ARGS__)
+#define RDX_LOG(fmt, ...) redox::detail::log(fmt##"\n",  __VA_ARGS__)
 
 #ifdef RDX_DEBUG
 #define RDX_DEBUG_LOG(fmt, ...) redox::detail::debug_log(##fmt##"\n",  __VA_ARGS__)

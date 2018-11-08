@@ -24,24 +24,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\utility.h"
-#include "platform\timer.h"
-
-#define RDX_LOG_TAG "Profiler"
-#include "core\logging\log.h"
+#include <core/core.h>
+#include <core/utility.h>
+#include <core/logging/log.h>
+#include <platform/timer.h>
 
 #define _RDX_PROFILE redox::Profiler _RDX_HELPER_CONCAT(_profiler_, __COUNTER__)(__FUNCTION__);
 
 namespace redox {
 	struct Profiler {
 		_RDX_INLINE Profiler(StringView name) {
-			RDX_LOG("{0}", name);
+			RDX_LOG("[PROFILING] {0}", ConsoleColor::WHITE, name);
 			_timer.start();
 		}
 
 		_RDX_INLINE ~Profiler() {
-			RDX_LOG("{0}ms", _timer.elapsed());
+			RDX_LOG("[PROFILING] {0}ms", ConsoleColor::WHITE, _timer.elapsed());
 		}
 
 		platform::Timer _timer;

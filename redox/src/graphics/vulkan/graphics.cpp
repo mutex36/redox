@@ -29,7 +29,7 @@ SOFTWARE.
 #include "core\application.h"
 
 const redox::graphics::Graphics& redox::graphics::Graphics::instance() {
-	return Application::instance->render_system().graphics();
+	return Application::instance->render_system()->graphics();
 }
 
 redox::graphics::Graphics::Graphics(const platform::Window& window) {
@@ -38,9 +38,9 @@ redox::graphics::Graphics::Graphics(const platform::Window& window) {
 	_init_surface(window);
 	_init_device();
 
-	ResourceManager::instance().register_factory(&_textureFactory);
-	ResourceManager::instance().register_factory(&_modelFactory);
-	ResourceManager::instance().register_factory(&_shaderFactory);
+	ResourceManager::instance()->register_factory(&_textureFactory);
+	ResourceManager::instance()->register_factory(&_modelFactory);
+	ResourceManager::instance()->register_factory(&_shaderFactory);
 }
 
 redox::graphics::Graphics::~Graphics() {
@@ -102,7 +102,7 @@ VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 	redox::Buffer<VkPresentModeKHR> modes(count);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, modes.data());
 
-	if (Application::instance->config().get("Engine", "vsync"))
+	if (Application::instance->config()->get("Engine", "vsync"))
 		return VK_PRESENT_MODE_FIFO_KHR;
 
 	for (auto& mode : modes) {
@@ -133,7 +133,7 @@ VkSurfaceFormatKHR redox::graphics::Graphics::pick_surface_format() const {
 }
 
 void redox::graphics::Graphics::_init_instance() {
-	RDX_LOG("Initializing instance...");
+	RDX_LOG("Initializing Vulkan Instance...", ConsoleColor::GREEN);
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -185,7 +185,7 @@ void redox::graphics::Graphics::_init_instance() {
 }
 
 void redox::graphics::Graphics::_init_physical_device() {
-	RDX_LOG("Choosing physical device...");
+	RDX_LOG("Choosing Physical Device...", ConsoleColor::GREEN);
 
 	auto device = _pick_device();
 	if (!device)
@@ -197,7 +197,7 @@ void redox::graphics::Graphics::_init_physical_device() {
 void redox::graphics::Graphics::_init_surface(const platform::Window& window) {
 
 #ifdef RDX_PLATFORM_WINDOWS
-	RDX_LOG("Creating surface (WIN32)...");
+	RDX_LOG("Creating Surface (Windows)...", ConsoleColor::GREEN);
 
 	VkWin32SurfaceCreateInfoKHR createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
@@ -215,7 +215,7 @@ void redox::graphics::Graphics::_init_surface(const platform::Window& window) {
 }
 
 void redox::graphics::Graphics::_init_device() {
-	RDX_LOG("Initializing logical device...");
+	RDX_LOG("Initializing logical device...", ConsoleColor::GREEN);
 
 	auto fqi = _pick_queue_family();
 	if (!fqi) throw Exception("could not find suitable queue family");

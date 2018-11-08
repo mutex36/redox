@@ -24,11 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "graphics\vulkan\vulkan.h"
-#include "resources\resource.h"
-
-#include "core\core.h"
-#include "platform\filesystem.h"
+#include <graphics/vulkan/vulkan.h>
+#include <resources/resource.h>
+#include <core/core.h>
+#include <platform/filesystem.h>
 
 namespace redox::graphics {
 
@@ -36,7 +35,7 @@ namespace redox::graphics {
 	{
 	public:
 		Shader(const redox::Buffer<i8>& buffer);
-		~Shader();
+		~Shader() override;
 
 		VkShaderModule handle() const;
 		void upload() override;

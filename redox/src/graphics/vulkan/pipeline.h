@@ -24,17 +24,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "vulkan.h"
-#include "sampler.h"
-#include "buffer.h"
+#include <graphics/vulkan/vulkan.h>
+#include <graphics/vulkan/sampler.h>
+#include <graphics/vulkan/buffer.h>
+#include <graphics/vulkan/vertex_layout.h>
+#include <graphics/vulkan/descriptor_layout.h>
 
-#include "vertex_layout.h"
-#include "descriptor_layout.h"
+#include <graphics/vulkan/resources/shader.h>
+#include <graphics/vulkan/resources/texture.h>
 
-#include "resources\shader.h"
-#include "resources\texture.h"
-
-#include "core\utility.h"
+#include <core/utility.h>
 
 namespace redox::graphics {
 	class CommandPool;

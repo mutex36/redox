@@ -48,7 +48,7 @@ namespace redox::graphics {
 	public:
 		Mesh(const redox::Buffer<MeshVertex>& vertices, 
 			const redox::Buffer<uint16_t>& indices, redox::Buffer<SubMesh> submeshes);
-		~Mesh() = default;
+		~Mesh() override = default;
 
 		void bind(const CommandBufferView& commandBuffer);
 		void upload() override;

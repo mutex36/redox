@@ -26,10 +26,22 @@ SOFTWARE.
 #pragma once
 #include "core\core.h"
 #include "core\utility.h"
-
 #include "filesystem.h"
 
 namespace redox::platform {
+
+	enum class WindowFlags {
+		FULLSCREEN = 0x1 << 0,
+		RESIZABLE =	 0x1 << 1
+	};
+
+	struct WindowSettings {
+		String title;
+		String iconPath;
+		i32 width, height;
+		WindowFlags flags;
+	};
+
 	class Window {
 	public:
 		enum class Event {
@@ -38,7 +50,7 @@ namespace redox::platform {
 
 		using EventFn = Function<void(Event)>;
 
-		Window(const String& name);
+		Window(const WindowSettings& settings);
 		~Window();
 
 		void show() const;
@@ -59,3 +71,5 @@ namespace redox::platform {
 		UniquePtr<internal> _internal;
 	};
 }
+
+RDX_ENABLE_ENUM_FLAGS(redox::platform::WindowFlags);

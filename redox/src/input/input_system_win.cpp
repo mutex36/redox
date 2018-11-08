@@ -32,10 +32,8 @@ SOFTWARE.
 #include "platform\windows.h"
 #include "core\application.h"
 
-#define RDX_LOG_TAG "InputSystem"
-
 redox::input::InputSystem::InputSystem(const platform::Window& window) {
-	RDX_LOG("Registering input devices...");
+	RDX_LOG("Initializing Input System...", ConsoleColor::GREEN);
 
 #ifdef RDX_INPUT_HIGH_DPI
 	RAWINPUTDEVICE keyboardDevice;

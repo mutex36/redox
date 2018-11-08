@@ -30,12 +30,15 @@ SOFTWARE.
 namespace redox::graphics {
 	class RenderPass;
 
-	class Framebuffer : public NonCopyable {
+	class Framebuffer {
 	public:
 		Framebuffer(const RenderPass& rp, VkImageView imageView, VkExtent2D extent);
 		~Framebuffer();
 
-		Framebuffer(Framebuffer&&);
+		Framebuffer(Framebuffer&&) = default;
+		Framebuffer& operator=(Framebuffer&&) = default;
+		Framebuffer(const Framebuffer&) = default;
+		Framebuffer& operator=(const Framebuffer&) = default;
 
 		VkFramebuffer handle() const;
 		const VkExtent2D& extent() const;

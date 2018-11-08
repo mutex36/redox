@@ -24,10 +24,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core/core.h"
-
-#include "mesh.h"
-#include "material.h"
+#include <core/core.h>
+#include <graphics/vulkan/resources/mesh.h>
+#include <graphics/vulkan/resources/material.h>
 
 namespace redox::graphics {
 
@@ -38,6 +37,7 @@ namespace redox::graphics {
 
 		Model(mesh_buffer meshBuffer, material_buffer materialBuffer);
 
+		~Model() override = default;
 		void upload() override;
 
 		const mesh_buffer& meshes() const;

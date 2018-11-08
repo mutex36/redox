@@ -24,11 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core/core.h"
+#include <core/core.h>
 
 namespace redox {
 	
 	struct IResource {
+		virtual ~IResource() = default;
 		virtual void upload() = 0;
 	};
 
@@ -36,6 +37,7 @@ namespace redox {
 	using ResourceHandle = SharedPtr<T>;
 
 	struct IResourceFactory {
+		virtual ~IResourceFactory() = default;
 		virtual ResourceHandle<IResource> load(const String& path) = 0;
 		virtual bool supports_ext(const String& ext) = 0;
 	};

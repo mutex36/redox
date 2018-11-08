@@ -23,12 +23,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "swapchain.h"
+#include <graphics/vulkan/swapchain.h>
+#include <graphics/vulkan/graphics.h>
 
-#include "core\profiling\profiler.h"
+#include <core/profiling/profiler.h>
 #include <limits> //std::numeric_limits
-
-#include "graphics.h"
 
 redox::graphics::Swapchain::Swapchain(CreateCallback&& createCallback) :
 	_createCallback(std::move(createCallback)) {
@@ -52,7 +51,6 @@ redox::graphics::Swapchain::~Swapchain() {
 }
 
 void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
-	_RDX_PROFILE;
 	_frameBuffers.clear();
 	_frameBuffers.reserve(_imageViews.size());
 

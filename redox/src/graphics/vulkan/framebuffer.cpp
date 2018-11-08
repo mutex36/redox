@@ -48,10 +48,6 @@ redox::graphics::Framebuffer::~Framebuffer() {
 	vkDestroyFramebuffer(Graphics::instance().device(), _handle, nullptr);
 }
 
-redox::graphics::Framebuffer::Framebuffer(Framebuffer&& ref) :
-	_handle(ref._handle), _extent(ref._extent) {
-}
-
 VkFramebuffer redox::graphics::Framebuffer::handle() const {
 	return _handle;
 }

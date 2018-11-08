@@ -137,12 +137,6 @@
     <ClInclude Include="src\math\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\allocation\growth_policy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\allocation\default_allocator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\graphics\vulkan\render_system.h">
       <Filter>Header Files</Filter>
     </ClInclude>

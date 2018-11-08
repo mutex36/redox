@@ -26,14 +26,11 @@ SOFTWARE.
 #include "core\core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
-#include "window.h"
-#include "core\logging\log.h"
-#include "platform\windows.h"
-#include "resources\resource.h"
-
-#include "core\application.h"
-
-#define RDX_LOG_TAG "WindowSystem"
+#include <platform/window.h>
+#include <core/logging/log.h>
+#include <core/application.h>
+#include <platform/windows.h>
+#include <resources/resource.h>
 
 struct redox::platform::Window::internal {
 	HWND handle;
@@ -76,7 +73,7 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-redox::platform::Window::Window(const String& title) :
+redox::platform::Window::Window(const WindowSettings& settings) :
 	_internal(std::make_unique<internal>()) {
 
 	_internal->instance = GetModuleHandle(0);
@@ -84,10 +81,8 @@ redox::platform::Window::Window(const String& title) :
 
 	DWORD dwStyle = WS_SYSMENU | WS_MINIMIZEBOX;
 
-	const auto& config = Application::instance->config();
-	const auto& resources = Application::instance->resource_manager();
-
-	String iconFile = resources.resolve_path(config.get("Surface", "icon"));
+	auto resources = Application::instance->resource_manager();
+	String iconFile = resources->resolve_path(settings.iconPath);
 
 	auto icon = (HICON)LoadImage(NULL, iconFile.c_str(), IMAGE_ICON,
 		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
@@ -104,16 +99,16 @@ redox::platform::Window::Window(const String& title) :
 	RegisterClass(&wndClass);
 
 	RECT windowRect{ 0,0 };
-	if (config.get("Surface", "fullscreen")) {
+	if ((settings.flags & WindowFlags::FULLSCREEN) == WindowFlags::FULLSCREEN) {
 		windowRect.right = GetSystemMetrics(SM_CXSCREEN);
 		windowRect.bottom = GetSystemMetrics(SM_CYSCREEN);
 		dwStyle |= WS_POPUP;
 	} else {
-		windowRect.right = config.get("Surface", "resolution_x");
-		windowRect.bottom = config.get("Surface", "resolution_y");
+		windowRect.right = settings.width;
+		windowRect.bottom = settings.height;
 		AdjustWindowRect(&windowRect, dwStyle, FALSE);
 
-		if (config.get("Surface", "resizable")) {
+		if ((settings.flags & WindowFlags::RESIZABLE) == WindowFlags::RESIZABLE) {
 			dwStyle |= WS_OVERLAPPEDWINDOW;
 		} else {
 			dwStyle |= WS_OVERLAPPED;
@@ -121,7 +116,7 @@ redox::platform::Window::Window(const String& title) :
 	}
 
 	_internal->handle = CreateWindowEx(
-		NULL, _internal->classname.c_str(), title.c_str(), dwStyle,
+		NULL, _internal->classname.c_str(), settings.title.c_str(), dwStyle,
 		windowRect.left, windowRect.left, 
 		windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
 		NULL, NULL, _internal->instance, this);

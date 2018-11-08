@@ -39,7 +39,7 @@ namespace redox::graphics {
 
 	class RenderSystem : public NonCopyable {
 	public:
-		static const RenderSystem& instance();
+		static const RenderSystem* instance();
 
 		RenderSystem(const platform::Window& window);
 		~RenderSystem();

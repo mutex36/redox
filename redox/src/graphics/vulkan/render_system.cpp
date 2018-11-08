@@ -23,15 +23,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "render_system.h"
-#include "core\utility.h"
+#include <graphics/vulkan/render_system.h>
 
-#include "core\profiling\profiler.h"
-#include "core\application.h"
+#include <core/utility.h>
+#include <core/profiling/profiler.h>
+#include <core/application.h>
 
-#define RDX_LOG_TAG "RenderSystem"
-
-const redox::graphics::RenderSystem& redox::graphics::RenderSystem::instance() {
+const redox::graphics::RenderSystem* redox::graphics::RenderSystem::instance() {
 	return Application::instance->render_system();
 }
 
@@ -40,7 +38,7 @@ redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
 	_mvpBuffer(sizeof(mvp_uniform)),
 	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
 	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS),
-	_demoModel(ResourceManager::instance().load<Model>("meshes\\centurion.gltf")),
+	_demoModel(ResourceManager::instance()->load<Model>("meshes\\centurion.gltf")),
 	_swapchain(std::bind(&RenderSystem::_swapchain_event_create, this)) {
 
 }
@@ -52,17 +50,14 @@ redox::graphics::RenderSystem::~RenderSystem() {
 void redox::graphics::RenderSystem::_demo_draw() {
 	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
-
 			_forwardRenderPass.begin(frameBuffer, commandBuffer);
-
-			//###DEMO###
 			auto mesh = _demoModel->meshes()[0];
 			for (const auto& sm : mesh->submeshes()) {
 				auto material = _demoModel->materials()[sm.materialIndex];
-				commandBuffer.submit({ mesh, material, {sm.vertexOffset, sm.vertexCount} });
+				commandBuffer.submit(IndexedDraw { 
+					mesh, material, {sm.vertexOffset, sm.vertexCount}
+				}); 
 			}
-			//##########
-
 			_forwardRenderPass.end(commandBuffer);
 		});
 	});
@@ -95,19 +90,19 @@ const redox::graphics::CommandPool& redox::graphics::RenderSystem::aux_command_p
 	return _auxCommandPool;
 }
 
-const redox::graphics::DescriptorPool & redox::graphics::RenderSystem::descriptor_pool() const {
+const redox::graphics::DescriptorPool& redox::graphics::RenderSystem::descriptor_pool() const {
 	return _descriptorPool;
 }
 
-const redox::graphics::PipelineCache & redox::graphics::RenderSystem::pipeline_cache() const {
+const redox::graphics::PipelineCache& redox::graphics::RenderSystem::pipeline_cache() const {
 	return _pipelineCache;
 }
 
-const redox::graphics::RenderPass & redox::graphics::RenderSystem::forward_render_pass() const {
+const redox::graphics::RenderPass& redox::graphics::RenderSystem::forward_render_pass() const {
 	return _forwardRenderPass;
 }
 
-const redox::graphics::Swapchain & redox::graphics::RenderSystem::swap_chain() const {
+const redox::graphics::Swapchain& redox::graphics::RenderSystem::swap_chain() const {
 	return _swapchain;
 }
 

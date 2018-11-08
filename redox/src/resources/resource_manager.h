@@ -24,17 +24,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\non_copyable.h"
-#include "resource.h"
+#include <core/core.h>
+#include <core/non_copyable.h>
+#include <resources/resource.h>
+#include <platform/filesystem.h>
+#include <core/logging/log.h>
 
-#include "platform/filesystem.h"
-
-namespace redox {
-
+namespace redox
+{
 	class ResourceManager : public NonCopyable {
 	public:
-		static const ResourceManager& instance();
+		static const ResourceManager* instance();
 
 		ResourceManager();
 		String resolve_path(const String& path) const;
@@ -48,9 +48,12 @@ namespace redox {
 			if (cit != _cache.end())
 				return std::static_pointer_cast<R>(cit->second);
 
-			for (const auto& fac : _factories)
-				if (fac->supports_ext(io::extension(path)))
+			for (const auto& fac : _factories) {
+				if (fac->supports_ext(io::extension(path))) {
+					RDX_LOG("Loading {0}...", path);
 					return std::static_pointer_cast<R>(fac->load(_resourcePath + path));
+				}
+			}
 
 			throw Exception("not suitable factory found");
 		}

@@ -34,6 +34,8 @@ namespace redox {
 		public:
 			value_proxy(ini_t* conf, StringView group, StringView value) {
 				_ini_val = ini_get(conf, group.data(), value.data());
+				if (_ini_val == nullptr)
+					throw Exception("failed to load ini key");
 			}
 
 			template<class T>
