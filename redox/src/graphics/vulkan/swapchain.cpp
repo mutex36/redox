@@ -29,12 +29,11 @@ SOFTWARE.
 #include <core/profiling/profiler.h>
 #include <limits> //std::numeric_limits
 
-redox::graphics::Swapchain::Swapchain(CreateCallback&& createCallback) :
-	_createCallback(std::move(createCallback)) {
+redox::graphics::Swapchain::Swapchain(ResizeCallback&& resizeCallback) :
+	_resizeCallback(std::move(resizeCallback)) {
 	_init();
 	_init_semaphores();
 	_init_images();
-	_createCallback();
 }
 
 void redox::graphics::Swapchain::_destroy() {
@@ -109,7 +108,7 @@ void redox::graphics::Swapchain::_reload() {
 	_init();
 	_init_semaphores();
 	_init_images();
-	_createCallback();
+	_resizeCallback();
 }
 
 VkSwapchainKHR redox::graphics::Swapchain::handle() const {

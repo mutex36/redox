@@ -28,7 +28,9 @@ SOFTWARE.
 #include "graphics.h"
 #include "core/application.h"
 
-redox::graphics::PipelineCache::PipelineCache() {
+redox::graphics::PipelineCache::PipelineCache(PipelineCreatedCallback&& pcc, const RenderPass* rp) :
+	_createCallback(std::move(pcc)),
+	_renderPass(rp) {
 }
 
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) const {
@@ -37,7 +39,9 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineTyp
 	if (hit != _pipelines.end())
 		return hit->second;
 
-	return _create_pipeline(type);
+	auto pipeline = _create_pipeline(type);
+	_createCallback(pipeline);
+	return pipeline;
 }
 
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_pipeline(PipelineType type) const {
@@ -90,8 +94,8 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_
 	auto vs = ResourceManager::instance()->load<Shader>("shader\\vert.spv");
 	auto fs = ResourceManager::instance()->load<Shader>("shader\\frag.spv");
 
-	auto pipeline = std::make_shared<Pipeline>(RenderSystem::instance()->forward_render_pass(),
-		vLayout, dLayout, std::move(vs), std::move(fs));
+	auto pipeline = redox::make_shared<Pipeline>(*_renderPass, vLayout,
+		dLayout, std::move(vs), std::move(fs));
 
 	return _pipelines.insert({ PipelineType::DEFAULT_MESH_PIPELINE, std::move(pipeline) }).first->second;
 }

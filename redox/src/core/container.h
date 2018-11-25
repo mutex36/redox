@@ -45,8 +45,12 @@ namespace redox
 	template<class T>
 	using UniquePtr = std::unique_ptr<T>;
 
+	using std::make_unique;
+
 	template<class T>
 	using SharedPtr = std::shared_ptr<T>;
+
+	using std::make_shared;
 
 	template<class S>
 	using Function = std::function<S>;

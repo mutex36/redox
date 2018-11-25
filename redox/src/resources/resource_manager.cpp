@@ -28,7 +28,7 @@ SOFTWARE.
 #include "core/application.h"
 
 redox::ResourceManager::ResourceManager() :
-	_resourcePath("resources\\") {
+	_resourcePath("assets\\") {
 }
 
 const redox::ResourceManager* redox::ResourceManager::instance() {

@@ -29,10 +29,8 @@ SOFTWARE.
 #include "core\non_copyable.h"
 
 #include "platform\window.h"
-
 #include "graphics.h"
 #include "render_pass.h"
-
 #include "math\math.h"
 
 namespace redox::graphics {
@@ -46,13 +44,6 @@ namespace redox::graphics {
 
 		void render();
 
-		const Graphics& graphics() const;
-		const CommandPool& aux_command_pool() const;
-		const DescriptorPool& descriptor_pool() const;
-		const PipelineCache& pipeline_cache() const;
-		const RenderPass& forward_render_pass() const;
-		const Swapchain& swap_chain() const;
-
 	private:
 		struct mvp_uniform {
 			math::Mat44f model;
@@ -60,20 +51,24 @@ namespace redox::graphics {
 			math::Mat44f projection;
 		};
 		
-		void _swapchain_event_create();
+		void _swapchain_event_resize();
+		void _pipeline_event_create(const PipelineHandle& pipeline);
 
-		Graphics _graphics;
 		UniformBuffer _mvpBuffer;
-		CommandPool _auxCommandPool;
-		RenderPass _forwardRenderPass;
 		DescriptorPool _descriptorPool;
-		PipelineCache _pipelineCache;
 
 		//@DEMO
 		ResourceHandle<Model> _demoModel;
 		void _demo_draw();
+		void _demo_load_assets();
 		//@@@
 
-		Swapchain _swapchain;
+		UniquePtr<Swapchain> _swapchain;
+		UniquePtr<RenderPass> _forwardPass;
+		UniquePtr<PipelineCache> _pipelineCache;
+
+		UniquePtr<ModelFactory> _modelFactory;
+		UniquePtr<TextureFactory> _textureFactory;
+		UniquePtr<ShaderFactory> _shaderFactory;
 	};
 }

@@ -72,10 +72,6 @@ namespace redox::graphics {
 		std::optional<VkPhysicalDevice> _pick_device();
 		std::optional<uint32_t> _pick_queue_family();
 
-		ModelFactory _modelFactory;
-		TextureFactory _textureFactory;
-		ShaderFactory  _shaderFactory;
-
 		uint32_t _queueFamily;
 		VkQueue _graphicsQueue;
 

@@ -50,15 +50,17 @@ namespace redox {
 		const platform::Timer* timer() const;
 		const ResourceManager* resource_manager() const;
 		const graphics::RenderSystem* render_system() const;
+		const graphics::Graphics* graphics() const;
 
 	private:
 		static_instance_wrapper _iw{ this };
 		Configuration _config;
+		platform::Timer _timer;
 
 		UniquePtr<ResourceManager> _resourceManager;
 		UniquePtr<platform::Window> _window;
-		UniquePtr<platform::Timer> _timer;
 		UniquePtr<input::InputSystem> _inputSystem;
+		UniquePtr<graphics::Graphics> _graphics;
 		UniquePtr<graphics::RenderSystem> _renderSystem;
 
 		Application::State _state;

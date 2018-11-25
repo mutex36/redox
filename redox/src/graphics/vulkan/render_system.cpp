@@ -34,39 +34,64 @@ const redox::graphics::RenderSystem* redox::graphics::RenderSystem::instance() {
 }
 
 redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
-	_graphics(window),
 	_mvpBuffer(sizeof(mvp_uniform)),
-	_auxCommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
-	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS),
-	_demoModel(ResourceManager::instance()->load<Model>("meshes\\centurion.gltf")),
-	_swapchain(std::bind(&RenderSystem::_swapchain_event_create, this)) {
+	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS) {
 
+	_swapchain = make_unique<Swapchain>([this]() { _swapchain_event_resize(); });
+	_forwardPass = make_unique<RenderPass>(_swapchain->extent());
+	_swapchain->create_fbs(*_forwardPass);
+
+	_pipelineCache = make_unique<PipelineCache>(
+		[this](const auto& pipeline) { _pipeline_event_create(pipeline); }, _forwardPass.get());
+
+	_textureFactory = make_unique<TextureFactory>();
+	_modelFactory = make_unique<ModelFactory>(&_descriptorPool, _pipelineCache.get());
+	_shaderFactory = make_unique<ShaderFactory>();
+
+	ResourceManager::instance()->register_factory(_textureFactory.get());
+	ResourceManager::instance()->register_factory(_modelFactory.get());
+	ResourceManager::instance()->register_factory(_shaderFactory.get());
+
+	_demo_load_assets();
+	_demo_draw();
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
-	_graphics.wait_pending();
+	Graphics::instance().wait_pending();
 }
 
 void redox::graphics::RenderSystem::_demo_draw() {
-	_swapchain.visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
+	_swapchain->visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
 		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
-			_forwardRenderPass.begin(frameBuffer, commandBuffer);
-			auto mesh = _demoModel->meshes()[0];
-			for (const auto& sm : mesh->submeshes()) {
-				auto material = _demoModel->materials()[sm.materialIndex];
-				commandBuffer.submit(IndexedDraw { 
-					mesh, material, {sm.vertexOffset, sm.vertexCount}
-				}); 
+			_forwardPass->begin(frameBuffer, commandBuffer);
+
+			for (const auto& mesh : _demoModel->meshes()) {
+				for (const auto& sm : mesh->submeshes()) {
+					auto material = _demoModel->materials()[sm.materialIndex];
+					commandBuffer.submit(IndexedDraw{
+						mesh, material, {sm.vertexOffset, sm.vertexCount}
+					});
+				}
 			}
-			_forwardRenderPass.end(commandBuffer);
+
+			_forwardPass->end(commandBuffer);
 		});
 	});
+}
+
+void redox::graphics::RenderSystem::_demo_load_assets() {
+	_demoModel = ResourceManager::instance()->load<Model>("meshes\\centurion.gltf");
+
+	for (auto& mat : _demoModel->materials())
+		mat->set_buffer(BufferKeys::MVP, _mvpBuffer);
+
+	_demoModel->upload();
 }
 
 void redox::graphics::RenderSystem::render() {
 
 	_mvpBuffer.map([this](void* data) {
-		auto extent = _swapchain.extent();
+		auto extent = _swapchain->extent();
 		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
 
 		static float k = 0.0;
@@ -79,38 +104,18 @@ void redox::graphics::RenderSystem::render() {
 	});
 	
 	_mvpBuffer.upload();
-	_swapchain.present();
+	_swapchain->present();
 }
 
-const redox::graphics::Graphics& redox::graphics::RenderSystem::graphics() const {
-	return _graphics;
-}
+void redox::graphics::RenderSystem::_swapchain_event_resize() {
+	for (const auto& p : *_pipelineCache)
+		p.second->set_viewport(_swapchain->extent());
 
-const redox::graphics::CommandPool& redox::graphics::RenderSystem::aux_command_pool() const {
-	return _auxCommandPool;
-}
-
-const redox::graphics::DescriptorPool& redox::graphics::RenderSystem::descriptor_pool() const {
-	return _descriptorPool;
-}
-
-const redox::graphics::PipelineCache& redox::graphics::RenderSystem::pipeline_cache() const {
-	return _pipelineCache;
-}
-
-const redox::graphics::RenderPass& redox::graphics::RenderSystem::forward_render_pass() const {
-	return _forwardRenderPass;
-}
-
-const redox::graphics::Swapchain& redox::graphics::RenderSystem::swap_chain() const {
-	return _swapchain;
-}
-
-void redox::graphics::RenderSystem::_swapchain_event_create() {
-	for (const auto& p : _pipelineCache)
-		p.second->set_viewport(_swapchain.extent());
-
-	_forwardRenderPass.resize_attachments(_swapchain.extent());
-	_swapchain.create_fbs(_forwardRenderPass);
+	_forwardPass->resize_attachments(_swapchain->extent());
+	_swapchain->create_fbs(*_forwardPass);
 	_demo_draw();
+}
+
+void redox::graphics::RenderSystem::_pipeline_event_create(const PipelineHandle& pipeline) {
+	pipeline->set_viewport(_swapchain->extent());
 }

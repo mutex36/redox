@@ -34,7 +34,7 @@ namespace redox::graphics {
 
 	class RenderPass : public NonCopyable {
 	public:
-		RenderPass();
+		RenderPass(const VkExtent2D& extent);
 		~RenderPass();
 
 		void resize_attachments(const VkExtent2D& extent);

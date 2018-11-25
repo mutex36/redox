@@ -39,9 +39,9 @@ namespace redox::graphics {
 
 	class Swapchain : public NonCopyable {
 	public:
-		using CreateCallback = Function<void()>;
+		using ResizeCallback = Function<void()>;
 
-		Swapchain(CreateCallback&& recreateCallback);
+		Swapchain(ResizeCallback&& resizeCallback);
 		~Swapchain();
 
 		void create_fbs(const RenderPass& renderPass);
@@ -58,7 +58,7 @@ namespace redox::graphics {
 		void _destroy();
 		void _reload();
 
-		CreateCallback _createCallback;
+		ResizeCallback _resizeCallback;
 
 		redox::Buffer<VkImageView> _imageViews;
 		redox::Buffer<Framebuffer> _frameBuffers;

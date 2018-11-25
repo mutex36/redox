@@ -40,7 +40,9 @@ namespace redox::graphics {
 
 	class PipelineCache : public NonCopyable {
 	public:
-		PipelineCache();
+		using PipelineCreatedCallback = Function<void(const PipelineHandle&)>;
+
+		PipelineCache(PipelineCreatedCallback&& pcc, const RenderPass* rp);
 
 		PipelineHandle load(PipelineType type) const;
 
@@ -51,6 +53,9 @@ namespace redox::graphics {
 		PipelineHandle _create_pipeline(PipelineType type) const;
 		PipelineHandle _create_default_mesh_pipeline() const;
 
+		PipelineCreatedCallback _createCallback;
+		const UniformBuffer* _mvpBuffer;
+		const RenderPass* _renderPass;
 		mutable Hashmap<PipelineType, PipelineHandle> _pipelines;
 	};
 }

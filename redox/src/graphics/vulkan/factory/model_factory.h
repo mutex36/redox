@@ -28,10 +28,20 @@ SOFTWARE.
 #include "graphics\vulkan\resources\model.h"
 
 namespace redox::graphics {
+	class DescriptorPool;
+	class PipelineCache;
 
 	class ModelFactory : public IResourceFactory {
 	public:
+		ModelFactory(const DescriptorPool* dp, const PipelineCache* pc);
+		~ModelFactory() = default;
+
 		ResourceHandle<IResource> load(const String & path) override;
 		bool supports_ext(const String& ext) override;
+
+	private:
+		const DescriptorPool* _descriptorPool;
+		const PipelineCache* _pipelineCache;
+
 	};
 }

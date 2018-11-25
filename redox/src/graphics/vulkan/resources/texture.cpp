@@ -167,8 +167,7 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 	}
 	else throw Exception("unsupported layout transition");
 
-	RenderSystem::instance()->aux_command_pool().quick_submit(
-	[sourceStage, destinationStage, &barrier](CommandBufferView cbo) {
+	CommandPool::aux_submit([&](CommandBufferView cbo) {
 		vkCmdPipelineBarrier(cbo.handle(), sourceStage, destinationStage,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
 	});
@@ -195,6 +194,9 @@ redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels,
 }
 
 void redox::graphics::ResizableTexture::resize(const VkExtent2D& extent) {
+	if (extent == _dimensions)
+		return;
+
 	_dimensions = extent;
 	_destroy();
 	_init();

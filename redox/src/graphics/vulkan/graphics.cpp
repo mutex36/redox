@@ -29,7 +29,7 @@ SOFTWARE.
 #include "core\application.h"
 
 const redox::graphics::Graphics& redox::graphics::Graphics::instance() {
-	return Application::instance->render_system()->graphics();
+	return *Application::instance->graphics();
 }
 
 redox::graphics::Graphics::Graphics(const platform::Window& window) {
@@ -37,10 +37,6 @@ redox::graphics::Graphics::Graphics(const platform::Window& window) {
 	_init_physical_device();
 	_init_surface(window);
 	_init_device();
-
-	ResourceManager::instance()->register_factory(&_textureFactory);
-	ResourceManager::instance()->register_factory(&_modelFactory);
-	ResourceManager::instance()->register_factory(&_shaderFactory);
 }
 
 redox::graphics::Graphics::~Graphics() {

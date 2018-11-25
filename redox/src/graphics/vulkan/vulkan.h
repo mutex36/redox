@@ -108,3 +108,11 @@ _RDX_INLINE redox::String lexical_cast(const VkResult& result) {
 	default: return "UNKNOWN_ERROR";
 	}
 }
+
+inline bool operator==(const VkExtent2D& a, const VkExtent2D& b) {
+	return a.width == b.width && a.height == b.height;
+}
+
+inline bool operator!=(const VkExtent2D& a, const VkExtent2D& b) {
+	return !(a == b);
+}

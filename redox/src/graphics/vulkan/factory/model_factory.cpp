@@ -29,6 +29,10 @@ SOFTWARE.
 #include "graphics/vulkan/graphics.h"
 #include "core/application.h"
 
+redox::graphics::ModelFactory::ModelFactory(const DescriptorPool* dp, const PipelineCache* pc) 
+: _descriptorPool(dp), _pipelineCache(pc) {
+}
+
 redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(const String& path) {
 	GLTFImporter importer(path);
 
@@ -70,19 +74,16 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 	redox::Buffer<ResourceHandle<Material>> materials;
 	materials.reserve(importer.material_count());
 
-	const auto& descPool = RenderSystem::instance()->descriptor_pool();
-	const auto& pipelineCache = RenderSystem::instance()->pipeline_cache();
-
 	for (std::size_t i = 0; i < importer.material_count(); i++) {
 		auto impMat = importer.import_material(i);
 
-		auto pipeline = pipelineCache.load(PipelineType::DEFAULT_MESH_PIPELINE);
-		auto dset = descPool.allocate(pipeline->descriptorLayout());
+		auto pipeline = _pipelineCache->load(PipelineType::DEFAULT_MESH_PIPELINE);
+		auto dset = _descriptorPool->allocate(pipeline->descriptorLayout());
 
 		auto& material = materials.emplace_back(std::make_shared<Material>(pipeline, dset));
 
 		material->set_texture(TextureKeys::ALBEDO,
-			ResourceManager::instance()->load<SampleTexture>(redox::String("textures\\") + impMat.albedoMap));
+			ResourceManager::instance()->load<SampleTexture>("textures\\" + impMat.albedoMap));
 	}
 
 	return std::make_shared<Model>(std::move(meshes), std::move(materials));

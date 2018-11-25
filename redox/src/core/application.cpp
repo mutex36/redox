@@ -43,11 +43,11 @@ redox::Application::Application() :
 	if (_config.get("Surface", "resizable"))
 		wdSettings.flags |= platform::WindowFlags::RESIZABLE;
 
-	_resourceManager = std::make_unique<ResourceManager>();
-	_timer = std::make_unique<platform::Timer>();
-	_window = std::make_unique<platform::Window>(wdSettings);
-	_renderSystem = std::make_unique<graphics::RenderSystem>(*_window);
-	_inputSystem = std::make_unique<input::InputSystem>(*_window);
+	_resourceManager = make_unique<ResourceManager>();
+	_window = make_unique<platform::Window>(wdSettings);
+	_graphics = make_unique<graphics::Graphics>(*_window);
+	_renderSystem = make_unique<graphics::RenderSystem>(*_window);
+	_inputSystem = make_unique<input::InputSystem>(*_window);
 
 	_window->set_callback([this](platform::Window::Event event) {
 		switch (event) {
@@ -76,18 +76,18 @@ void redox::Application::run() {
 	const u32 max_fps = _config.get("Engine", "max_fps");
 	const auto timestep = 1000. / max_fps;
 
-	_timer->start();
+	_timer.start();
 
 	while (_state != State::TERMINATED) {
-		auto dt_ms = _timer->elapsed();
+		auto dt_ms = _timer.elapsed();
 
 		_window->process_events();
 		_inputSystem->poll();
 
-		//if (_state == State::PAUSED) {
-		//	RDX_SLEEP_MS(1);
-		//	continue;
-		//}
+		if (_state == State::PAUSED) {
+			RDX_SLEEP_MS(1);
+			continue;
+		}
 
 		if (dt_ms >= timestep) {
 			_timer.reset();
@@ -109,7 +109,7 @@ const redox::Configuration* redox::Application::config() const {
 }
 
 const redox::platform::Timer* redox::Application::timer() const {
-	return _timer.get();
+	return &_timer;
 }
 
 const redox::ResourceManager* redox::Application::resource_manager() const {
@@ -118,4 +118,8 @@ const redox::ResourceManager* redox::Application::resource_manager() const {
 
 const redox::graphics::RenderSystem* redox::Application::render_system() const {
 	return _renderSystem.get();
+}
+
+const redox::graphics::Graphics* redox::Application::graphics() const {
+	return _graphics.get();
 }

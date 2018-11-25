@@ -30,6 +30,7 @@ SOFTWARE.
 namespace redox::graphics {
 	class ShaderFactory : public IResourceFactory {
 	public:
+		~ShaderFactory() = default;
 		ResourceHandle<IResource> load(const String& path) override;
 		bool supports_ext(const String& ext) override;
 	};

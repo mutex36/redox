@@ -58,14 +58,15 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 		throw Exception("failed to create commandbuffers");
 }
 
-void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const CommandBufferView&)> fn) const {
+void redox::graphics::CommandPool::aux_submit(tl::function_ref<void(const CommandBufferView&)> fn) {
 
 	//TODO: Optimize
+	static CommandPool cp(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = _handle;
+	allocInfo.commandPool = cp._handle;
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -91,7 +92,7 @@ void redox::graphics::CommandPool::quick_submit(tl::function_ref<void(const Comm
 
 	vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, fence);
 	vkWaitForFences(Graphics::instance().device(), 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkFreeCommandBuffers(Graphics::instance().device(), _handle, 1, &commandBuffer);
+	vkFreeCommandBuffers(Graphics::instance().device(), cp._handle, 1, &commandBuffer);
 	vkDestroyFence(Graphics::instance().device(), fence, VK_NULL_HANDLE);
 }
 

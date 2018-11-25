@@ -28,8 +28,8 @@ SOFTWARE.
 #include "graphics.h"
 #include "command_pool.h"
 
-redox::graphics::RenderPass::RenderPass() : 
-	_depthTexture({ 1, 1 }) {
+redox::graphics::RenderPass::RenderPass(const VkExtent2D& extent) :
+	_depthTexture(extent) {
 
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = VK_FORMAT_B8G8R8A8_UNORM;

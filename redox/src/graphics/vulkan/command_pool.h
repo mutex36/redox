@@ -65,7 +65,9 @@ namespace redox::graphics {
 
 		void free_all();
 		void allocate(uint32_t numBuffers);
-		void quick_submit(tl::function_ref<void(const CommandBufferView&)> fn) const;
+
+		//TODO: export
+		static void aux_submit(tl::function_ref<void(const CommandBufferView&)> fn);
 
 		CommandBufferView operator[](std::size_t index) const;
 
