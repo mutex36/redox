@@ -24,15 +24,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "shader_factory.h"
+#include <resources/resource_manager.h>
+#include <graphics/vulkan/resources/shader_compiler.h>
+
+#include <algorithm> //std::find
 
 redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(const String& path) {
 
-	io::File fstream(path, io::File::Mode::READ);
+	ShaderCompiler shc(io::fullpath("tools\\spirv\\glslangValidator.exe"),
+		io::fullpath("assets\\shader\\compiled\\"));
+	auto output = shc.compile(path);
+
+	io::File fstream(output, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
 	auto buffer = fstream.read();
 
 	return std::make_shared<Shader>(std::move(buffer));
 }
 
 bool redox::graphics::ShaderFactory::supports_ext(const String& ext) {
-	return ext == ".spv";
+	Array<StringView, 4> supported = { ".frag", ".vert", ".geom" };
+	return std::find(supported.begin(), supported.end(), ext) != supported.end();
 }

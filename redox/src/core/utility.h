@@ -73,14 +73,6 @@ namespace redox {
 		return scope_guard<Fn>(std::forward<Fn>(fn));
 	}
 
-	template<class M>
-	struct member_type_wrapper {
-		using type = M;
-	};
-
-	template <class T, class M>
-	member_type_wrapper<M> member_type(M T:: *);
-
 	struct static_instance_wrapper {
 		template<class T>
 		static_instance_wrapper(T* this_ptr) {
@@ -93,8 +85,6 @@ namespace redox {
 		return cnt.size() * sizeof(Container::value_type);
 	}
 }
-
-//####UTIL####
 
 namespace redox::util {
 	template<class C, class T, std::size_t Size >
@@ -111,5 +101,10 @@ namespace redox::util {
 	template<std::size_t Index, class T>
 	constexpr auto check_bit(T expr) noexcept {
 		return static_cast<bool>((expr >> Index) & 0x1);
+	}
+
+	template<class T>
+	constexpr bool check_flag(T bits, T mask) noexcept {
+		return (bits & mask) == mask;
 	}
 }

@@ -25,7 +25,8 @@ SOFTWARE.
 */
 #include <core/application.h>
 #include <core/string_format.h>
-#include <platform/misc.h>
+
+#include <thread> //std::this_thread::sleep_for
 
 redox::Application* redox::Application::instance = nullptr;
 
@@ -85,7 +86,7 @@ void redox::Application::run() {
 		_inputSystem->poll();
 
 		if (_state == State::PAUSED) {
-			RDX_SLEEP_MS(1);
+			std::this_thread::sleep_for(std::chrono::milliseconds{1});
 			continue;
 		}
 
@@ -112,7 +113,7 @@ const redox::platform::Timer* redox::Application::timer() const {
 	return &_timer;
 }
 
-const redox::ResourceManager* redox::Application::resource_manager() const {
+redox::ResourceManager* redox::Application::resource_manager() {
 	return _resourceManager.get();
 }
 

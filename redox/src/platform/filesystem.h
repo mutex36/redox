@@ -28,17 +28,19 @@ SOFTWARE.
 #include "core\utility.h"
 
 namespace redox::io {
-
 	class File {
 	public:
 		enum class Mode {
-			READ = 1 << 0,
-			WRITE = 1 << 1
+			READ = 0x1 << 0,
+			WRITE = 0x1 << 1,
+			ALWAYS_CREATE = 0x1 << 2,
+			THROW_IF_INVALID = 0x1 << 3
 		};
 
-		File(const String& file, const Mode mode);
+		File(const String& file, const Mode mode = Mode::READ);
 		~File();
 
+		bool is_valid() const;
 		std::size_t size() const;
 		Buffer<i8> read();
 
@@ -49,6 +51,9 @@ namespace redox::io {
 
 	String extension(const String& str);
 	String directory(const String& str);
+	String filename(const String& str);
+	String fullpath(const String& str);
+	String tempfile(const String& dir, const String& prefix);
 }
 
 RDX_ENABLE_ENUM_FLAGS(::redox::io::File::Mode);

@@ -48,7 +48,7 @@ namespace redox {
 
 		const Configuration* config() const;
 		const platform::Timer* timer() const;
-		const ResourceManager* resource_manager() const;
+		ResourceManager* resource_manager();
 		const graphics::RenderSystem* render_system() const;
 		const graphics::Graphics* graphics() const;
 

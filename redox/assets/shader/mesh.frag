@@ -11,12 +11,11 @@ layout(location = 1) in vec3 fragNormal;
 //OUT
 layout(location = 0) out vec4 outColor;
 
-
 void main() {
 	vec3 lightDir = normalize(vec3(0,1,1));
     vec3 baseColor = texture(albedoTexture, fragUV).rgb;
 	vec3 normal = normalize(fragNormal);
 	float diffuse = max(0.0, dot(normal, lightDir));
 
-	outColor = vec4(baseColor * diffuse, 1);
+	outColor = vec4(diffuse * baseColor, 1);
 }

@@ -172,6 +172,7 @@
     <ClCompile Include="src\graphics\vulkan\resources\mesh.cpp" />
     <ClCompile Include="src\graphics\vulkan\render_pass.cpp" />
     <ClCompile Include="src\graphics\vulkan\resources\model.cpp" />
+    <ClCompile Include="src\graphics\vulkan\resources\shader_compiler.cpp" />
     <ClCompile Include="src\graphics\vulkan\sampler.cpp" />
     <ClCompile Include="src\graphics\vulkan\resources\texture.cpp" />
     <ClCompile Include="src\input\input_system_win.cpp" />
@@ -208,6 +209,7 @@
     <ClInclude Include="src\graphics\vulkan\resources\material.h" />
     <ClInclude Include="src\graphics\vulkan\resources\mesh.h" />
     <ClInclude Include="src\graphics\vulkan\render_pass.h" />
+    <ClInclude Include="src\graphics\vulkan\resources\shader_compiler.h" />
     <ClInclude Include="src\graphics\vulkan\sampler.h" />
     <ClInclude Include="src\graphics\vulkan\resources\texture.h" />
     <ClInclude Include="src\graphics\vulkan\vertex_layout.h" />
@@ -215,7 +217,6 @@
     <ClInclude Include="src\input\keys.h" />
     <ClInclude Include="src\input\mappings\mappings_win.h" />
     <ClInclude Include="src\math\mat.h" />
-    <ClInclude Include="src\platform\misc.h" />
     <ClInclude Include="src\platform\timer.h" />
     <ClInclude Include="src\platform\filesystem.h" />
     <ClInclude Include="src\graphics\vulkan\command_pool.h" />

@@ -29,7 +29,7 @@ SOFTWARE.
 redox::GLTFImporter::GLTFImporter(const String& path) :
 	_searchPath(io::directory(path)) {
 
-	io::File file(path, io::File::Mode::READ);
+	io::File file(path, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
 	auto buffer = file.read();
 
 	cgltf_options options{};

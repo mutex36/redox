@@ -99,7 +99,7 @@ redox::platform::Window::Window(const WindowSettings& settings) :
 	RegisterClass(&wndClass);
 
 	RECT windowRect{ 0,0 };
-	if ((settings.flags & WindowFlags::FULLSCREEN) == WindowFlags::FULLSCREEN) {
+	if (util::check_flag(settings.flags, WindowFlags::FULLSCREEN)) {
 		windowRect.right = GetSystemMetrics(SM_CXSCREEN);
 		windowRect.bottom = GetSystemMetrics(SM_CYSCREEN);
 		dwStyle |= WS_POPUP;
@@ -108,7 +108,7 @@ redox::platform::Window::Window(const WindowSettings& settings) :
 		windowRect.bottom = settings.height;
 		AdjustWindowRect(&windowRect, dwStyle, FALSE);
 
-		if ((settings.flags & WindowFlags::RESIZABLE) == WindowFlags::RESIZABLE) {
+		if (util::check_flag(settings.flags, WindowFlags::RESIZABLE)) {
 			dwStyle |= WS_OVERLAPPEDWINDOW;
 		} else {
 			dwStyle |= WS_OVERLAPPED;

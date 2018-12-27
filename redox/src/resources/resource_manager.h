@@ -30,19 +30,20 @@ SOFTWARE.
 #include <platform/filesystem.h>
 #include <core/logging/log.h>
 
-namespace redox
-{
+namespace redox {
 	class ResourceManager : public NonCopyable {
 	public:
-		static const ResourceManager* instance();
-
+		static ResourceManager* instance();
+			
 		ResourceManager();
+
+		StringView resource_path() const;
 		String resolve_path(const String& path) const;
-		void register_factory(IResourceFactory* factory) const;
+		void register_factory(IResourceFactory* factory);
 
 		template<class R>
-		ResourceHandle<R> load(const String& path) const {
-			static_assert(std::is_base_of_v<IResource, R>);
+		ResourceHandle<R> load(const String& path) {
+			static_assert(std::is_base_of_v<IResource, R>, "<R> should be of type IResource");
 
 			auto cit = _cache.find(path);
 			if (cit != _cache.end())
@@ -61,7 +62,7 @@ namespace redox
 	private:
 		String _resourcePath;
 
-		mutable Hashmap<String, ResourceHandle<IResource>> _cache;
-		mutable Buffer<IResourceFactory*> _factories;
+		Hashmap<String, ResourceHandle<IResource>> _cache;
+		Buffer<IResourceFactory*> _factories;
 	};
 }

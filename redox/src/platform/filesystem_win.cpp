@@ -38,21 +38,30 @@ redox::io::File::File(const redox::String& file, const Mode mode) :
 	_internal(std::make_unique<internal>()) {
 
 	DWORD access{ 0 };
-	if ((mode & Mode::READ) == Mode::READ)
+	if (util::check_flag(mode, Mode::READ))
 		access |= GENERIC_READ;
 
-	if ((mode & Mode::WRITE) == Mode::WRITE)
+	if (util::check_flag(mode, Mode::WRITE))
 		access |= GENERIC_WRITE;
 
-	_internal->handle = CreateFile(file.c_str(), access, 0, NULL,
-		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	DWORD creationFlags = OPEN_EXISTING;
+	if (util::check_flag(mode, Mode::ALWAYS_CREATE))
+		creationFlags = CREATE_ALWAYS;
 
-	if (_internal->handle == INVALID_HANDLE_VALUE)
+	_internal->handle = CreateFile(file.c_str(), access, 0, NULL,
+		creationFlags, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (util::check_flag(mode, Mode::THROW_IF_INVALID) && !is_valid())
 		throw Exception("failed to open file");
 }
 
 redox::io::File::~File() {
-	CloseHandle(_internal->handle);
+	if (is_valid())
+		CloseHandle(_internal->handle);
+}
+
+bool redox::io::File::is_valid() const {
+	return (_internal->handle != INVALID_HANDLE_VALUE);
 }
 
 std::size_t redox::io::File::size() const {
@@ -71,7 +80,7 @@ redox::Buffer<redox::i8> redox::io::File::read() {
 }
 
 redox::String redox::io::extension(const String& str) {
-	char ext[10];
+	char ext[MAX_PATH];
 	_splitpath(str.c_str(), NULL, NULL, NULL, ext);
 	return ext;
 }
@@ -80,6 +89,26 @@ redox::String redox::io::directory(const String& str) {
 	char dir[MAX_PATH];
 	_splitpath(str.c_str(), NULL, dir, NULL, NULL);
 	return dir;
+}
+
+redox::String redox::io::filename(const String& str) {
+	char fn[MAX_PATH];
+	_splitpath(str.c_str(), NULL, NULL, fn, NULL);
+	return fn;
+}
+
+redox::String redox::io::fullpath(const String& str) {
+	TCHAR fp[MAX_PATH];
+	GetFullPathName(str.c_str(), MAX_PATH, fp, NULL);
+	return fp;
+}
+
+redox::String redox::io::tempfile(const String& dir, const String& prefix) {
+	_putenv("TMP=");
+	auto buffer = _tempnam(dir.c_str(), prefix.c_str());
+	String output(buffer);
+	std::free(buffer);
+	return output;
 }
 
 #endif

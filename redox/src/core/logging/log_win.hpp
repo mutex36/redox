@@ -62,28 +62,28 @@ namespace redox::detail {
 	template<class T1>
 	_RDX_INLINE bool assert_true(const T1& a) {
 		if (a) return true;
-		log("Assertion failed: {0} == true\n", a);
+		log("Assertion failed: {0} == true\n", ConsoleColor::RED, a);
 		return false;
 	}
 
 	template<class T1>
 	_RDX_INLINE bool assert_false(const T1& a) {
 		if (!a) return true;
-		log("Assertion failed: {0} == false\n", a);
+		log("Assertion failed: {0} == false\n", ConsoleColor::RED, a);
 		return false;
 	}
 
 	template<class T1, class T2>
 	_RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
 		if (a == b) return true;
-		log("Assertion failed: {0} == {1}\n", a, b);
+		log("Assertion failed: {0} == {1}\n", ConsoleColor::RED, a, b);
 		return false;
 	}
 
 	template<class T1, class T2>
 	_RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
 		if (a != b) return true;
-		log("Assertion failed: {0} != {1}\n", a, b);
+		log("Assertion failed: {0} != {1}\n", ConsoleColor::RED, a, b);
 		return false;
 	}
 

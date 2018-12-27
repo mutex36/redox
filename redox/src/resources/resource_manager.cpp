@@ -28,17 +28,21 @@ SOFTWARE.
 #include "core/application.h"
 
 redox::ResourceManager::ResourceManager() :
-	_resourcePath("assets\\") {
+	_resourcePath(io::fullpath("assets\\")) {
 }
 
-const redox::ResourceManager* redox::ResourceManager::instance() {
+redox::ResourceManager* redox::ResourceManager::instance() {
 	return Application::instance->resource_manager();
+}
+
+redox::StringView redox::ResourceManager::resource_path() const {
+	return _resourcePath;
 }
 
 redox::String redox::ResourceManager::resolve_path(const String& path) const{
 	return _resourcePath + path;
 }
 
-void redox::ResourceManager::register_factory(IResourceFactory* factory) const {
+void redox::ResourceManager::register_factory(IResourceFactory* factory) {
 	_factories.push_back(factory);
 }

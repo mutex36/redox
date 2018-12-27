@@ -30,6 +30,7 @@ SOFTWARE.
 #include <string>
 #include <memory>
 #include <functional>
+#include <array>
 
 namespace redox
 {
@@ -54,4 +55,7 @@ namespace redox
 
 	template<class S>
 	using Function = std::function<S>;
+
+	template<class T, std::size_t N>
+	using Array = std::array<T, N>;
 }
