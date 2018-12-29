@@ -54,15 +54,6 @@ redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(co
 
 void redox::graphics::TextureFactory::reload(const ResourceHandle<IResource>& resource, const Path& path) {
 	auto texture = std::static_pointer_cast<SampleTexture>(resource);
-	auto size = texture->dimension().width * texture->dimension().height;
-
-	texture->map([&](void* data) {
-		auto bytes = reinterpret_cast<byte*>(data);
-		for (size_t i = 0; i < size; i++) {
-			bytes[i] = 2550.f - bytes[i];
-		}
-	});
-	texture->upload();
 }
 
 bool redox::graphics::TextureFactory::supports_ext(const Path& ext) {
