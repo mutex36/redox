@@ -176,11 +176,15 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 redox::graphics::StagedTexture::StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size,
 	VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags) :
 	Texture(format, size, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT, viewAspectFlags),
-	_stagingBuffer(byte_size(pixels), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
+	_stagingBuffer(pixels.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
 
 	_stagingBuffer.map([&pixels](void* data) {
-		std::memcpy(data, pixels.data(), byte_size(pixels));
+		std::memcpy(data, pixels.data(), pixels.size());
 	});
+}
+
+void redox::graphics::StagedTexture::map(FunctionRef<void(void*)> fn) const {
+	_stagingBuffer.map(fn);
 }
 
 void redox::graphics::StagedTexture::upload() {
@@ -189,7 +193,7 @@ void redox::graphics::StagedTexture::upload() {
 	_transfer_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D & size) :
+redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size) :
 	StagedTexture(pixels, format, size, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT) {
 }
 

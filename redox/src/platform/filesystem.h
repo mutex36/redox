@@ -24,11 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\utility.h"
+#include <core\core.h>
+#include <core\non_copyable.h>
+#include <core\utility.h>
 
 namespace redox::io {
-	class File {
+	class File : public NonCopyable {
 	public:
 		enum class Mode {
 			READ = 0x1 << 0,
@@ -37,7 +38,7 @@ namespace redox::io {
 			THROW_IF_INVALID = 0x1 << 3
 		};
 
-		File(const String& file, const Mode mode = Mode::READ);
+		File(const Path& file, const Mode mode = Mode::READ);
 		~File();
 
 		bool is_valid() const;
@@ -49,11 +50,32 @@ namespace redox::io {
 		UniquePtr<internal> _internal;
 	};
 
-	String extension(const String& str);
-	String directory(const String& str);
-	String filename(const String& str);
-	String fullpath(const String& str);
-	String tempfile(const String& dir, const String& prefix);
+	enum class ChangeEvents {
+		FILE_ADDED = 0x1 << 0,
+		FILE_REMOVED = 0x1 << 1,
+		FILE_MODIFIED = 0x1 << 2,
+		FILE_RENAME = 0x1 << 3,
+		UNKNOWN = 0x1 << 4
+	};
+
+	class DirectoryWatcher : public NonCopyable {
+	public:
+		using CallbackType = Function<void(const Path& file, ChangeEvents events)>;
+
+		DirectoryWatcher();
+		~DirectoryWatcher();
+
+		void subscribe(CallbackType callback);
+		void start(const Path& directory, ChangeEvents events);
+		void stop();
+
+	private:
+		struct internal;
+		UniquePtr<internal> _internal;
+	};
+
+	using namespace std::filesystem;
 }
 
 RDX_ENABLE_ENUM_FLAGS(::redox::io::File::Mode);
+RDX_ENABLE_ENUM_FLAGS(::redox::io::ChangeEvents);

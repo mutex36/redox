@@ -29,8 +29,6 @@ SOFTWARE.
 #include "resources/mesh.h"
 #include "resources/material.h"
 
-#include <thirdparty/function_ref/function_ref.hpp>
-
 namespace redox::graphics {
 	class Graphics;
 
@@ -50,7 +48,13 @@ namespace redox::graphics {
 		~CommandBufferView() = default;
 
 		void submit(const IndexedDraw& command) const;
-		void record(tl::function_ref<void()> fn) const;
+
+		[[nodiscard]] auto scoped_record() const {
+			begin_record();
+			return make_scope_guard([this]() { end_record(); });
+		}
+		void begin_record() const;
+		void end_record() const;
 
 		VkCommandBuffer handle() const;
 
@@ -67,7 +71,7 @@ namespace redox::graphics {
 		void allocate(uint32_t numBuffers);
 
 		//TODO: export
-		static void aux_submit(tl::function_ref<void(const CommandBufferView&)> fn);
+		static void aux_submit(FunctionRef<void(const CommandBufferView&)> fn);
 
 		CommandBufferView operator[](std::size_t index) const;
 

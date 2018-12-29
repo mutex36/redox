@@ -58,9 +58,9 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 		throw Exception("failed to create commandbuffers");
 }
 
-void redox::graphics::CommandPool::aux_submit(tl::function_ref<void(const CommandBufferView&)> fn) {
+void redox::graphics::CommandPool::aux_submit(FunctionRef<void(const CommandBufferView&)> fn) {
 
-	//TODO: Optimize
+	//TODO: will crash due to SIOF
 	static CommandPool cp(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
@@ -110,16 +110,16 @@ void redox::graphics::CommandBufferView::submit(const IndexedDraw& command) cons
 	vkCmdDrawIndexed(_handle, command.range.start, 1, command.range.end, 0, 0);
 }
 
-void redox::graphics::CommandBufferView::record(tl::function_ref<void()> fn) const {
+void redox::graphics::CommandBufferView::begin_record() const {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
 	if (vkBeginCommandBuffer(_handle, &beginInfo) != VK_SUCCESS)
 		throw Exception("failed to begin recording of commandBuffer");
+}
 
-	fn();
-
+void redox::graphics::CommandBufferView::end_record() const {
 	if (vkEndCommandBuffer(_handle) != VK_SUCCESS)
 		throw Exception("failed to end recording of commandBuffer");
 }

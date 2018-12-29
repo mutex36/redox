@@ -30,8 +30,6 @@ SOFTWARE.
 #include "core\utility.h"
 #include "core\error.h"
 
-#include <thirdparty/function_ref/function_ref.hpp>
-
 namespace redox::graphics {
 	class CommandBufferView;
 	class Texture;
@@ -44,7 +42,7 @@ namespace redox::graphics {
 		VkDeviceSize size() const;
 		VkBuffer handle() const;
 
-		void map(tl::function_ref<void(void*)> fn) const;
+		void map(FunctionRef<void(void*)> fn) const;
 		void copy_to(const Buffer& other);
 		void copy_to(const Texture& texture);
 

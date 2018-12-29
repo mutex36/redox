@@ -27,54 +27,53 @@ SOFTWARE.
 #include "core\core.h"
 
 #include <stdlib.h> //std::strtof, std::strtoll
-#include <cstdlib> //std::itoa
-
-#include <charconv>
+#include <chrono> //std::chrono::time_point
+#include <sstream> //std::stringstream
 
 namespace redox {
 
 	template<class T>
-	_RDX_INLINE T parse(StringView expr) {
+	RDX_INLINE T parse(StringView expr) {
 		return expr;
 	}
 
 	template<>
-	_RDX_INLINE String parse(StringView expr) {
+	RDX_INLINE String parse(StringView expr) {
 		return expr.data();
 	}
 
 	template<>
-	_RDX_INLINE f32 parse(StringView expr) {
+	RDX_INLINE f32 parse(StringView expr) {
 		return std::strtof(expr.data(), NULL);
 	}
 
 	template<>
-	_RDX_INLINE i64 parse(StringView expr) {
+	RDX_INLINE i64 parse(StringView expr) {
 		return std::strtoll(expr.data(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE i32 parse(StringView expr) {
+	RDX_INLINE i32 parse(StringView expr) {
 		return std::strtol(expr.data(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE long parse(StringView expr) {
+	RDX_INLINE long parse(StringView expr) {
 		return std::strtol(expr.data(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE u64 parse(StringView expr) {
+	RDX_INLINE u64 parse(StringView expr) {
 		return std::strtoull(expr.data(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE u32 parse(StringView expr) {
+	RDX_INLINE u32 parse(StringView expr) {
 		return std::strtoul(expr.data(), NULL, 10);
 	}
 
 	template<>
-	_RDX_INLINE bool parse(StringView expr) {
+	RDX_INLINE bool parse(StringView expr) {
 		if (!expr.empty()) {
 			if (expr[0] == '1' || expr == "true")
 				return true;
@@ -90,7 +89,7 @@ namespace redox {
 	struct binary { const T& value; };
 
 	template<class T>
-	_RDX_INLINE redox::String lexical_cast(const binary<T>& expr) {
+	RDX_INLINE redox::String lexical_cast(const binary<T>& expr) {
 		redox::String output;
 		output.reserve(sizeof(T) * 8);
 		for (std::size_t i = 0; i < output.capacity(); ++i)
@@ -98,41 +97,47 @@ namespace redox {
 		return output;
 	}
 
-	_RDX_INLINE redox::String lexical_cast(const f64& expr) {
-		i8 result[16]; //TODO: unsafe
-		sprintf_s(result, "%.3f", expr);
-		return result;
+	template<class Clock>
+	RDX_INLINE redox::String lexical_cast(const std::chrono::time_point<Clock>& tp) {
+		auto t = std::chrono::system_clock::to_time_t(tp);
+		std::stringstream ss;
+		ss << std::put_time(std::localtime(&t), "%Y-%m-%d %X");
+		return ss.str();
 	}
 
-	_RDX_INLINE redox::String lexical_cast(const i32& expr) {
-		i8 buffer[16]; //TODO: unsafe
-		_itoa_s(expr, buffer, 10);
-		return buffer;
+	RDX_INLINE redox::String lexical_cast(const f64& expr) {
+		return std::to_string(expr);
 	}
 
-	_RDX_INLINE redox::String lexical_cast(const i64& expr) {
-		 i8 buffer[16]; //TODO: unsafe
-		_i64toa_s(expr, buffer, sizeof(buffer), 10);
-		return buffer;
+	RDX_INLINE redox::String lexical_cast(const i32& expr) {
+		return std::to_string(expr);
 	}
 
-	_RDX_INLINE redox::String lexical_cast(const u64& expr) {
-		i8 buffer[16]; //TODO: unsafe
-		_ui64toa_s(expr, buffer, sizeof(buffer), 10);
-		return buffer;
+	RDX_INLINE redox::String lexical_cast(const i64& expr) {
+		return std::to_string(expr);
 	}
 
-	_RDX_INLINE redox::String lexical_cast(const u32& expr) {
-		i8 buffer[16]; //TODO: unsafe
-		_itoa_s(expr, buffer, sizeof(buffer), 10);
-		return buffer;
+	RDX_INLINE redox::String lexical_cast(const u64& expr) {
+		return std::to_string(expr);
 	}
 
-	_RDX_INLINE redox::String lexical_cast(const char* expr) {
+	RDX_INLINE redox::String lexical_cast(const u32& expr) {
+		return std::to_string(expr);
+	}
+
+	RDX_INLINE redox::String lexical_cast(const char* expr) {
 		return expr;
 	}
 
-	_RDX_INLINE redox::String lexical_cast(StringView expr) {
+	RDX_INLINE redox::String lexical_cast(const Path& path) {
+		return path.string();
+	}
+
+	RDX_INLINE redox::String lexical_cast(const String& str) {
+		return str;
+	}
+
+	RDX_INLINE redox::String lexical_cast(StringView expr) {
 		return expr.data();
 	}
 

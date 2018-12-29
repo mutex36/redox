@@ -31,6 +31,9 @@ SOFTWARE.
 #include <memory>
 #include <functional>
 #include <array>
+#include <filesystem>
+
+#include <thirdparty/function_ref/function_ref.hpp>
 
 namespace redox
 {
@@ -41,6 +44,7 @@ namespace redox
 	using Hashmap = std::unordered_map<Key, Value>;
 
 	using String = std::string;
+	using WString = std::wstring;
 	using StringView = std::string_view;
 
 	template<class T>
@@ -56,6 +60,20 @@ namespace redox
 	template<class S>
 	using Function = std::function<S>;
 
+	template<class S>
+	using FunctionRef = tl::function_ref<S>;
+
 	template<class T, std::size_t N>
 	using Array = std::array<T, N>;
+
+	using Path = std::filesystem::path;
+}
+
+namespace std {
+	template<>
+	struct hash<std::filesystem::path> {
+		std::size_t operator()(const std::filesystem::path& path) const {
+			return std::filesystem::hash_value(path);
+		}
+	};
 }

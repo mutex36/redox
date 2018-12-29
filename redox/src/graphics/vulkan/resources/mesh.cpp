@@ -32,15 +32,15 @@ redox::graphics::Mesh::Mesh(const redox::Buffer<MeshVertex>& vertices,
 	_vertexCount(vertices.size()),
 	_indexCount(indices.size()),
 	_submeshes(std::move(submeshes)),
-	_vertexBuffer(byte_size(vertices)),
-	_indexBuffer(byte_size(indices)) {
+	_vertexBuffer(util::byte_size(vertices)),
+	_indexBuffer(util::byte_size(indices)) {
 
 	_vertexBuffer.map([&vertices](void* dest) {
-		std::memcpy(dest, vertices.data(), byte_size(vertices));
+		std::memcpy(dest, vertices.data(), util::byte_size(vertices));
 	});
 
 	_indexBuffer.map([&indices](void* dest) {
-		std::memcpy(dest, indices.data(), byte_size(indices));
+		std::memcpy(dest, indices.data(), util::byte_size(indices));
 	});
 }
 

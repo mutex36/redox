@@ -29,11 +29,11 @@ SOFTWARE.
 #include "graphics/vulkan/graphics.h"
 #include "core/application.h"
 
-redox::graphics::ModelFactory::ModelFactory(const DescriptorPool* dp, const PipelineCache* pc) 
+redox::graphics::ModelFactory::ModelFactory(const DescriptorPool* dp, PipelineCache* pc) 
 : _descriptorPool(dp), _pipelineCache(pc) {
 }
 
-redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(const String& path) {
+redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(const Path& path) {
 	GLTFImporter importer(path);
 
 	//import meshes
@@ -83,12 +83,17 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 		auto& material = materials.emplace_back(std::make_shared<Material>(pipeline, dset));
 
 		material->set_texture(TextureKeys::ALBEDO,
-			ResourceManager::instance()->load<SampleTexture>("textures\\" + impMat.albedoMap));
+			ResourceManager::instance()->load<SampleTexture>(Path("textures\\") / impMat.albedoMap));
 	}
 
 	return std::make_shared<Model>(std::move(meshes), std::move(materials));
 }
 
-bool redox::graphics::ModelFactory::supports_ext(const String& ext) {
+void redox::graphics::ModelFactory::reload(const ResourceHandle<IResource>& resource, const Path & path) {
+	//TODO: implement
+}
+
+bool redox::graphics::ModelFactory::supports_ext(const Path& ext) {
 	return (ext == ".gltf");
 }
+

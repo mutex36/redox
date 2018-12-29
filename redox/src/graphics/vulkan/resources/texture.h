@@ -33,8 +33,6 @@ SOFTWARE.
 #include "resources/resource.h"
 
 namespace redox::graphics {
-	class CommandBufferView;
-
 	class Texture : public NonCopyable {
 	public:
 		Texture(VkFormat format, const VkExtent2D& size, 
@@ -55,7 +53,6 @@ namespace redox::graphics {
 		void _transfer_layout(VkImageLayout oldLayout, VkImageLayout newLayout) const;
 
 		Sampler _sampler;
-
 		VkImage _handle;
 		VkImageView _view;
 
@@ -83,8 +80,9 @@ namespace redox::graphics {
 		StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format,
 			const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
 
-		~StagedTexture() = default;
+		~StagedTexture() override = default;
 
+		void map(FunctionRef<void(void*)> fn) const;
 		void upload() override;
 
 	protected:

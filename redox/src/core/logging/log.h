@@ -42,18 +42,18 @@ SOFTWARE.
 
 #define RDX_ASSERT_EQ(a,b)				\
 if (!redox::detail::assert_eq(a,b))		\
-	_RDX_DEBUG_BREAK();					\
+	RDX_DEBUG_BREAK();					\
 
 #define RDX_ASSERT_NEQ(a,b)				\
 if (!redox::detail::assert_neq(a,b))	\
-	_RDX_DEBUG_BREAK();					\
+	RDX_DEBUG_BREAK();					\
 
 #define RDX_ASSERT_TRUE(a)				\
 if (!redox::detail::assert_true(a))		\
-	_RDX_DEBUG_BREAK();					\
+	RDX_DEBUG_BREAK();					\
 
 #define RDX_ASSERT_FALSE(a)				\
 if (!redox::detail::assert_false(a))	\
-	_RDX_DEBUG_BREAK();					\
+	RDX_DEBUG_BREAK();					\
 
 //###

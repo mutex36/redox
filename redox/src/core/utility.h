@@ -27,16 +27,15 @@ SOFTWARE.
 #include "core\core.h"
 #include <type_traits>
 
-#define _RDX_HELPER_CONCAT_IMPL(x,y) x##y
-#define _RDX_HELPER_CONCAT(x,y) _RDX_HELPER_CONCAT_IMPL(x,y)
+#define RDX_HELPER_CONCAT_IMPL(x,y) x##y
+#define RDX_HELPER_CONCAT(x,y) RDX_HELPER_CONCAT_IMPL(x,y)
+
+#define RDX_SCOPE_GUARD(fn)															\
+auto RDX_HELPER_CONCAT(_scope_guard_, __COUNTER__) = redox::make_scope_guard(fn)	\
 
 #define RDX_ENABLE_ENUM_FLAGS(en) 								\
 	template<>													\
 	struct ::redox::enable_bit_flags<en> : std::true_type {};	\
-
-
-#define RDX_SCOPE_GUARD(fn)															\
-auto _RDX_HELPER_CONCAT(_scope_guard_, __COUNTER__) = redox::make_scope_guard(fn)	\
 
 namespace redox {
 	template<class Enum>
@@ -79,17 +78,17 @@ namespace redox {
 			T::instance = this_ptr;
 		}
 	};
-
-	template<class Container>
-	auto byte_size(const Container& cnt) {
-		return cnt.size() * sizeof(Container::value_type);
-	}
 }
 
 namespace redox::util {
 	template<class C, class T, std::size_t Size >
 	constexpr auto array_size(const T(&array)[Size]) noexcept {
 		return static_cast<C>(Size);
+	}
+
+	template<class Container>
+	auto byte_size(const Container& cnt) {
+		return cnt.size() * sizeof(Container::value_type);
 	}
 
 	template<class C, class M, class T>
@@ -103,8 +102,8 @@ namespace redox::util {
 		return static_cast<bool>((expr >> Index) & 0x1);
 	}
 
-	template<class T>
-	constexpr bool check_flag(T bits, T mask) noexcept {
+	template<class T, class O>
+	constexpr bool check_flag(T bits, O mask) noexcept {
 		return (bits & mask) == mask;
 	}
 }

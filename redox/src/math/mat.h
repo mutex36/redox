@@ -53,7 +53,7 @@ namespace redox::math {
 
 		}
 
-		_RDX_INLINE Mat44 operator+(const Mat44& rhs) const {
+		RDX_INLINE Mat44 operator+(const Mat44& rhs) const {
 			return {
 				simd::add(_xmm[0], rhs._xmm[0]),
 				simd::add(_xmm[1], rhs._xmm[1]),
@@ -62,7 +62,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE static Mat44 identity() {
+		RDX_INLINE static Mat44 identity() {
 			return {
 				simd::set(1,0,0,0),
 				simd::set(0,1,0,0),
@@ -71,7 +71,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE static Mat44 rotate_y(Scalar alpha) {
+		RDX_INLINE static Mat44 rotate_y(Scalar alpha) {
 			return {
 				simd::set(std::cos(alpha),0,-std::sin(alpha),0),
 				simd::set(0,1,0,0),
@@ -80,7 +80,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE static Mat44 rotate_euler(const vec3_type& angles) {
+		RDX_INLINE static Mat44 rotate_euler(const vec3_type& angles) {
 			auto a = deg2rad(angles.x);
 			auto b = deg2rad(angles.y);
 			auto c = deg2rad(angles.z);
@@ -104,7 +104,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE static Mat44 scale(const vec3_type& scale) {
+		RDX_INLINE static Mat44 scale(const vec3_type& scale) {
 			return {
 				simd::blend<0x1>(simd::set_zero(), scale._xmm),
 				simd::blend<0x2>(simd::set_zero(), scale._xmm),
@@ -113,7 +113,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE static Mat44 perspective(Scalar fov, Scalar aspect, Scalar near, Scalar far) {
+		RDX_INLINE static Mat44 perspective(Scalar fov, Scalar aspect, Scalar near, Scalar far) {
 			auto yscale = static_cast<Scalar>(-1. / deg2rad(fov / 2.0f));
 			auto xscale = static_cast<Scalar>(yscale / aspect);
 			auto nf = near - far;
@@ -126,7 +126,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE static Mat44 translate(const vec3_type& coords) {
+		RDX_INLINE static Mat44 translate(const vec3_type& coords) {
 			return {
 				//TODO: Optimize
 				simd::set(1,0,0,coords.x),
@@ -136,7 +136,7 @@ namespace redox::math {
 			};
 		}
 		
-		_RDX_INLINE static Mat44 lookat(const vec3_type& eye, const vec3_type& center, const vec3_type& up) {
+		RDX_INLINE static Mat44 lookat(const vec3_type& eye, const vec3_type& center, const vec3_type& up) {
 			//TODO: Optimize
 			auto f = (center - eye).normalize();
 			auto s = f.cross(up.normalize()).normalize();
@@ -150,7 +150,7 @@ namespace redox::math {
 			};
 		}
 
-		_RDX_INLINE vec4_type operator[](std::size_t index) {
+		RDX_INLINE vec4_type operator[](std::size_t index) {
 			return _xmm[index];
 		}
 

@@ -77,14 +77,14 @@ redox::platform::Window::Window(const WindowSettings& settings) :
 	_internal(std::make_unique<internal>()) {
 
 	_internal->instance = GetModuleHandle(0);
-	_internal->classname = "redox_window";
+	_internal->classname = "RedoxWindow";
 
 	DWORD dwStyle = WS_SYSMENU | WS_MINIMIZEBOX;
 
 	auto resources = Application::instance->resource_manager();
-	String iconFile = resources->resolve_path(settings.iconPath);
+	Path iconFile = resources->resolve_path(settings.iconPath);
 
-	auto icon = (HICON)LoadImage(NULL, iconFile.c_str(), IMAGE_ICON,
+	auto icon = (HICON)LoadImageW(NULL, iconFile.c_str(), IMAGE_ICON,
 		0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
 
 	WNDCLASS wndClass{};

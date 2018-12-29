@@ -32,89 +32,103 @@ SOFTWARE.
 #include "platform\windows.h"
 #include "core\application.h"
 
-redox::input::InputSystem::InputSystem(const platform::Window& window) {
+struct redox::input::InputSystem::internal {
+	Hashmap<Keys, KeyState> keyStates;
+	bool useHighDpi;
+
+	void handle_wm_input(const MSG& msg);
+	void handle_wm_key_du(const MSG& msg);
+};
+
+redox::input::InputSystem::InputSystem(const platform::Window& window) :
+	_internal(make_unique<internal>()) {
+	_internal->useHighDpi = Application::instance->config()->get("Input", "high_dpi");
+
 	RDX_LOG("Initializing Input System...", ConsoleColor::GREEN);
 
-#ifdef RDX_INPUT_HIGH_DPI
-	RAWINPUTDEVICE keyboardDevice;
-	keyboardDevice.usUsagePage = 1;
-	keyboardDevice.usUsage = 6;
-	keyboardDevice.dwFlags = 0;
-	keyboardDevice.hwndTarget = reinterpret_cast<HWND>(window.native_handle());
+	if (_internal->useHighDpi) {
+		RDX_LOG("Registering High DPI devices...");
+		RAWINPUTDEVICE keyboardDevice;
+		keyboardDevice.usUsagePage = 1;
+		keyboardDevice.usUsage = 6;
+		keyboardDevice.dwFlags = 0;
+		keyboardDevice.hwndTarget = reinterpret_cast<HWND>(window.native_handle());
 
-	const RAWINPUTDEVICE devices[] = { keyboardDevice };
+		const RAWINPUTDEVICE devices[] = { keyboardDevice };
 
-	if (!RegisterRawInputDevices(devices, util::array_size<UINT>(devices), sizeof(RAWINPUTDEVICE)))
-		throw Exception("failed to register raw device");
-#endif
+		if (!RegisterRawInputDevices(devices, util::array_size<UINT>(devices), sizeof(RAWINPUTDEVICE)))
+			throw Exception("failed to register raw device");
+	}
 }
 
 redox::input::InputSystem::~InputSystem() {
 }
 
+void redox::input::InputSystem::internal::handle_wm_input(const MSG& msg) {
+	HRAWINPUT handle = reinterpret_cast<HRAWINPUT>(msg.lParam);
+
+	UINT dwSize;
+	GetRawInputData(handle, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+	Buffer<u8> buffer(dwSize);
+	GetRawInputData(handle, RID_INPUT, buffer.data(), &dwSize, sizeof(RAWINPUTHEADER));
+
+	RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(buffer.data());
+	if (raw->header.dwType == RIM_TYPEKEYBOARD) {
+		auto& kbData = raw->data.keyboard;
+		auto mappingIt = g_vkey_mappings.find(kbData.VKey);
+		if (mappingIt == g_vkey_mappings.end()) {
+			RDX_LOG("Unknown VKey code: {0}", kbData.VKey);
+			return;
+		}
+
+		if (kbData.Flags == RI_KEY_MAKE) {
+			keyStates.insert({ mappingIt->second, KeyState::PRESSED });
+		}
+		else if (kbData.Flags == RI_KEY_BREAK) {
+			keyStates.insert({ mappingIt->second, KeyState::RELEASED });
+		}
+	}
+}
+
+void redox::input::InputSystem::internal::handle_wm_key_du(const MSG& msg) {
+	auto mappingIt = g_vkey_mappings.find(msg.wParam);
+	if (mappingIt == g_vkey_mappings.end()) {
+		RDX_LOG("Unknown VKey code: {0}", msg.wParam);
+		return;
+	}
+
+	if (msg.message == WM_KEYDOWN) {
+		keyStates.insert({ mappingIt->second, KeyState::PRESSED });
+	}
+	else if (msg.message == WM_KEYUP) {
+		keyStates.insert({ mappingIt->second, KeyState::RELEASED });
+	}
+}
+
 void redox::input::InputSystem::poll() {
-	_keyStates.clear();
+	_internal->keyStates.clear();
 
 	MSG msg;
 	while (PeekMessage(&msg, NULL, WM_INPUT, WM_KEYLAST, PM_REMOVE | PM_QS_INPUT)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 
-#ifdef RDX_INPUT_HIGH_DPI
-		if (msg.message == WM_INPUT) {
-			HRAWINPUT handle = reinterpret_cast<HRAWINPUT>(msg.lParam);
-
-			UINT dwSize;
-			GetRawInputData(handle, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
-			Buffer<u8> buffer(dwSize);
-			GetRawInputData(handle, RID_INPUT, buffer.data(), &dwSize, sizeof(RAWINPUTHEADER));
-
-			RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(buffer.data());
-			switch (raw->header.dwType) {
-			case RIM_TYPEKEYBOARD:
-			{
-				auto& kbData = raw->data.keyboard;
-				auto mappingIt = g_vkey_mappings.find(kbData.VKey);
-
-				if (mappingIt == g_vkey_mappings.end()) {
-					RDX_LOG("Unknown VKey code: {0}", kbData.VKey);
-					continue;
-				}
-
-				switch (kbData.Flags) {
-				case RI_KEY_MAKE:
-					_keyStates.insert({ mappingIt->second, KeyState::PRESSED });
-					break;
-				case RI_KEY_BREAK: {
-					_keyStates.insert({ mappingIt->second, KeyState::RELEASED });
-					break;
-				}}
-				break;
-			}}
+		if (_internal->useHighDpi) {
+			if (msg.message == WM_INPUT) {
+				_internal->handle_wm_input(msg);
+			}
+		}
+		else {
+			if (msg.message == WM_KEYDOWN || msg.message == WM_KEYUP) {
+				_internal->handle_wm_key_du(msg);
+			}
 		}
 	}
-#else
-
-	if (msg.message == WM_KEYDOWN || msg.message == WM_KEYUP) {
-
-		auto mapping = g_vkey_mappings.get(msg.wParam);
-		if (!mapping) {
-			RDX_LOG("Unknown VKey code: {0}", msg.wParam);
-			continue;
-		}
-			
-		if (msg.message == WM_KEYDOWN)
-			_keyStates.push(*mapping, KeyState::PRESSED);
-		else if (msg.message == WM_KEYUP)
-			_keyStates.push(*mapping, KeyState::RELEASED);
-	}
-
-#endif
 }
 
 redox::input::KeyState redox::input::InputSystem::key_state(Keys key) {
-	auto state = _keyStates.find(key);
-	if (state != _keyStates.end())
+	auto state = _internal->keyStates.find(key);
+	if (state != _internal->keyStates.end())
 		return state->second;
 
 	return KeyState::NORMAL;

@@ -176,6 +176,7 @@
     <ClCompile Include="src\graphics\vulkan\sampler.cpp" />
     <ClCompile Include="src\graphics\vulkan\resources\texture.cpp" />
     <ClCompile Include="src\input\input_system_win.cpp" />
+    <ClCompile Include="src\platform\process_win.cpp" />
     <ClCompile Include="src\platform\timer_win.cpp" />
     <ClCompile Include="src\platform\filesystem_win.cpp" />
     <ClCompile Include="src\graphics\vulkan\command_pool.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="src\input\keys.h" />
     <ClInclude Include="src\input\mappings\mappings_win.h" />
     <ClInclude Include="src\math\mat.h" />
+    <ClInclude Include="src\platform\process.h" />
     <ClInclude Include="src\platform\timer.h" />
     <ClInclude Include="src\platform\filesystem.h" />
     <ClInclude Include="src\graphics\vulkan\command_pool.h" />

@@ -41,10 +41,11 @@ namespace redox::input {
 		~InputSystem();
 
 		void poll();
-	
+
 		KeyState key_state(Keys key);
 
 	private:
-		Hashmap<Keys, KeyState> _keyStates;
+		struct internal;
+		UniquePtr<internal> _internal;
 	};
 }

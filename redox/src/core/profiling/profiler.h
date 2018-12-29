@@ -29,17 +29,17 @@ SOFTWARE.
 #include <core/logging/log.h>
 #include <platform/timer.h>
 
-#define _RDX_PROFILE redox::Profiler _RDX_HELPER_CONCAT(_profiler_, __COUNTER__)(__FUNCTION__);
+#define RDX_PROFILE redox::Profiler RDX_HELPER_CONCAT(_profiler_, __COUNTER__)(__FUNCTION__);
 
 namespace redox {
 	struct Profiler {
-		_RDX_INLINE Profiler(StringView name) {
-			RDX_LOG("[PROFILING] {0}", ConsoleColor::WHITE, name);
+		RDX_INLINE Profiler(StringView name) {
+			RDX_DEBUG_LOG("[PROFILING] {0}", name);
 			_timer.start();
 		}
 
-		_RDX_INLINE ~Profiler() {
-			RDX_LOG("[PROFILING] {0}ms", ConsoleColor::WHITE, _timer.elapsed());
+		RDX_INLINE ~Profiler() {
+			RDX_DEBUG_LOG("[PROFILING] {0}ms", _timer.elapsed());
 		}
 
 		platform::Timer _timer;

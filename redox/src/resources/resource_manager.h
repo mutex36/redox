@@ -30,39 +30,34 @@ SOFTWARE.
 #include <platform/filesystem.h>
 #include <core/logging/log.h>
 
+#include <platform/filesystem.h>
+#include <mutex> //std::mutex, std::lock_guard
+
 namespace redox {
 	class ResourceManager : public NonCopyable {
 	public:
 		static ResourceManager* instance();
 			
 		ResourceManager();
-
-		StringView resource_path() const;
-		String resolve_path(const String& path) const;
+		const Path& resource_path() const;
+		Path resolve_path(const Path& path) const;
 		void register_factory(IResourceFactory* factory);
+		ResourceHandle<IResource> load(const Path& path);
 
 		template<class R>
-		ResourceHandle<R> load(const String& path) {
-			static_assert(std::is_base_of_v<IResource, R>, "<R> should be of type IResource");
-
-			auto cit = _cache.find(path);
-			if (cit != _cache.end())
-				return std::static_pointer_cast<R>(cit->second);
-
-			for (const auto& fac : _factories) {
-				if (fac->supports_ext(io::extension(path))) {
-					RDX_LOG("Loading {0}...", path);
-					return std::static_pointer_cast<R>(fac->load(_resourcePath + path));
-				}
-			}
-
-			throw Exception("not suitable factory found");
+		ResourceHandle<R> load(const Path& path) {
+			static_assert(std::is_base_of_v<IResource, R>, "<R> must be of type IResource");
+			return std::static_pointer_cast<R>(load(path));
 		}
 
 	private:
-		String _resourcePath;
+		IResourceFactory* _find_factory(const Path& ext);
+		void _event_resource_modified(const Path& file, io::ChangeEvents event);
 
-		Hashmap<String, ResourceHandle<IResource>> _cache;
+		std::recursive_mutex _resourcesLock;
+		Path _resourcePath;
+		Hashmap<Path, ResourceHandle<IResource>> _cache;
 		Buffer<IResourceFactory*> _factories;
+		io::DirectoryWatcher _monitor;
 	};
 }

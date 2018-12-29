@@ -25,7 +25,6 @@ SOFTWARE.
 */
 #pragma once
 #include "core\core.h"
-
 #include "simd.h"
 
 //Accessing scalar by union seems portable, but technically UB in C++
@@ -63,7 +62,7 @@ namespace redox::math {
 			VecBase(Scalar x, Scalar y, Scalar z) : VecBase(simd::set(x, y, z)) {
 			}
 
-			_RDX_INLINE Vec<Scalar, XMM, 3> cross(const VecBase& rhs) const {
+			RDX_INLINE Vec<Scalar, XMM, 3> cross(const VecBase& rhs) const {
 				return simd::sub(
 					simd::mul(
 						simd::shuffle<3, 0, 2, 1>(_xmm, _xmm),
@@ -116,42 +115,42 @@ namespace redox::math {
 
 		Vec() : base_type(simd::set_zero()) {}
 
-		_RDX_INLINE Vec operator+(const Vec& rhs) const {
+		RDX_INLINE Vec operator+(const Vec& rhs) const {
 			return simd::add(base_type::_xmm, rhs._xmm);
 		}
-		_RDX_INLINE Vec operator-(const Vec& rhs) const {
+		RDX_INLINE Vec operator-(const Vec& rhs) const {
 			return simd::sub(base_type::_xmm, rhs._xmm);
 		}
-		_RDX_INLINE Vec operator*(const Vec& rhs) const {
+		RDX_INLINE Vec operator*(const Vec& rhs) const {
 			return simd::mul(base_type::_xmm, rhs._xmm);
 		}
-		_RDX_INLINE Vec operator/(const Vec& rhs) const {
+		RDX_INLINE Vec operator/(const Vec& rhs) const {
 			return simd::div(base_type::_xmm, rhs._xmm);
 		}
 
-		_RDX_INLINE Vec operator+(Scalar rhs) const {
+		RDX_INLINE Vec operator+(Scalar rhs) const {
 			return simd::add(base_type::_xmm, simd::set_all(rhs));
 		}
-		_RDX_INLINE Vec operator-(Scalar rhs) const {
+		RDX_INLINE Vec operator-(Scalar rhs) const {
 			return simd::sub(base_type::_xmm, simd::set_all(rhs));
 		}
-		_RDX_INLINE Vec operator*(Scalar rhs) const {
+		RDX_INLINE Vec operator*(Scalar rhs) const {
 			return simd::mul(base_type::_xmm, simd::set_all(rhs));
 		}
-		_RDX_INLINE Vec operator/(Scalar rhs) const {
+		RDX_INLINE Vec operator/(Scalar rhs) const {
 			return simd::div(base_type::_xmm, simd::set_all(rhs));
 		}
 
-		_RDX_INLINE Scalar dot(const Vec& rhs) const {
+		RDX_INLINE Scalar dot(const Vec& rhs) const {
 			return simd::extract_lower(simd::dot<0x71>(base_type::_xmm, rhs._xmm));
 		}
 
-		_RDX_INLINE Scalar length() const {
+		RDX_INLINE Scalar length() const {
 			return simd::extract_lower(
 				simd::sqrt_lower(simd::dot<0x71>(base_type::_xmm, base_type::_xmm))
 			);
 		}
-		_RDX_INLINE Vec normalize() const {
+		RDX_INLINE Vec normalize() const {
 			return simd::mul(base_type::_xmm,
 				simd::rsqrt(simd::dot<0x77>(base_type::_xmm, base_type::_xmm)));
 		}

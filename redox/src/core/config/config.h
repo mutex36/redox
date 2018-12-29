@@ -55,7 +55,7 @@ namespace redox {
 
 	class Configuration {
 	public:
-		Configuration(const String& file);
+		Configuration(const Path& file);
 		~Configuration();
 
 		detail::value_proxy get(StringView group, StringView value) const;

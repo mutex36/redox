@@ -38,7 +38,8 @@ namespace redox {
 
 	struct IResourceFactory {
 		virtual ~IResourceFactory() = default;
-		virtual ResourceHandle<IResource> load(const String& path) = 0;
-		virtual bool supports_ext(const String& ext) = 0;
+		virtual ResourceHandle<IResource> load(const Path& path) = 0;
+		virtual void reload(const ResourceHandle<IResource>& resource, const Path& path) = 0;
+		virtual bool supports_ext(const Path& ext) = 0;
 	};
 }

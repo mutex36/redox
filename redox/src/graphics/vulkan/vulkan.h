@@ -24,8 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\logging\log.h"
-
+#include <core\logging\log.h>
 #include <vulkan/vulkan.h>
 
 #ifdef RDX_PLATFORM_WINDOWS 
@@ -37,9 +36,6 @@ SOFTWARE.
 #define RDX_VULKAN_VALIDATION
 #endif
 
-//########
-//SETTINGS
-//########
 #define RDX_VULKAN_MAX_DESC_SETS 5
 #define RDX_VULKAN_MAX_DESC_SAMPLERS 20
 #define RDX_VULKAN_MAX_DESC_UBOS 5
@@ -69,7 +65,7 @@ static VkBool32 DebugMessageCallback(
 	VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
 	size_t location, int32_t msgCode, const char* pLayerPrefix, const char* pMsg, void* pUserData) {
 
-	RDX_LOG("Debug Message (Layer: {0}, Code: {1}): {2}", pLayerPrefix, msgCode, pMsg);
+	RDX_DEBUG_LOG("Debug Message (Layer: {0}, Code: {1}): {2}", pLayerPrefix, msgCode, pMsg);
 
 	RDX_ASSERT_FALSE(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT);
 	RDX_ASSERT_FALSE(flags & VK_DEBUG_REPORT_WARNING_BIT_EXT);
@@ -78,7 +74,7 @@ static VkBool32 DebugMessageCallback(
 }
 #endif
 
-_RDX_INLINE redox::String lexical_cast(const VkResult& result) {
+RDX_INLINE redox::String lexical_cast(const VkResult& result) {
 	switch (result) {
 	case VK_NOT_READY: return "VK_NOT_READY";
 	case VK_TIMEOUT: return "VK_TIMEOUT";

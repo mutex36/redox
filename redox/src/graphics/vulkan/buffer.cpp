@@ -74,7 +74,7 @@ VkBuffer redox::graphics::Buffer::handle() const {
 	return _handle;
 }
 
-void redox::graphics::Buffer::map(tl::function_ref<void(void*)> fn) const {
+void redox::graphics::Buffer::map(FunctionRef<void(void*)> fn) const {
 	void* data;
 	vkMapMemory(Graphics::instance().device(), _memory, 0, _size, 0, &data);
 	fn(data);

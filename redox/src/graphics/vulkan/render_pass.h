@@ -38,6 +38,11 @@ namespace redox::graphics {
 		~RenderPass();
 
 		void resize_attachments(const VkExtent2D& extent);
+		[[nodiscard]] auto scoped_begin(const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) const {
+			begin(frameBuffer, commandBuffer);
+			return make_scope_guard([this, &commandBuffer]() { end(commandBuffer); });
+		}
+
 		void begin(const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) const;
 		void end(const CommandBufferView& commandBuffer) const;
 		VkRenderPass handle() const;

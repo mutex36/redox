@@ -32,8 +32,6 @@ SOFTWARE.
 #include "render_pass.h"
 #include "framebuffer.h"
 
-#include <thirdparty/function_ref/function_ref.hpp>
-
 namespace redox::graphics {
 	class Graphics;
 
@@ -41,11 +39,12 @@ namespace redox::graphics {
 	public:
 		using ResizeCallback = Function<void()>;
 
-		Swapchain(ResizeCallback&& resizeCallback);
+		Swapchain();
 		~Swapchain();
 
+		void set_resize_callback(ResizeCallback callback);
 		void create_fbs(const RenderPass& renderPass);
-		void visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) const;
+		void visit(FunctionRef<void(const Framebuffer&, const CommandBufferView&)> fn) const;
 		void present();
 
 		VkSwapchainKHR handle() const;

@@ -26,10 +26,10 @@ SOFTWARE.
 #include "gltf_importer.h"
 #include "core/logging/log.h"
 
-redox::GLTFImporter::GLTFImporter(const String& path) :
-	_searchPath(io::directory(path)) {
+redox::GLTFImporter::GLTFImporter(const Path& filePath) :
+	_searchPath(filePath.parent_path()) {
 
-	io::File file(path, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
+	io::File file(filePath, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
 	auto buffer = file.read();
 
 	cgltf_options options{};

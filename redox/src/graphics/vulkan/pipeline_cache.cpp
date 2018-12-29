@@ -28,15 +28,16 @@ SOFTWARE.
 #include "graphics.h"
 #include "core/application.h"
 
-redox::graphics::PipelineCache::PipelineCache(PipelineCreatedCallback&& pcc, const RenderPass* rp) :
-	_createCallback(std::move(pcc)),
+redox::graphics::PipelineCache::PipelineCache(const RenderPass* rp) :
 	_renderPass(rp) {
 }
 
-redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) const {
-	auto hit = _pipelines.find(type);
+void redox::graphics::PipelineCache::set_creation_callback(PipelineCreatedCallback callback) {
+	_createCallback = std::move(callback);
+}
 
-	if (hit != _pipelines.end())
+redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) {
+	if (auto hit = _pipelines.find(type); hit != _pipelines.end())
 		return hit->second;
 
 	auto pipeline = _create_pipeline(type);
@@ -44,7 +45,7 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineTyp
 	return pipeline;
 }
 
-redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_pipeline(PipelineType type) const {
+redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_pipeline(PipelineType type) {
 
 	switch (type) {
 	case redox::graphics::PipelineType::DEFAULT_MESH_PIPELINE:
@@ -54,7 +55,7 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_pipeline
 	throw Exception("invalid pipeline type");
 }
 
-redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_mesh_pipeline() const {
+redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_mesh_pipeline() {
 
 	VkDescriptorSetLayoutBinding mvpBinding{};
 	mvpBinding.binding = 0;
@@ -91,8 +92,8 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_
 	vLayout.attribs[2].format = VK_FORMAT_R32G32_SFLOAT;
 	vLayout.attribs[2].offset = util::offset_of<uint32_t>(&MeshVertex::uv);
 
-	auto vs = ResourceManager::instance()->load<Shader>("shader\\mesh.frag");
-	auto fs = ResourceManager::instance()->load<Shader>("shader\\mesh.vert");
+	auto vs = ResourceManager::instance()->load<Shader>("shader\\mesh.vert");
+	auto fs = ResourceManager::instance()->load<Shader>("shader\\mesh.frag");
 
 	auto pipeline = redox::make_shared<Pipeline>(*_renderPass, vLayout,
 		dLayout, std::move(vs), std::move(fs));

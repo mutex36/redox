@@ -37,12 +37,14 @@ redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
 	_mvpBuffer(sizeof(mvp_uniform)),
 	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS) {
 
-	_swapchain = make_unique<Swapchain>([this]() { _swapchain_event_resize(); });
+	_swapchain = make_unique<Swapchain>();
+	_swapchain->set_resize_callback(std::bind(&RenderSystem::_swapchain_event_resize, this));
+
 	_forwardPass = make_unique<RenderPass>(_swapchain->extent());
 	_swapchain->create_fbs(*_forwardPass);
 
-	_pipelineCache = make_unique<PipelineCache>(
-		[this](const auto& pipeline) { _pipeline_event_create(pipeline); }, _forwardPass.get());
+	_pipelineCache = make_unique<PipelineCache>(_forwardPass.get());
+	_pipelineCache->set_creation_callback(std::bind(&RenderSystem::_pipeline_event_create, this, std::placeholders::_1));
 
 	_textureFactory = make_unique<TextureFactory>();
 	_modelFactory = make_unique<ModelFactory>(&_descriptorPool, _pipelineCache.get());
@@ -62,20 +64,17 @@ redox::graphics::RenderSystem::~RenderSystem() {
 
 void redox::graphics::RenderSystem::_demo_draw() {
 	_swapchain->visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
-		commandBuffer.record([this, &commandBuffer, &frameBuffer]() {
-			_forwardPass->begin(frameBuffer, commandBuffer);
+		auto rg = commandBuffer.scoped_record();
+		auto pg = _forwardPass->scoped_begin(frameBuffer, commandBuffer);
 
-			for (const auto& mesh : _demoModel->meshes()) {
-				for (const auto& sm : mesh->submeshes()) {
-					auto material = _demoModel->materials()[sm.materialIndex];
-					commandBuffer.submit(IndexedDraw{
-						mesh, material, {sm.vertexOffset, sm.vertexCount}
-					});
-				}
+		for (const auto& mesh : _demoModel->meshes()) {
+			for (const auto& sm : mesh->submeshes()) {
+				auto material = _demoModel->materials()[sm.materialIndex];
+				commandBuffer.submit(IndexedDraw{
+					mesh, material, {sm.vertexOffset, sm.vertexCount}
+				});
 			}
-
-			_forwardPass->end(commandBuffer);
-		});
+		}
 	});
 }
 
@@ -100,9 +99,9 @@ void redox::graphics::RenderSystem::render() {
 		auto bf = reinterpret_cast<mvp_uniform*>(data);
 		bf->model = math::Mat44f::rotate_y(k);
 		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
-		bf->view = math::Mat44f::translate({0,0,-3});
+		bf->view = math::Mat44f::translate({ 0,0,-3 });
 	});
-	
+
 	_mvpBuffer.upload();
 	_swapchain->present();
 }

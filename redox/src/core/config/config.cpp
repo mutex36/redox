@@ -25,8 +25,9 @@ SOFTWARE.
 */
 #include "config.h"
 
-redox::Configuration::Configuration(const String& file) {
-	_config = ini_load(file.c_str());
+redox::Configuration::Configuration(const Path& file) {
+	auto fileStr = file.string();
+	_config = ini_load(fileStr.c_str());
 	if (_config == nullptr)
 		throw Exception("failed to load ini config");
 }

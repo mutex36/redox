@@ -28,10 +28,11 @@ SOFTWARE.
 #define STB_IMAGE_IMPLEMENTATION
 #include <thirdparty/stbimage/stb_image.h>
 
-redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(const String& path) {
+redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(const Path& path) {
 	
-	i32 chan, width, height;
-	stbi_uc* pixels = stbi_load(path.c_str(),
+	[[maybe_unused]] i32 chan, width, height;
+	auto ps = path.string();
+	stbi_uc* pixels = stbi_load(ps.c_str(),
 		&width, &height, &chan, STBI_rgb_alpha);
 
 	if (pixels == nullptr)
@@ -51,11 +52,21 @@ redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(co
 		std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions);
 }
 
-bool redox::graphics::TextureFactory::supports_ext(const String& ext) {
-	const StringView supportedExts[] = { ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
-	for (const auto& sxt : supportedExts)
-		if (sxt == ext)
-			return true;
+void redox::graphics::TextureFactory::reload(const ResourceHandle<IResource>& resource, const Path& path) {
+	auto texture = std::static_pointer_cast<SampleTexture>(resource);
+	auto size = texture->dimension().width * texture->dimension().height;
 
-	return false;
+	texture->map([&](void* data) {
+		auto bytes = reinterpret_cast<byte*>(data);
+		for (size_t i = 0; i < size; i++) {
+			bytes[i] = 2550.f - bytes[i];
+		}
+	});
+	texture->upload();
 }
+
+bool redox::graphics::TextureFactory::supports_ext(const Path& ext) {
+	Array<StringView, 8> supported = { ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
+	return std::find(supported.begin(), supported.end(), ext) != supported.end();
+}
+

@@ -139,12 +139,13 @@ void redox::graphics::Graphics::_init_instance() {
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
 #ifdef RDX_DEBUG
+	RDX_DEBUG_LOG("Vulkan Layers:");
 	uint32_t layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 	redox::Buffer<VkLayerProperties> availableLayers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 	for (auto& layer : availableLayers)
-		RDX_LOG("Layer: {0}", layer.layerName);
+		RDX_DEBUG_LOG("{0} ({1})", layer.layerName, layer.description);
 #endif
 
 	VkInstanceCreateInfo instanceCreateInfo{};
@@ -211,7 +212,7 @@ void redox::graphics::Graphics::_init_surface(const platform::Window& window) {
 }
 
 void redox::graphics::Graphics::_init_device() {
-	RDX_LOG("Initializing logical device...", ConsoleColor::GREEN);
+	RDX_LOG("Initializing Logical Device...", ConsoleColor::GREEN);
 
 	auto fqi = _pick_queue_family();
 	if (!fqi) throw Exception("could not find suitable queue family");
@@ -257,9 +258,6 @@ std::optional<VkPhysicalDevice> redox::graphics::Graphics::_pick_device() {
 	for (auto& dev : devices) {
 		VkPhysicalDeviceProperties deviceProperties;
 		vkGetPhysicalDeviceProperties(dev, &deviceProperties);
-
-		//VkPhysicalDeviceFeatures deviceFeatures;
-		//vkGetPhysicalDeviceFeatures(dev, &deviceFeatures);
 
 		RDX_LOG("Physical device: {0}", deviceProperties.deviceName);
 

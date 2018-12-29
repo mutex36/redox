@@ -25,15 +25,16 @@ SOFTWARE.
 */
 #include "shader_factory.h"
 #include <resources/resource_manager.h>
-#include <graphics/vulkan/resources/shader_compiler.h>
 
 #include <algorithm> //std::find
 
-redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(const String& path) {
+redox::graphics::ShaderFactory::ShaderFactory() : 
+	_compiler(io::absolute("assets\\shader\\compiled\\")) {
+	_compiler.clear_output();
+}
 
-	ShaderCompiler shc(io::fullpath("tools\\spirv\\glslangValidator.exe"),
-		io::fullpath("assets\\shader\\compiled\\"));
-	auto output = shc.compile(path);
+redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(const Path& path) {
+	auto output = _compiler.compile(path);
 
 	io::File fstream(output, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
 	auto buffer = fstream.read();
@@ -41,7 +42,11 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(con
 	return std::make_shared<Shader>(std::move(buffer));
 }
 
-bool redox::graphics::ShaderFactory::supports_ext(const String& ext) {
+void redox::graphics::ShaderFactory::reload(const ResourceHandle<IResource>& resource, const Path& path) {
+	//TODO: implement
+}
+
+bool redox::graphics::ShaderFactory::supports_ext(const Path& ext) {
 	Array<StringView, 4> supported = { ".frag", ".vert", ".geom" };
 	return std::find(supported.begin(), supported.end(), ext) != supported.end();
 }

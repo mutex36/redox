@@ -33,6 +33,8 @@ redox::Application* redox::Application::instance = nullptr;
 redox::Application::Application() :
 	_config("config\\settings.ini") {
 
+	RDX_LOG("Initializing Redox...", ConsoleColor::GREEN);
+
 	platform::WindowSettings wdSettings{};
 	wdSettings.iconPath = _config.get("Surface", "icon").as<String>();
 	wdSettings.width = _config.get("Surface", "resolution_x");
@@ -55,7 +57,7 @@ redox::Application::Application() :
 		case platform::Window::Event::CLOSE:
 			stop(); break;
 		case platform::Window::Event::LOSTFOCUS:
-			if (_state != State::TERMINATED)
+			if (_state != State::TERMINATED && !_config.get("Engine", "run_in_background"))
 				_state = State::PAUSED;
 			break;
 		case platform::Window::Event::GAINFOCUS:
@@ -65,6 +67,7 @@ redox::Application::Application() :
 	});
 
 	RDX_LOG("Initializing Application...", ConsoleColor::GREEN);
+	RDX_LOG("TestApp-Manifest.json loaded.");
 }
 
 redox::Application::~Application() {

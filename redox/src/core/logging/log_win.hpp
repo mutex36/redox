@@ -28,7 +28,7 @@ SOFTWARE.
 
 #ifdef RDX_PLATFORM_WINDOWS
 #include "core\string_format.h"
-#include "platform\windows.h"
+#include <platform\windows.h>
 
 namespace redox {	
 	enum class ConsoleColor : WORD {
@@ -42,14 +42,15 @@ namespace redox::detail {
 	static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	template<class...Args>
-	_RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
+	RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
-		WriteConsole(detail::std_handle, fmt.c_str(), 
-			static_cast<DWORD>(fmt.size()), NULL, NULL);
+		auto fst = format("[{0}] {1}", std::chrono::system_clock::now(), fmt);
+		WriteConsole(detail::std_handle, fst.c_str(),
+			static_cast<DWORD>(fst.size()), NULL, NULL);
 	}
 
 	template<class...Args>
-	_RDX_INLINE void log(redox::StringView fmts, redox::ConsoleColor color, const Args&...args) {
+	RDX_INLINE void log(redox::StringView fmts, redox::ConsoleColor color, const Args&...args) {
 		CONSOLE_SCREEN_BUFFER_INFO restore{};
 		GetConsoleScreenBufferInfo(std_handle, &restore);
 
@@ -60,37 +61,37 @@ namespace redox::detail {
 	}
 
 	template<class T1>
-	_RDX_INLINE bool assert_true(const T1& a) {
+	RDX_INLINE bool assert_true(const T1& a) {
 		if (a) return true;
 		log("Assertion failed: {0} == true\n", ConsoleColor::RED, a);
 		return false;
 	}
 
 	template<class T1>
-	_RDX_INLINE bool assert_false(const T1& a) {
+	RDX_INLINE bool assert_false(const T1& a) {
 		if (!a) return true;
 		log("Assertion failed: {0} == false\n", ConsoleColor::RED, a);
 		return false;
 	}
 
 	template<class T1, class T2>
-	_RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
+	RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
 		if (a == b) return true;
 		log("Assertion failed: {0} == {1}\n", ConsoleColor::RED, a, b);
 		return false;
 	}
 
 	template<class T1, class T2>
-	_RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
+	RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
 		if (a != b) return true;
 		log("Assertion failed: {0} != {1}\n", ConsoleColor::RED, a, b);
 		return false;
 	}
 
 	template<class...Args>
-	_RDX_INLINE void debug_log(redox::StringView fmts, const Args&...args) {
+	RDX_INLINE void debug_log(redox::StringView fmts, const Args&...args) {
 		auto fmt = format(fmts, args...);
-		OutputDebugString(fmt.cstr());
+		OutputDebugString(fmt.c_str());
 	}
 }
 #endif

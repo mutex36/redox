@@ -24,25 +24,71 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "resource_manager.h"
-
 #include "core/application.h"
 
 redox::ResourceManager::ResourceManager() :
-	_resourcePath(io::fullpath("assets\\")) {
+	_resourcePath(io::absolute("assets\\")) {
+
+	RDX_LOG("Initializing Resource Manager...", ConsoleColor::GREEN);
+
+	_monitor.subscribe([this](auto file, auto event) {
+		_event_resource_modified(file, event);
+	});
+	_monitor.start(_resourcePath, io::ChangeEvents::FILE_MODIFIED);
+
+	RDX_LOG("Monitoring asset directory {0}", _resourcePath);
 }
 
 redox::ResourceManager* redox::ResourceManager::instance() {
 	return Application::instance->resource_manager();
 }
 
-redox::StringView redox::ResourceManager::resource_path() const {
+const redox::Path& redox::ResourceManager::resource_path() const {
 	return _resourcePath;
 }
 
-redox::String redox::ResourceManager::resolve_path(const String& path) const{
-	return _resourcePath + path;
+redox::Path redox::ResourceManager::resolve_path(const Path& path) const{
+	return _resourcePath / path;
 }
 
 void redox::ResourceManager::register_factory(IResourceFactory* factory) {
 	_factories.push_back(factory);
+}
+
+redox::IResourceFactory* redox::ResourceManager::_find_factory(const Path& ext) {
+	for (const auto& fac : _factories) {
+		if (fac->supports_ext(ext)) {
+			return fac;
+		}
+	}
+	return nullptr;
+}
+
+void redox::ResourceManager::_event_resource_modified(const Path& file, io::ChangeEvents event) {
+	std::lock_guard guard(_resourcesLock);
+
+	if (auto cit = _cache.find(file); cit != _cache.end()) {
+		RDX_LOG("Resource {0} modified", file);
+		auto factory = _find_factory(file.extension());
+		
+		if (factory) {
+			factory->reload(cit->second, file);
+		}
+	}
+}
+
+redox::ResourceHandle<redox::IResource> redox::ResourceManager::load(const redox::Path& path) {
+	std::lock_guard guard(_resourcesLock);
+
+	if (auto cit = _cache.find(path); cit != _cache.end())
+		return cit->second;
+
+	auto factory = _find_factory(path.extension());
+	if (factory == nullptr)
+		throw Exception("not suitable factory found");
+	
+	RDX_LOG("Loading {0}...", ConsoleColor::WHITE, path);
+	auto resource = factory->load(_resourcePath / path);
+	_cache[path] = resource;
+	return resource;
 }

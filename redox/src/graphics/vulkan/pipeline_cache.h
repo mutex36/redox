@@ -42,20 +42,20 @@ namespace redox::graphics {
 	public:
 		using PipelineCreatedCallback = Function<void(const PipelineHandle&)>;
 
-		PipelineCache(PipelineCreatedCallback&& pcc, const RenderPass* rp);
+		PipelineCache(const RenderPass* rp);
 
-		PipelineHandle load(PipelineType type) const;
+		void set_creation_callback(PipelineCreatedCallback callback);
+		PipelineHandle load(PipelineType type);
 
 		auto begin() const { return _pipelines.begin(); }
 		auto end() const { return _pipelines.end(); }
 
 	private:
-		PipelineHandle _create_pipeline(PipelineType type) const;
-		PipelineHandle _create_default_mesh_pipeline() const;
+		PipelineHandle _create_pipeline(PipelineType type);
+		PipelineHandle _create_default_mesh_pipeline();
 
 		PipelineCreatedCallback _createCallback;
-		const UniformBuffer* _mvpBuffer;
+		Hashmap<PipelineType, PipelineHandle> _pipelines;
 		const RenderPass* _renderPass;
-		mutable Hashmap<PipelineType, PipelineHandle> _pipelines;
 	};
 }

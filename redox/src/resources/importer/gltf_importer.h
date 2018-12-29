@@ -33,7 +33,7 @@ SOFTWARE.
 namespace redox {
 	class GLTFImporter : public NonCopyable {
 	public:
-		GLTFImporter(const String& path);
+		GLTFImporter(const Path& path);
 		~GLTFImporter();
 
 		struct submesh_data {
@@ -71,7 +71,7 @@ namespace redox {
 		void read_buffer(cgltf_buffer_view* bufferView, cgltf_accessor* accessor, Fn&& fn) {
 			auto it = _buffers.find(bufferView->buffer->uri);
 			if (it == _buffers.end()) {
-				io::File blobFile(_searchPath + bufferView->buffer->uri,
+				io::File blobFile(_searchPath / bufferView->buffer->uri,
 					io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
 
 				std::tie(it, std::ignore) = _buffers.insert({ bufferView->buffer->uri, blobFile.read() });
@@ -87,7 +87,7 @@ namespace redox {
 		}
 
 		cgltf_data _data;
-		String _searchPath;
+		Path _searchPath;
 		Hashmap<String, Buffer<i8>> _buffers;
 	};
 }

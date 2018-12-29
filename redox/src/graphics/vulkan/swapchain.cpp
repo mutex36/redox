@@ -29,8 +29,7 @@ SOFTWARE.
 #include <core/profiling/profiler.h>
 #include <limits> //std::numeric_limits
 
-redox::graphics::Swapchain::Swapchain(ResizeCallback&& resizeCallback) :
-	_resizeCallback(std::move(resizeCallback)) {
+redox::graphics::Swapchain::Swapchain() {
 	_init();
 	_init_semaphores();
 	_init_images();
@@ -49,6 +48,10 @@ redox::graphics::Swapchain::~Swapchain() {
 	_destroy();
 }
 
+void redox::graphics::Swapchain::set_resize_callback(ResizeCallback callback) {
+	_resizeCallback = std::move(callback);
+}
+
 void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 	_frameBuffers.clear();
 	_frameBuffers.reserve(_imageViews.size());
@@ -57,7 +60,7 @@ void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 		_frameBuffers.emplace_back(renderPass, _imageViews[i], _extent);
 }
 
-void redox::graphics::Swapchain::visit(tl::function_ref<void(const Framebuffer&, const CommandBufferView&)> fn) const {
+void redox::graphics::Swapchain::visit(FunctionRef<void(const Framebuffer&, const CommandBufferView&)> fn) const {
 	for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
 		fn(_frameBuffers[index], _commandPool[index]);
 }
@@ -164,7 +167,7 @@ void redox::graphics::Swapchain::_init() {
 }
 
 void redox::graphics::Swapchain::_init_images() {
-	_RDX_PROFILE;
+	RDX_PROFILE;
 
 	uint32_t imageCount;
 	vkGetSwapchainImagesKHR(Graphics::instance().device(), _handle, &imageCount, nullptr);

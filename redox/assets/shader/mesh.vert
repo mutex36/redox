@@ -26,5 +26,5 @@ void main() {
 	gl_Position = vec4(inPosition, 1.0) * mvp;
 
 	fragUV = inUV;
-	fragNormal = inNormal;
+	fragNormal = inNormal * mat3(mvp_buffer.model);
 }
