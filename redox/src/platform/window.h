@@ -40,6 +40,8 @@ namespace redox::platform {
 		String iconPath;
 		i32 width, height;
 		WindowFlags flags;
+		String defaultCursor;
+		bool stayOnTop;
 	};
 
 	class Window {
@@ -61,12 +63,7 @@ namespace redox::platform {
 		bool is_minimized() const;
 		void* native_handle() const;
 
-		//internal
-		void _notify_event(const Event ev);
-
 	private:
-		EventFn _eventfn;
-
 		struct internal;
 		UniquePtr<internal> _internal;
 	};

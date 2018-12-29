@@ -35,36 +35,11 @@ redox::Application::Application() :
 
 	RDX_LOG("Initializing Redox...", ConsoleColor::GREEN);
 
-	platform::WindowSettings wdSettings{};
-	wdSettings.iconPath = _config.get("Surface", "icon").as<String>();
-	wdSettings.width = _config.get("Surface", "resolution_x");
-	wdSettings.height = _config.get("Surface", "resolution_y");
-
-	if (_config.get("Surface", "fullscreen"))
-		wdSettings.flags |= platform::WindowFlags::FULLSCREEN;
-
-	if (_config.get("Surface", "resizable"))
-		wdSettings.flags |= platform::WindowFlags::RESIZABLE;
-
 	_resourceManager = make_unique<ResourceManager>();
-	_window = make_unique<platform::Window>(wdSettings);
+	_init_window();
 	_graphics = make_unique<graphics::Graphics>(*_window);
 	_renderSystem = make_unique<graphics::RenderSystem>(*_window);
 	_inputSystem = make_unique<input::InputSystem>(*_window);
-
-	_window->set_callback([this](platform::Window::Event event) {
-		switch (event) {
-		case platform::Window::Event::CLOSE:
-			stop(); break;
-		case platform::Window::Event::LOSTFOCUS:
-			if (_state != State::TERMINATED && !_config.get("Engine", "run_in_background"))
-				_state = State::PAUSED;
-			break;
-		case platform::Window::Event::GAINFOCUS:
-			_state = State::RUNNING;
-			break;
-		}
-	});
 
 	RDX_LOG("Initializing Application...", ConsoleColor::GREEN);
 	RDX_LOG("TestApp-Manifest.json loaded.");
@@ -77,7 +52,7 @@ void redox::Application::run() {
 	_window->show();
 	_state = State::RUNNING;
 
-	const u32 max_fps = _config.get("Engine", "max_fps");
+	const u32 max_fps = _config.get("Engine", "MaxFPS");
 	const auto timestep = 1000. / max_fps;
 
 	_timer.start();
@@ -87,6 +62,10 @@ void redox::Application::run() {
 
 		_window->process_events();
 		_inputSystem->poll();
+
+		if (_inputSystem->key_state(input::Keys::ESC) == input::KeyState::PRESSED) {
+			stop();
+		}
 
 		if (_state == State::PAUSED) {
 			std::this_thread::sleep_for(std::chrono::milliseconds{1});
@@ -104,8 +83,9 @@ void redox::Application::run() {
 }
 
 void redox::Application::stop() {
-	_state = State::TERMINATED;
 	RDX_LOG("Terminating Application...", ConsoleColor::RED);
+	_state = State::TERMINATED;
+	_resourceManager->clear_cache();
 }
 
 const redox::Configuration* redox::Application::config() const {
@@ -126,4 +106,37 @@ const redox::graphics::RenderSystem* redox::Application::render_system() const {
 
 const redox::graphics::Graphics* redox::Application::graphics() const {
 	return _graphics.get();
+}
+
+void redox::Application::_init_window() {
+
+	platform::WindowSettings wdSettings{};
+	wdSettings.iconPath = _config.get("Surface", "Icon").as<String>();
+	wdSettings.defaultCursor = _config.get("Surface", "DefaultCursor").as<String>();
+	wdSettings.width = _config.get("Surface", "ResolutionX");
+	wdSettings.height = _config.get("Surface", "ResolutionY");
+	wdSettings.stayOnTop = _config.get("Surface", "StayOnTop");
+
+	if (_config.get("Surface", "Fullscreen"))
+		wdSettings.flags |= platform::WindowFlags::FULLSCREEN;
+
+	if (_config.get("Surface", "Resizable"))
+		wdSettings.flags |= platform::WindowFlags::RESIZABLE;
+
+	_window = make_unique<platform::Window>(wdSettings);
+	_window->set_callback([this](platform::Window::Event event) {
+		switch (event) {
+		case platform::Window::Event::CLOSE:
+			stop(); 
+			break;
+		case platform::Window::Event::LOSTFOCUS:
+			if (_state != State::TERMINATED && !_config.get("Engine", "RunInBackground")) {
+				_state = State::PAUSED;
+			}
+			break;
+		case platform::Window::Event::GAINFOCUS:
+			_state = State::RUNNING;
+			break;
+		}
+	});
 }

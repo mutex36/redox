@@ -60,8 +60,8 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 
 void redox::graphics::CommandPool::aux_submit(FunctionRef<void(const CommandBufferView&)> fn) {
 
-	//TODO: will crash due to SIOF
-	static CommandPool cp(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+	//TODO: make it live somewhere...
+	CommandPool cp(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

@@ -31,12 +31,20 @@ redox::ResourceManager::ResourceManager() :
 
 	RDX_LOG("Initializing Resource Manager...", ConsoleColor::GREEN);
 
-	_monitor.subscribe([this](auto file, auto event) {
-		_event_resource_modified(file, event);
-	});
-	_monitor.start(_resourcePath, io::ChangeEvents::FILE_MODIFIED);
+	if (Application::instance->config()->get("Resources", "HotReloading")) {
+		_monitor.emplace();
+		_monitor->subscribe([this](auto file, auto event) {
+			_event_resource_modified(file, event);
+		});
+		_monitor->start(_resourcePath, io::ChangeEvents::FILE_MODIFIED);
 
-	RDX_LOG("Monitoring asset directory {0}", _resourcePath);
+		RDX_LOG("Monitoring asset directory {0}", _resourcePath);
+	}
+}
+
+void redox::ResourceManager::clear_cache() {
+	RDX_LOG("Clearing resource cache...");
+	_cache.clear();
 }
 
 redox::ResourceManager* redox::ResourceManager::instance() {
@@ -68,7 +76,7 @@ void redox::ResourceManager::_event_resource_modified(const Path& file, io::Chan
 	std::lock_guard guard(_resourcesLock);
 
 	if (auto cit = _cache.find(file); cit != _cache.end()) {
-		RDX_LOG("Resource {0} modified", file);
+		RDX_LOG("Resource {0} modified. Attempting to reload...", file);
 		auto factory = _find_factory(file.extension());
 		
 		if (factory) {

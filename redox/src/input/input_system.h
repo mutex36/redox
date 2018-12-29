@@ -41,7 +41,6 @@ namespace redox::input {
 		~InputSystem();
 
 		void poll();
-
 		KeyState key_state(Keys key);
 
 	private:

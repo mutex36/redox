@@ -32,6 +32,7 @@ SOFTWARE.
 
 #include <platform/filesystem.h>
 #include <mutex> //std::mutex, std::lock_guard
+#include <optional> //std::optional
 
 namespace redox {
 	class ResourceManager : public NonCopyable {
@@ -39,6 +40,7 @@ namespace redox {
 		static ResourceManager* instance();
 			
 		ResourceManager();
+		void clear_cache();
 		const Path& resource_path() const;
 		Path resolve_path(const Path& path) const;
 		void register_factory(IResourceFactory* factory);
@@ -58,6 +60,6 @@ namespace redox {
 		Path _resourcePath;
 		Hashmap<Path, ResourceHandle<IResource>> _cache;
 		Buffer<IResourceFactory*> _factories;
-		io::DirectoryWatcher _monitor;
+		std::optional<io::DirectoryWatcher> _monitor;
 	};
 }

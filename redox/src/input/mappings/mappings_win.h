@@ -29,12 +29,10 @@ SOFTWARE.
 #ifdef RDX_PLATFORM_WINDOWS
 #include "input\keys.h"
 
-#include "platform\windows.h"
-
 namespace redox::input {
 	//http://www.kbdedit.com/manual/low_level_vk_list.html
-	static const redox::Hashmap<UINT, Keys> g_vkey_mappings(
-		{{ 0x41, Keys::A },
+	static const redox::Hashmap<u32, Keys> g_vkey_mappings(
+		{ { 0x41, Keys::A },
 		{ 0x42, Keys::B },
 		{ 0x43, Keys::C },
 		{ 0x44, Keys::D },
@@ -59,7 +57,9 @@ namespace redox::input {
 		{ 0x57, Keys::W },
 		{ 0x58, Keys::X },
 		{ 0x59, Keys::Y },
-		{ 0x5A, Keys::Z }}
+		{ 0x5A, Keys::Z },
+		{ 0x7A, Keys::F11 },
+		{ 0x1B, Keys::ESC }}
 	);
 }
 #endif

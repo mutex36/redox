@@ -53,6 +53,8 @@ namespace redox {
 		const graphics::Graphics* graphics() const;
 
 	private:
+		void _init_window();
+
 		static_instance_wrapper _iw{ this };
 		Configuration _config;
 		platform::Timer _timer;

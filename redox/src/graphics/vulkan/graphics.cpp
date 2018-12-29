@@ -98,7 +98,7 @@ VkPresentModeKHR redox::graphics::Graphics::pick_presentation_mode() const {
 	redox::Buffer<VkPresentModeKHR> modes(count);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, &count, modes.data());
 
-	if (Application::instance->config()->get("Engine", "vsync"))
+	if (Application::instance->config()->get("Engine", "VSync"))
 		return VK_PRESENT_MODE_FIFO_KHR;
 
 	for (auto& mode : modes) {

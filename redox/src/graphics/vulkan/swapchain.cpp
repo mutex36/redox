@@ -100,8 +100,8 @@ void redox::graphics::Swapchain::present() {
 	presentInfo.pImageIndices = &imageIndex;
 
 	auto result = vkQueuePresentKHR(Graphics::instance().present_queue(), &presentInfo);
-	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
-		_reload();
+	//if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
+	//	_reload();
 }
 
 void redox::graphics::Swapchain::_reload() {

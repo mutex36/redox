@@ -36,9 +36,16 @@ struct redox::platform::Window::internal {
 	HWND handle;
 	HINSTANCE instance;
 	String classname;
+	EventFn eventFn;
+	u32 width, height;
+
+	HCURSOR get_cursor(const String& cursorName);
+	void _notify_event(const Event ev);
+
+	static LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };
 
-LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+LRESULT redox::platform::Window::internal::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	if (msg == WM_CREATE) {
 		CREATESTRUCT* cs = reinterpret_cast<CREATESTRUCT*>(lp);
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
@@ -47,24 +54,24 @@ LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
 	LONG_PTR wndptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 	auto instance = reinterpret_cast<redox::platform::Window*>(wndptr);
-
 	if (instance != nullptr) {
+		auto& internal = *instance->_internal;
 		switch (msg) {
 			case WM_CLOSE: {
-				instance->_notify_event(redox::platform::Window::Event::CLOSE);
+				internal._notify_event(redox::platform::Window::Event::CLOSE);
 				break;
 			}
 			case WM_SYSCOMMAND: {
 				if ((wp & 0xfff0) == SC_MINIMIZE)
-					instance->_notify_event(redox::platform::Window::Event::MINIMIZE);
+					internal._notify_event(redox::platform::Window::Event::MINIMIZE);
 				break;
 			}
 			case WM_KILLFOCUS: {
-				instance->_notify_event(redox::platform::Window::Event::LOSTFOCUS);
+				internal._notify_event(redox::platform::Window::Event::LOSTFOCUS);
 				break;
 			}
 			case WM_SETFOCUS: {
-				instance->_notify_event(redox::platform::Window::Event::GAINFOCUS);
+				internal._notify_event(redox::platform::Window::Event::GAINFOCUS);
 				break;
 			}
 		}
@@ -89,15 +96,14 @@ redox::platform::Window::Window(const WindowSettings& settings) :
 
 	WNDCLASS wndClass{};
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
-	wndClass.lpfnWndProc = WndProc;
+	wndClass.lpfnWndProc = internal::WndProc;
 	wndClass.hInstance = _internal->instance;
 	wndClass.hIcon = icon;
-	wndClass.hCursor = LoadCursor(NULL, IDC_HAND);
+	wndClass.hCursor = _internal->get_cursor(settings.defaultCursor);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wndClass.lpszClassName = _internal->classname.c_str();
 
 	RegisterClass(&wndClass);
-
 	RECT windowRect{ 0,0 };
 	if (util::check_flag(settings.flags, WindowFlags::FULLSCREEN)) {
 		windowRect.right = GetSystemMetrics(SM_CXSCREEN);
@@ -115,8 +121,13 @@ redox::platform::Window::Window(const WindowSettings& settings) :
 		}
 	}
 
+	DWORD dwExStyle{ 0 };
+	if (settings.stayOnTop) {
+		dwExStyle |= WS_EX_TOPMOST;
+	}
+
 	_internal->handle = CreateWindowEx(
-		NULL, _internal->classname.c_str(), settings.title.c_str(), dwStyle,
+		dwExStyle, _internal->classname.c_str(), settings.title.c_str(), dwStyle,
 		windowRect.left, windowRect.left, 
 		windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
 		NULL, NULL, _internal->instance, this);
@@ -144,7 +155,7 @@ void _process_events(HWND hwnd, UINT rangeMin, UINT rangeMax) {
 void redox::platform::Window::process_events() const {
 	//We want to skip all keyboard/mouse/input related
 	//messages. These are processed and handled by the input manager
-	_process_events(_internal->handle, 0, WM_INPUT);
+	_process_events(_internal->handle, 0, WM_INPUT - 1);
 	_process_events(_internal->handle, WM_KEYLAST, 0);
 }
 
@@ -157,7 +168,7 @@ void redox::platform::Window::set_title(const String& title) {
 }
 
 void redox::platform::Window::set_callback(EventFn && fn) {
-	_eventfn = std::move(fn);
+	_internal->eventFn = std::move(fn);
 }
 
 bool redox::platform::Window::is_minimized() const {
@@ -168,9 +179,24 @@ void* redox::platform::Window::native_handle() const {
 	return _internal->handle;
 }
 
-void redox::platform::Window::_notify_event(const Event ev) {
-	if (_eventfn)
-		_eventfn(ev);
+void redox::platform::Window::internal::_notify_event(const Event ev) {
+	if (eventFn)
+		eventFn(ev);
 }
+
+HCURSOR redox::platform::Window::internal::get_cursor(const String& cursorName) {
+	if (cursorName == "Hand")
+		return LoadCursor(NULL, IDC_HAND);
+
+	if (cursorName == "Arrow")
+		return LoadCursor(NULL, IDC_ARROW);
+
+	if (cursorName == "Cross")
+		return LoadCursor(NULL, IDC_CROSS);
+
+	//TODO: implement more
+	return LoadCursor(NULL, IDC_HAND);
+}
+
 
 #endif

@@ -42,16 +42,16 @@ struct redox::input::InputSystem::internal {
 
 redox::input::InputSystem::InputSystem(const platform::Window& window) :
 	_internal(make_unique<internal>()) {
-	_internal->useHighDpi = Application::instance->config()->get("Input", "high_dpi");
+	_internal->useHighDpi = Application::instance->config()->get("Input", "HighDpi");
 
 	RDX_LOG("Initializing Input System...", ConsoleColor::GREEN);
 
 	if (_internal->useHighDpi) {
 		RDX_LOG("Registering High DPI devices...");
 		RAWINPUTDEVICE keyboardDevice;
-		keyboardDevice.usUsagePage = 1;
-		keyboardDevice.usUsage = 6;
-		keyboardDevice.dwFlags = 0;
+		keyboardDevice.usUsagePage = 0x01;
+		keyboardDevice.usUsage = 0x06;
+		keyboardDevice.dwFlags = RIDEV_NOLEGACY;
 		keyboardDevice.hwndTarget = reinterpret_cast<HWND>(window.native_handle());
 
 		const RAWINPUTDEVICE devices[] = { keyboardDevice };
@@ -77,14 +77,16 @@ void redox::input::InputSystem::internal::handle_wm_input(const MSG& msg) {
 		auto& kbData = raw->data.keyboard;
 		auto mappingIt = g_vkey_mappings.find(kbData.VKey);
 		if (mappingIt == g_vkey_mappings.end()) {
-			RDX_LOG("Unknown VKey code: {0}", kbData.VKey);
+			RDX_DEBUG_LOG("Unknown VKey: {0}", kbData.VKey);
 			return;
 		}
 
 		if (kbData.Flags == RI_KEY_MAKE) {
+			RDX_DEBUG_LOG("VKey Pressed: {0}", kbData.VKey);
 			keyStates.insert({ mappingIt->second, KeyState::PRESSED });
 		}
 		else if (kbData.Flags == RI_KEY_BREAK) {
+			RDX_DEBUG_LOG("VKey Released: {0}", kbData.VKey);
 			keyStates.insert({ mappingIt->second, KeyState::RELEASED });
 		}
 	}
@@ -93,14 +95,16 @@ void redox::input::InputSystem::internal::handle_wm_input(const MSG& msg) {
 void redox::input::InputSystem::internal::handle_wm_key_du(const MSG& msg) {
 	auto mappingIt = g_vkey_mappings.find(msg.wParam);
 	if (mappingIt == g_vkey_mappings.end()) {
-		RDX_LOG("Unknown VKey code: {0}", msg.wParam);
+		RDX_DEBUG_LOG("Unknown VKey: {0}", msg.wParam);
 		return;
 	}
 
 	if (msg.message == WM_KEYDOWN) {
+		RDX_DEBUG_LOG("VKey Pressed: {0}", msg.wParam);
 		keyStates.insert({ mappingIt->second, KeyState::PRESSED });
 	}
 	else if (msg.message == WM_KEYUP) {
+		RDX_DEBUG_LOG("VKey Released: {0}", msg.wParam);
 		keyStates.insert({ mappingIt->second, KeyState::RELEASED });
 	}
 }
@@ -127,8 +131,7 @@ void redox::input::InputSystem::poll() {
 }
 
 redox::input::KeyState redox::input::InputSystem::key_state(Keys key) {
-	auto state = _internal->keyStates.find(key);
-	if (state != _internal->keyStates.end())
+	if (auto state = _internal->keyStates.find(key); state != _internal->keyStates.end())
 		return state->second;
 
 	return KeyState::NORMAL;
