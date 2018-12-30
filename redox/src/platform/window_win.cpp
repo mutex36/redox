@@ -37,10 +37,10 @@ struct redox::platform::Window::internal {
 	HINSTANCE instance;
 	String classname;
 	EventFn eventFn;
-	u32 width, height;
+	bool closed{ false };
 
 	HCURSOR get_cursor(const String& cursorName);
-	void _notify_event(const Event ev);
+	void notify_event(const Event ev);
 
 	static LRESULT WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };
@@ -58,20 +58,21 @@ LRESULT redox::platform::Window::internal::WndProc(HWND hwnd, UINT msg, WPARAM w
 		auto& internal = *instance->_internal;
 		switch (msg) {
 			case WM_CLOSE: {
-				internal._notify_event(redox::platform::Window::Event::CLOSE);
+				internal.notify_event(redox::platform::Window::Event::CLOSE);
+				internal.closed = true;
 				break;
 			}
 			case WM_SYSCOMMAND: {
 				if ((wp & 0xfff0) == SC_MINIMIZE)
-					internal._notify_event(redox::platform::Window::Event::MINIMIZE);
+					internal.notify_event(redox::platform::Window::Event::MINIMIZE);
 				break;
 			}
 			case WM_KILLFOCUS: {
-				internal._notify_event(redox::platform::Window::Event::LOSTFOCUS);
+				internal.notify_event(redox::platform::Window::Event::LOSTFOCUS);
 				break;
 			}
 			case WM_SETFOCUS: {
-				internal._notify_event(redox::platform::Window::Event::GAINFOCUS);
+				internal.notify_event(redox::platform::Window::Event::GAINFOCUS);
 				break;
 			}
 		}
@@ -144,6 +145,10 @@ void redox::platform::Window::show() const {
 	SetForegroundWindow(_internal->handle);
 }
 
+bool redox::platform::Window::is_closed() {
+	return _internal->closed;
+}
+
 void _process_events(HWND hwnd, UINT rangeMin, UINT rangeMax) {
 	MSG msg;
 	while (PeekMessage(&msg, hwnd, rangeMin, rangeMax, PM_REMOVE)) {
@@ -179,7 +184,7 @@ void* redox::platform::Window::native_handle() const {
 	return _internal->handle;
 }
 
-void redox::platform::Window::internal::_notify_event(const Event ev) {
+void redox::platform::Window::internal::notify_event(const Event ev) {
 	if (eventFn)
 		eventFn(ev);
 }

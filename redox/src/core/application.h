@@ -34,7 +34,7 @@ SOFTWARE.
 namespace redox {
 	class Application {
 	public:
-		Application();
+		Application(Path directory);
 		~Application();
 
 		static Application* instance;
@@ -49,6 +49,7 @@ namespace redox {
 		const Configuration* config() const;
 		const platform::Timer* timer() const;
 		ResourceManager* resource_manager();
+		const input::InputSystem* input_system() const;
 		const graphics::RenderSystem* render_system() const;
 		const graphics::Graphics* graphics() const;
 
@@ -56,6 +57,8 @@ namespace redox {
 		void _init_window();
 
 		static_instance_wrapper _iw{ this };
+
+		Path _directory;
 		Configuration _config;
 		platform::Timer _timer;
 

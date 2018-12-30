@@ -39,7 +39,7 @@ namespace redox::graphics {
 	public:
 		static const RenderSystem* instance();
 
-		RenderSystem(const platform::Window& window);
+		RenderSystem();
 		~RenderSystem();
 
 		void render();
@@ -59,6 +59,7 @@ namespace redox::graphics {
 
 		//@DEMO
 		ResourceHandle<Model> _demoModel;
+		void _demo_cam_move();
 		void _demo_draw();
 		void _demo_load_assets();
 		//@@@

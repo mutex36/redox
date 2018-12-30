@@ -24,9 +24,47 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "graphics.h"
-#include "core\utility.h"
+#include <core\utility.h>
+#include <core\application.h>
 
-#include "core\application.h"
+#ifdef RDX_PLATFORM_WINDOWS 
+#include <platform\windows.h>
+#include <vulkan\vulkan_win32.h>
+#endif
+
+static constexpr const char* RDX_VULKAN_LAYERS[] = {
+	"VK_LAYER_LUNARG_standard_validation"
+};
+
+static constexpr const char* RDX_VULKAN_EXTENSIONS[] = {
+	VK_KHR_SURFACE_EXTENSION_NAME,
+
+#ifdef RDX_PLATFORM_WINDOWS
+	VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#endif
+
+#ifdef RDX_VULKAN_VALIDATION
+	VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+#endif
+};
+
+static constexpr const char* RDX_VULKAN_DEVICE_EXTENSIONS[] = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
+#ifdef RDX_VULKAN_VALIDATION
+static VkBool32 DebugMessageCallback(
+	VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
+	size_t location, int32_t msgCode, const char* pLayerPrefix, const char* pMsg, void* pUserData) {
+
+	RDX_DEBUG_LOG("Debug Message (Layer: {0}, Code: {1}): {2}", pLayerPrefix, msgCode, pMsg);
+
+	RDX_ASSERT_FALSE(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT);
+	RDX_ASSERT_FALSE(flags & VK_DEBUG_REPORT_WARNING_BIT_EXT);
+
+	return VK_FALSE;
+}
+#endif
 
 const redox::graphics::Graphics& redox::graphics::Graphics::instance() {
 	return *Application::instance->graphics();
@@ -40,6 +78,8 @@ redox::graphics::Graphics::Graphics(const platform::Window& window) {
 }
 
 redox::graphics::Graphics::~Graphics() {
+	ResourceManager::instance()->clear_cache(ResourceGroup::GRAPHICS);
+
 	vkDestroySurfaceKHR(_instance, _surface, nullptr);
 
 #ifdef RDX_VULKAN_VALIDATION
@@ -69,7 +109,7 @@ VkQueue redox::graphics::Graphics::graphics_queue() const {
 }
 
 VkQueue redox::graphics::Graphics::present_queue() const {
-	return _graphicsQueue;
+	return _presentationQueue;
 }
 
 uint32_t redox::graphics::Graphics::queue_family() const {
@@ -245,7 +285,7 @@ void redox::graphics::Graphics::_init_device() {
 		throw Exception("failed to create logical device");
 	
 	vkGetDeviceQueue(_device, _queueFamily, 0, &_graphicsQueue);
-	//vkGetDeviceQueue(_device, _queueIndex, 0, &_presentQueue);
+	_presentationQueue = _graphicsQueue; //todo: check if not equal
 }
 
 std::optional<VkPhysicalDevice> redox::graphics::Graphics::_pick_device() {

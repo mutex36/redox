@@ -41,6 +41,10 @@ void redox::graphics::Material::upload() {
 		it.second->upload();
 }
 
+redox::ResourceGroup redox::graphics::Material::res_group() const {
+	return ResourceGroup::GRAPHICS;
+}
+
 void redox::graphics::Material::set_buffer(BufferKeys key, const UniformBuffer& buffer) {
 
 	switch (key) {
@@ -55,6 +59,9 @@ void redox::graphics::Material::set_texture(TextureKeys key, ResourceHandle<Samp
 	switch (key) {
 	case redox::graphics::TextureKeys::ALBEDO:
 		_descSet.bind_resource(*texture, 1);
+		break;
+	case redox::graphics::TextureKeys::NORMAL:
+		_descSet.bind_resource(*texture, 2);
 		break;
 	}
 

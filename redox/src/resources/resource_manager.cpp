@@ -26,25 +26,23 @@ SOFTWARE.
 #include "resource_manager.h"
 #include "core/application.h"
 
-redox::ResourceManager::ResourceManager() :
-	_resourcePath(io::absolute("assets\\")) {
+redox::ResourceManager::ResourceManager(const Path& resourcePath) :
+	_resourcePath(io::absolute(resourcePath)) {
 
 	RDX_LOG("Initializing Resource Manager...", ConsoleColor::GREEN);
 
-	if (Application::instance->config()->get("Resources", "HotReloading")) {
+	auto config = Application::instance->config();
+
+	if (config->get("Resources", "HotReloading")) {
 		_monitor.emplace();
 		_monitor->subscribe([this](auto file, auto event) {
+			std::lock_guard guard(_resourcesMutex);
 			_event_resource_modified(file, event);
 		});
 		_monitor->start(_resourcePath, io::ChangeEvents::FILE_MODIFIED);
 
-		RDX_LOG("Monitoring asset directory {0}", _resourcePath);
+		RDX_LOG("Hot-Reload enabled. Monitoring {0}", resourcePath);
 	}
-}
-
-void redox::ResourceManager::clear_cache() {
-	RDX_LOG("Clearing resource cache...");
-	_cache.clear();
 }
 
 redox::ResourceManager* redox::ResourceManager::instance() {
@@ -53,6 +51,23 @@ redox::ResourceManager* redox::ResourceManager::instance() {
 
 const redox::Path& redox::ResourceManager::resource_path() const {
 	return _resourcePath;
+}
+
+void redox::ResourceManager::clear_cache(ResourceGroup groups) {
+	RDX_LOG("Clearing resource cache...");
+	for (auto it = _cache.begin(); it != _cache.end();) {
+		if (util::check_flag(groups, it->second->res_group())) {
+			it = _cache.erase(it);
+		} else ++it;
+	}
+}
+
+void redox::ResourceManager::_purge_resources() {
+	for (auto it = _cache.begin(); it != _cache.end();) {
+		if (it->second.use_count() == 1) {
+			it = _cache.erase(it);
+		} else ++it;
+	}
 }
 
 redox::Path redox::ResourceManager::resolve_path(const Path& path) const{
@@ -73,8 +88,6 @@ redox::IResourceFactory* redox::ResourceManager::_find_factory(const Path& ext) 
 }
 
 void redox::ResourceManager::_event_resource_modified(const Path& file, io::ChangeEvents event) {
-	std::lock_guard guard(_resourcesLock);
-
 	if (auto cit = _cache.find(file); cit != _cache.end()) {
 		RDX_LOG("Resource {0} modified. Attempting to reload...", file);
 		auto factory = _find_factory(file.extension());
@@ -86,7 +99,7 @@ void redox::ResourceManager::_event_resource_modified(const Path& file, io::Chan
 }
 
 redox::ResourceHandle<redox::IResource> redox::ResourceManager::load(const redox::Path& path) {
-	std::lock_guard guard(_resourcesLock);
+	std::lock_guard guard(_resourcesMutex);
 
 	if (auto cit = _cache.find(path); cit != _cache.end())
 		return cit->second;

@@ -69,7 +69,13 @@ redox::graphics::PipelineHandle redox::graphics::PipelineCache::_create_default_
 	albedoBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	albedoBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	DescriptorLayout dLayout{ { mvpBinding, albedoBinding } };
+	VkDescriptorSetLayoutBinding normalBinding{};
+	normalBinding.binding = 2;
+	normalBinding.descriptorCount = 1;
+	normalBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	normalBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	DescriptorLayout dLayout{ { mvpBinding, albedoBinding, normalBinding } };
 
 	VertexLayout vLayout{};
 	vLayout.binding.binding = 0;

@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 
-typedef unsigned long cgltf_size;
+typedef unsigned long long cgltf_size;
 typedef float cgltf_float;
 typedef int cgltf_bool;
 

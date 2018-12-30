@@ -52,6 +52,7 @@ namespace redox::graphics {
 
 		void bind(const CommandBufferView& commandBuffer);
 		void upload() override;
+		ResourceGroup res_group() const override;
 
 		uint32_t vertex_count() const;
 		uint32_t index_count() const;

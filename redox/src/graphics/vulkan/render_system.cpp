@@ -33,9 +33,9 @@ const redox::graphics::RenderSystem* redox::graphics::RenderSystem::instance() {
 	return Application::instance->render_system();
 }
 
-redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
+redox::graphics::RenderSystem::RenderSystem() :
 	_mvpBuffer(sizeof(mvp_uniform)),
-	_descriptorPool(RDX_VULKAN_MAX_DESC_SETS, RDX_VULKAN_MAX_DESC_SAMPLERS, RDX_VULKAN_MAX_DESC_UBOS) {
+	_descriptorPool(10, 10, 10) {
 
 	_swapchain = make_unique<Swapchain>();
 	_swapchain->set_resize_callback(std::bind(&RenderSystem::_swapchain_event_resize, this));
@@ -55,11 +55,41 @@ redox::graphics::RenderSystem::RenderSystem(const platform::Window& window) :
 	ResourceManager::instance()->register_factory(_shaderFactory.get());
 
 	_demo_load_assets();
-	_demo_draw();
 }
 
 redox::graphics::RenderSystem::~RenderSystem() {
 	Graphics::instance().wait_pending();
+}
+
+void redox::graphics::RenderSystem::_demo_cam_move() {
+	static math::Vec3f camPosition{ 0,0,-2 };
+
+	auto input = Application::instance->input_system();
+	if (input->key_state(input::Keys::W) == input::KeyState::PRESSED) {
+		camPosition.z += 0.5f;
+	}
+	else if (input->key_state(input::Keys::S) == input::KeyState::PRESSED) {
+		camPosition.z -= 0.5f;
+	}
+
+	if (input->key_state(input::Keys::D) == input::KeyState::PRESSED) {
+		camPosition.x += 0.5f;
+	}
+	else if (input->key_state(input::Keys::A) == input::KeyState::PRESSED) {
+		camPosition.x -= 0.5f;
+	}
+
+	_mvpBuffer.map([this](void* data) {
+		auto extent = _swapchain->extent();
+		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
+
+		auto bf = reinterpret_cast<mvp_uniform*>(data);
+		bf->model = math::Mat44f::rotate_y(90);
+		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
+		bf->view = math::Mat44f::translate(camPosition);
+	});
+
+	_mvpBuffer.upload();
 }
 
 void redox::graphics::RenderSystem::_demo_draw() {
@@ -88,21 +118,8 @@ void redox::graphics::RenderSystem::_demo_load_assets() {
 }
 
 void redox::graphics::RenderSystem::render() {
-
-	_mvpBuffer.map([this](void* data) {
-		auto extent = _swapchain->extent();
-		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
-
-		static float k = 0.0;
-		k += 0.02f;
-
-		auto bf = reinterpret_cast<mvp_uniform*>(data);
-		bf->model = math::Mat44f::rotate_y(k);
-		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
-		bf->view = math::Mat44f::translate({ 0,0,-3 });
-	});
-
-	_mvpBuffer.upload();
+	_demo_cam_move();
+	_demo_draw();
 	_swapchain->present();
 }
 
@@ -112,7 +129,6 @@ void redox::graphics::RenderSystem::_swapchain_event_resize() {
 
 	_forwardPass->resize_attachments(_swapchain->extent());
 	_swapchain->create_fbs(*_forwardPass);
-	_demo_draw();
 }
 
 void redox::graphics::RenderSystem::_pipeline_event_create(const PipelineHandle& pipeline) {

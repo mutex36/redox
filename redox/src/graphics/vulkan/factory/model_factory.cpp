@@ -82,8 +82,11 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 
 		auto& material = materials.emplace_back(std::make_shared<Material>(pipeline, dset));
 
-		material->set_texture(TextureKeys::ALBEDO,
-			ResourceManager::instance()->load<SampleTexture>(Path("textures\\") / impMat.albedoMap));
+		auto albedo = ResourceManager::instance()->load<SampleTexture>(Path("textures\\") / impMat.albedoMap);
+		material->set_texture(TextureKeys::ALBEDO, std::move(albedo));
+
+		auto normal = ResourceManager::instance()->load<SampleTexture>(Path("textures\\") / impMat.normalMap);
+		material->set_texture(TextureKeys::NORMAL, std::move(normal));
 	}
 
 	return std::make_shared<Model>(std::move(meshes), std::move(materials));

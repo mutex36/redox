@@ -28,14 +28,6 @@ SOFTWARE.
 
 namespace redox::math {
 	template<class T>
-	constexpr auto round_multiple(T n, T m) {
-		if (m == 0) return n;
-		auto rmd = n % m;
-		if (rmd == 0) return n;
-		return n + m - rmd;
-	}
-
-	template<class T>
 	constexpr auto deg2rad(T n) {
 		return std::tan(n * constants::d2r);
 	}

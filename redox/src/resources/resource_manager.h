@@ -39,9 +39,11 @@ namespace redox {
 	public:
 		static ResourceManager* instance();
 			
-		ResourceManager();
-		void clear_cache();
+		ResourceManager(const Path& resourcePath);
+		~ResourceManager() = default;
+
 		const Path& resource_path() const;
+		void clear_cache(ResourceGroup groups);
 		Path resolve_path(const Path& path) const;
 		void register_factory(IResourceFactory* factory);
 		ResourceHandle<IResource> load(const Path& path);
@@ -55,9 +57,11 @@ namespace redox {
 	private:
 		IResourceFactory* _find_factory(const Path& ext);
 		void _event_resource_modified(const Path& file, io::ChangeEvents event);
+		void _purge_resources();
 
-		std::recursive_mutex _resourcesLock;
 		Path _resourcePath;
+
+		std::recursive_mutex _resourcesMutex;
 		Hashmap<Path, ResourceHandle<IResource>> _cache;
 		Buffer<IResourceFactory*> _factories;
 		std::optional<io::DirectoryWatcher> _monitor;

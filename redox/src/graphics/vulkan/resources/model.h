@@ -39,6 +39,7 @@ namespace redox::graphics {
 
 		~Model() override = default;
 		void upload() override;
+		ResourceGroup res_group() const override;
 
 		const mesh_buffer& meshes() const;
 		const material_buffer& materials() const;

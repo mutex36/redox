@@ -30,19 +30,21 @@ SOFTWARE.
 
 redox::Application* redox::Application::instance = nullptr;
 
-redox::Application::Application() :
-	_config("config\\settings.ini") {
+redox::Application::Application(Path directory) :
+	_directory(std::move(directory)),
+	_config(_directory / "engine.ini") {
 
 	RDX_LOG("Initializing Redox...", ConsoleColor::GREEN);
+	io::current_path(_directory);
 
-	_resourceManager = make_unique<ResourceManager>();
+	_resourceManager = make_unique<ResourceManager>("assets\\");
 	_init_window();
 	_graphics = make_unique<graphics::Graphics>(*_window);
-	_renderSystem = make_unique<graphics::RenderSystem>(*_window);
+	_renderSystem = make_unique<graphics::RenderSystem>();
 	_inputSystem = make_unique<input::InputSystem>(*_window);
 
 	RDX_LOG("Initializing Application...", ConsoleColor::GREEN);
-	RDX_LOG("TestApp-Manifest.json loaded.");
+	RDX_LOG("Manifest.json loaded.");
 }
 
 redox::Application::~Application() {
@@ -68,16 +70,18 @@ void redox::Application::run() {
 		}
 
 		if (_state == State::PAUSED) {
-			std::this_thread::sleep_for(std::chrono::milliseconds{1});
+			std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
 			continue;
 		}
 
 		if (dt_ms >= timestep) {
 			_timer.reset();
-			_renderSystem->render();
 
-			_window->set_title(
-				redox::format("redox engine | {0}fps", 1000. / dt_ms));
+			if (!_window->is_closed()) {
+				_renderSystem->render();
+				_window->set_title(
+					redox::format("redox engine | {0}fps", 1000. / dt_ms));
+			}
 		}
 	}
 }
@@ -85,7 +89,6 @@ void redox::Application::run() {
 void redox::Application::stop() {
 	RDX_LOG("Terminating Application...", ConsoleColor::RED);
 	_state = State::TERMINATED;
-	_resourceManager->clear_cache();
 }
 
 const redox::Configuration* redox::Application::config() const {
@@ -98,6 +101,10 @@ const redox::platform::Timer* redox::Application::timer() const {
 
 redox::ResourceManager* redox::Application::resource_manager() {
 	return _resourceManager.get();
+}
+
+const redox::input::InputSystem* redox::Application::input_system() const {
+	return _inputSystem.get();
 }
 
 const redox::graphics::RenderSystem* redox::Application::render_system() const {
@@ -127,7 +134,7 @@ void redox::Application::_init_window() {
 	_window->set_callback([this](platform::Window::Event event) {
 		switch (event) {
 		case platform::Window::Event::CLOSE:
-			stop(); 
+			stop();
 			break;
 		case platform::Window::Event::LOSTFOCUS:
 			if (_state != State::TERMINATED && !_config.get("Engine", "RunInBackground")) {

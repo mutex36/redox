@@ -25,16 +25,29 @@ SOFTWARE.
 */
 #pragma once
 #include <core/core.h>
+#include <core/utility.h>
 
 namespace redox {
+
+	enum class ResourceGroup {
+		GRAPHICS,
+		AUDIO,
+		PHYSICS,
+		SCRIPT,
+		ENGINE
+	};
 	
 	struct IResource {
 		virtual ~IResource() = default;
 		virtual void upload() = 0;
+		virtual ResourceGroup res_group() const = 0;
 	};
 
 	template<class T>
 	using ResourceHandle = SharedPtr<T>;
+
+	template<class T>
+	using WeakResourceHandle = WeakPtr<T>;
 
 	struct IResourceFactory {
 		virtual ~IResourceFactory() = default;
@@ -43,3 +56,5 @@ namespace redox {
 		virtual bool supports_ext(const Path& ext) = 0;
 	};
 }
+
+RDX_ENABLE_ENUM_FLAGS(::redox::ResourceGroup);

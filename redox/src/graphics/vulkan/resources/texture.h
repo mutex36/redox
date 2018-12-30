@@ -80,10 +80,11 @@ namespace redox::graphics {
 		StagedTexture(const redox::Buffer<byte>& pixels, VkFormat format,
 			const VkExtent2D& size, VkImageUsageFlags usage, VkImageAspectFlags viewAspectFlags);
 
-		~StagedTexture() override = default;
-
 		void map(FunctionRef<void(void*)> fn) const;
+
+		~StagedTexture() override = default;
 		void upload() override;
+		ResourceGroup res_group() const override;
 
 	protected:
 		Buffer _stagingBuffer;

@@ -24,33 +24,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-
-namespace redox {
-	typedef float f32;
-	typedef double f64;
-
-	typedef char i8;
-	typedef int i32;
-	typedef long long i64;
-
-	typedef unsigned char u8;
-	typedef unsigned int u32;
-	typedef unsigned long long u64;
-
-	typedef u8 byte;
-}
-
-#include "platform.h"
-#include "error.h"
-#include "container.h"
+#include "core\core.h"
 
 #ifdef RDX_PLATFORM_WINDOWS
-#define RDX_DLL __declspec(dllexport)
-#define RDX_INLINE __forceinline
-#ifdef RDX_COMPILER_MSVC
-#define RDX_DEBUG_BREAK __debugbreak
-#if _DEBUG
-#define RDX_DEBUG 
-#endif
-#endif
+#include "log.h"
+#include <platform\windows.h>
+
+namespace redox::detail {
+	static const HANDLE std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	static CONSOLE_SCREEN_BUFFER_INFO restore;
+
+	//https://i.imgur.com/oRvcm5L.png
+	static const Hashmap<ConsoleColor, WORD> color_mappings = {
+		{ConsoleColor::RED, 4},
+		{ConsoleColor::GREEN, 11},
+		{ConsoleColor::BLUE, 9},
+		{ConsoleColor::WHITE, 15},
+		{ConsoleColor::GRAY, 8},
+	};
+
+	void impl_set_console_color(redox::ConsoleColor color) {
+		auto it = color_mappings.find(color);
+		if (it != color_mappings.end()) {
+			GetConsoleScreenBufferInfo(std_handle, &restore);
+			SetConsoleTextAttribute(std_handle, it->second);
+		}
+	}
+
+	void impl_restore_console_color() {
+		SetConsoleTextAttribute(std_handle, restore.wAttributes);
+	}
+
+	void impl_debug_log(const redox::String& str) {
+		OutputDebugString(str.c_str());
+	}
+}
 #endif

@@ -25,54 +25,12 @@ SOFTWARE.
 */
 #pragma once
 #include <core\logging\log.h>
-#include <vulkan/vulkan.h>
-
-#ifdef RDX_PLATFORM_WINDOWS 
-#include "platform\windows.h"
-#include <vulkan\vulkan_win32.h>
-#endif
+#include <vulkan\vulkan.h>
 
 #ifdef RDX_DEBUG
 #define RDX_VULKAN_VALIDATION
 #endif
 
-#define RDX_VULKAN_MAX_DESC_SETS 5
-#define RDX_VULKAN_MAX_DESC_SAMPLERS 20
-#define RDX_VULKAN_MAX_DESC_UBOS 5
-
-static constexpr const char* RDX_VULKAN_LAYERS[] = {
-	"VK_LAYER_LUNARG_standard_validation"
-};
-
-static constexpr const char* RDX_VULKAN_EXTENSIONS[] = {
-	VK_KHR_SURFACE_EXTENSION_NAME,
-
-#ifdef RDX_PLATFORM_WINDOWS
-	VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#endif
-
-#ifdef RDX_VULKAN_VALIDATION
-	VK_EXT_DEBUG_REPORT_EXTENSION_NAME
-#endif
-};
-
-static constexpr const char* RDX_VULKAN_DEVICE_EXTENSIONS[] = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-
-#ifdef RDX_VULKAN_VALIDATION
-static VkBool32 DebugMessageCallback(
-	VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
-	size_t location, int32_t msgCode, const char* pLayerPrefix, const char* pMsg, void* pUserData) {
-
-	RDX_DEBUG_LOG("Debug Message (Layer: {0}, Code: {1}): {2}", pLayerPrefix, msgCode, pMsg);
-
-	RDX_ASSERT_FALSE(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT);
-	RDX_ASSERT_FALSE(flags & VK_DEBUG_REPORT_WARNING_BIT_EXT);
-
-	return VK_FALSE;
-}
-#endif
 
 RDX_INLINE redox::String lexical_cast(const VkResult& result) {
 	switch (result) {

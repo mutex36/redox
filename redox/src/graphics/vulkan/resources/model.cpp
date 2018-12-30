@@ -38,6 +38,10 @@ void redox::graphics::Model::upload() {
 		mesh->upload();
 }
 
+redox::ResourceGroup redox::graphics::Model::res_group() const {
+	return ResourceGroup::GRAPHICS;
+}
+
 const redox::graphics::Model::mesh_buffer& redox::graphics::Model::meshes() const {
 	return _meshes;
 }

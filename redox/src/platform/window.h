@@ -56,6 +56,7 @@ namespace redox::platform {
 		~Window();
 
 		void show() const;
+		bool is_closed();
 		void process_events() const;
 		void hide() const;
 		void set_title(const String& title);

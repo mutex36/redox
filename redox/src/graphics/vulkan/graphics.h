@@ -74,6 +74,7 @@ namespace redox::graphics {
 
 		uint32_t _queueFamily;
 		VkQueue _graphicsQueue;
+		VkQueue _presentationQueue;
 
 		VkInstance _instance;
 		VkDevice _device;

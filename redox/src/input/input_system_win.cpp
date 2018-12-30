@@ -32,6 +32,8 @@ SOFTWARE.
 #include "platform\windows.h"
 #include "core\application.h"
 
+//#define RDX_INPUT_DEBUG_KEY_CODES
+
 struct redox::input::InputSystem::internal {
 	Hashmap<Keys, KeyState> keyStates;
 	bool useHighDpi;
@@ -77,34 +79,46 @@ void redox::input::InputSystem::internal::handle_wm_input(const MSG& msg) {
 		auto& kbData = raw->data.keyboard;
 		auto mappingIt = g_vkey_mappings.find(kbData.VKey);
 		if (mappingIt == g_vkey_mappings.end()) {
+#ifdef RDX_INPUT_DEBUG_KEY_CODES
 			RDX_DEBUG_LOG("Unknown VKey: {0}", kbData.VKey);
+#endif
 			return;
 		}
 
 		if (kbData.Flags == RI_KEY_MAKE) {
+#ifdef RDX_INPUT_DEBUG_KEY_CODES
 			RDX_DEBUG_LOG("VKey Pressed: {0}", kbData.VKey);
+#endif
 			keyStates.insert({ mappingIt->second, KeyState::PRESSED });
 		}
 		else if (kbData.Flags == RI_KEY_BREAK) {
+#ifdef RDX_INPUT_DEBUG_KEY_CODES
 			RDX_DEBUG_LOG("VKey Released: {0}", kbData.VKey);
+#endif
 			keyStates.insert({ mappingIt->second, KeyState::RELEASED });
 		}
 	}
 }
 
 void redox::input::InputSystem::internal::handle_wm_key_du(const MSG& msg) {
-	auto mappingIt = g_vkey_mappings.find(msg.wParam);
+	auto mappingIt = g_vkey_mappings.find(static_cast<u32>(msg.wParam));
 	if (mappingIt == g_vkey_mappings.end()) {
+#ifdef RDX_INPUT_DEBUG_KEY_CODES
 		RDX_DEBUG_LOG("Unknown VKey: {0}", msg.wParam);
+#endif
 		return;
 	}
 
 	if (msg.message == WM_KEYDOWN) {
+#ifdef RDX_INPUT_DEBUG_KEY_CODES
 		RDX_DEBUG_LOG("VKey Pressed: {0}", msg.wParam);
+#endif
 		keyStates.insert({ mappingIt->second, KeyState::PRESSED });
 	}
 	else if (msg.message == WM_KEYUP) {
+#ifdef RDX_INPUT_DEBUG_KEY_CODES
 		RDX_DEBUG_LOG("VKey Released: {0}", msg.wParam);
+#endif
 		keyStates.insert({ mappingIt->second, KeyState::RELEASED });
 	}
 }
@@ -130,7 +144,7 @@ void redox::input::InputSystem::poll() {
 	}
 }
 
-redox::input::KeyState redox::input::InputSystem::key_state(Keys key) {
+redox::input::KeyState redox::input::InputSystem::key_state(Keys key) const {
 	if (auto state = _internal->keyStates.find(key); state != _internal->keyStates.end())
 		return state->second;
 

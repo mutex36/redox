@@ -72,10 +72,11 @@ namespace redox::math {
 		}
 
 		RDX_INLINE static Mat44 rotate_y(Scalar alpha) {
+			auto a = deg2rad(alpha);
 			return {
-				simd::set(std::cos(alpha),0,-std::sin(alpha),0),
+				simd::set(std::cos(a),0,-std::sin(a),0),
 				simd::set(0,1,0,0),
-				simd::set(std::sin(alpha),0,std::cos(alpha),0),
+				simd::set(std::sin(a),0,std::cos(a),0),
 				simd::set(0,0,0,1)
 			};
 		}

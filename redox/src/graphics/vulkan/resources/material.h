@@ -49,6 +49,7 @@ namespace redox::graphics {
 
 		void bind(const CommandBufferView& commandBuffer);
 		void upload() override;
+		ResourceGroup res_group() const override;
 
 		void set_buffer(BufferKeys key, const UniformBuffer& buffer);
 		void set_texture(TextureKeys key, ResourceHandle<SampleTexture> texture);

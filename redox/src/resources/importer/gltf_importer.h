@@ -28,7 +28,9 @@ SOFTWARE.
 #include "graphics/vulkan/resources/mesh.h"
 #include "resources/resource.h"
 
+#pragma warning(push, 0)
 #include <thirdparty/gltf/cgltf.h>
+#pragma warning(pop)
 
 namespace redox {
 	class GLTFImporter : public NonCopyable {
@@ -58,6 +60,7 @@ namespace redox {
 			redox::String name;
 			redox::String albedoMap;
 			redox::String normalMap;
+			redox::String aoMap;
 		};
 
 		std::size_t mesh_count() const;

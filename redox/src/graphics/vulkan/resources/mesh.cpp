@@ -56,6 +56,10 @@ void redox::graphics::Mesh::upload() {
 	_indexBuffer.upload();
 }
 
+redox::ResourceGroup redox::graphics::Mesh::res_group() const {
+	return ResourceGroup::GRAPHICS;
+}
+
 uint32_t redox::graphics::Mesh::vertex_count() const {
 	return _vertexCount;
 }

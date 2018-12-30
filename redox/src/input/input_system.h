@@ -41,7 +41,7 @@ namespace redox::input {
 		~InputSystem();
 
 		void poll();
-		KeyState key_state(Keys key);
+		KeyState key_state(Keys key) const;
 
 	private:
 		struct internal;

@@ -39,6 +39,7 @@ namespace redox::graphics {
 
 		VkShaderModule handle() const;
 		void upload() override;
+		ResourceGroup res_group() const override;
 
 	private:
 		VkShaderModule _handle;

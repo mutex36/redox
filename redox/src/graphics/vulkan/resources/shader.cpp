@@ -50,3 +50,7 @@ VkShaderModule redox::graphics::Shader::handle() const {
 void redox::graphics::Shader::upload() {
 	//SPIR-V compile...?
 }
+
+redox::ResourceGroup redox::graphics::Shader::res_group() const {
+	return ResourceGroup::GRAPHICS;
+}

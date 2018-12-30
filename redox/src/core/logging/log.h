@@ -24,13 +24,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
+#include <core\core.h>
+#include <core\string_format.h>
 
-#ifdef RDX_PLATFORM_WINDOWS
-#include "log_win.hpp"
-#endif
-
-#define RDX_LOG(fmt, ...) redox::detail::log(fmt##"\n",  __VA_ARGS__)
+#define RDX_LOG(fmt, ...) redox::detail::log(fmt,  __VA_ARGS__)
 
 #ifdef RDX_DEBUG
 #define RDX_DEBUG_LOG(fmt, ...) redox::detail::debug_log(##fmt##"\n",  __VA_ARGS__)
@@ -56,4 +53,63 @@ if (!redox::detail::assert_true(a))		\
 if (!redox::detail::assert_false(a))	\
 	RDX_DEBUG_BREAK();					\
 
-//###
+namespace redox {
+
+	enum class ConsoleColor {
+		RED, GREEN, BLUE, WHITE, GRAY
+	};
+
+	namespace detail {
+		void impl_debug_log(const String& string);
+		void impl_set_console_color(redox::ConsoleColor color);
+		void impl_restore_console_color();
+
+		template<class...Args>
+		RDX_INLINE void debug_log(redox::StringView fmts, const Args&...args) {
+			auto fmt = redox::format(fmts, args...);
+			impl_debug_log(fmt);
+		}
+
+		template<class...Args>
+		RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
+			auto fmt = redox::format(fmts, args...);
+			auto fst = redox::format("[{0}] {1}", std::chrono::system_clock::now(), fmt);
+			std::puts(fst.c_str());
+		}
+
+		template<class...Args>
+		RDX_INLINE void log(redox::StringView fmts, redox::ConsoleColor color, const Args&...args) {
+			impl_set_console_color(color);
+			log(fmts, args...);
+			impl_restore_console_color();
+		}
+
+		template<class T1>
+		RDX_INLINE bool assert_true(const T1& a) {
+			if (a) return true;
+			log("Assertion failed: {0} == true\n", ConsoleColor::RED, a);
+			return false;
+		}
+
+		template<class T1>
+		RDX_INLINE bool assert_false(const T1& a) {
+			if (!a) return true;
+			log("Assertion failed: {0} == false\n", ConsoleColor::RED, a);
+			return false;
+		}
+
+		template<class T1, class T2>
+		RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
+			if (a == b) return true;
+			log("Assertion failed: {0} == {1}\n", ConsoleColor::RED, a, b);
+			return false;
+		}
+
+		template<class T1, class T2>
+		RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
+			if (a != b) return true;
+			log("Assertion failed: {0} != {1}\n", ConsoleColor::RED, a, b);
+			return false;
+		}
+	}
+}

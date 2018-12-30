@@ -35,7 +35,6 @@ redox::graphics::ShaderFactory::ShaderFactory() :
 
 redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(const Path& path) {
 	auto output = _compiler.compile(path);
-
 	io::File fstream(output, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
 	auto buffer = fstream.read();
 

@@ -193,6 +193,10 @@ void redox::graphics::StagedTexture::upload() {
 	_transfer_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
+redox::ResourceGroup redox::graphics::StagedTexture::res_group() const {
+	return ResourceGroup::GRAPHICS;
+}
+
 redox::graphics::SampleTexture::SampleTexture(const redox::Buffer<byte>& pixels, VkFormat format, const VkExtent2D& size) :
 	StagedTexture(pixels, format, size, VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT) {
 }

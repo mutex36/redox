@@ -63,6 +63,9 @@ redox::GLTFImporter::material_data redox::GLTFImporter::import_material(std::siz
 	if (material.normal_texture.texture)
 		output.normalMap = material.normal_texture.texture->image->uri;
 
+	if (material.occlusion_texture.texture)
+		output.aoMap = material.occlusion_texture.texture->image->uri;
+
 	return output;
 }
 
@@ -132,7 +135,6 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 		}
 		submesh.attributeCount = output.positions.size() / 3 - submesh.attributeOffset;
 		submesh.materialIndex = primitive.material - _data.materials;
-
 		output.submeshes.push_back(std::move(submesh));
 	}
 
