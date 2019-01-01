@@ -29,6 +29,7 @@ SOFTWARE.
 #include <resources/resource.h>
 #include <platform/filesystem.h>
 #include <core/logging/log.h>
+#include <core/event.h>
 
 #include <platform/filesystem.h>
 #include <mutex> //std::mutex, std::lock_guard
@@ -39,27 +40,30 @@ namespace redox {
 	public:
 		static ResourceManager* instance();
 			
-		ResourceManager(const Path& resourcePath);
+		ResourceManager(const Path& builtinResources, const Path& appResources);
 		~ResourceManager() = default;
 
-		const Path& resource_path() const;
 		void clear_cache(ResourceGroup groups);
-		Path resolve_path(const Path& path) const;
 		void register_factory(IResourceFactory* factory);
-		ResourceHandle<IResource> load(const Path& path);
 
-		template<class R>
-		ResourceHandle<R> load(const Path& path) {
+		ResourceHandle<IResource> load(const Path& path);
+		ResourceHandle<IResource> load(const Path& path, const Path& fallback);
+		Path resolve_path(const Path& path) const;
+
+		template<class R, class...Args>
+		ResourceHandle<R> load(Args&&...args) {
 			static_assert(std::is_base_of_v<IResource, R>, "<R> must be of type IResource");
-			return std::static_pointer_cast<R>(load(path));
+			return std::static_pointer_cast<R>(load(std::forward<Args>(args)...));
 		}
+
+		Event<ResourceHandle<IResource>, ResourceHandle<IResource>> onReloadResource;
 
 	private:
 		IResourceFactory* _find_factory(const Path& ext);
 		void _event_resource_modified(const Path& file, io::ChangeEvents event);
-		void _purge_resources();
 
-		Path _resourcePath;
+		Path _appResources;
+		Path _builtinResources;
 
 		std::recursive_mutex _resourcesMutex;
 		Hashmap<Path, ResourceHandle<IResource>> _cache;

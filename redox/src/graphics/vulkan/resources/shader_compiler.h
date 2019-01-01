@@ -30,12 +30,6 @@ SOFTWARE.
 namespace redox::graphics {
 	class ShaderCompiler : public NonCopyable {
 	public:
-		ShaderCompiler(Path outputLocation);
-
-		void clear_output();
-		Path compile(const Path& source) const;
-
-	private:
-		Path _outputLocation;
+		static Path compile(const Path& source, const Path& outputFolder, bool overwrite = false);
 	};
 }

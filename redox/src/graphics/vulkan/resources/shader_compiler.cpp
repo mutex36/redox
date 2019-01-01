@@ -28,25 +28,11 @@ SOFTWARE.
 #include <platform/filesystem.h>
 #include <platform/process.h>
 
-redox::graphics::ShaderCompiler::ShaderCompiler(Path outputLocation)
-	: _outputLocation(std::move(outputLocation)) {
-
-	if (!io::exists(_outputLocation)) {
-		io::create_directory(_outputLocation);
-	}
-}
-
-void redox::graphics::ShaderCompiler::clear_output() {
-	for (auto& p : io::directory_iterator(_outputLocation)) {
-		io::remove_all(p);
-	}
-}
-
-redox::Path redox::graphics::ShaderCompiler::compile(const Path& source) const {
+redox::Path redox::graphics::ShaderCompiler::compile(const Path& source, const Path& outputFolder, bool overwrite) {
 	std::hash<Path> hash;
-	auto cacheFile = _outputLocation / (redox::lexical_cast(hash(source)) + ".spv");
+	auto cacheFile = outputFolder / (redox::lexical_cast(hash(source)) + ".spv");
 
-	if (!io::exists(cacheFile)) {
+	if (!io::exists(cacheFile) || overwrite) {
 		RDX_LOG("Compiling shader...");
 
 		auto args = redox::format("glslangValidator -o {0} -V {1}", cacheFile, source);

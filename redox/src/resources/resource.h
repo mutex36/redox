@@ -27,6 +27,8 @@ SOFTWARE.
 #include <core/core.h>
 #include <core/utility.h>
 
+#include <variant>
+
 namespace redox {
 
 	enum class ResourceGroup {
@@ -52,7 +54,6 @@ namespace redox {
 	struct IResourceFactory {
 		virtual ~IResourceFactory() = default;
 		virtual ResourceHandle<IResource> load(const Path& path) = 0;
-		virtual void reload(const ResourceHandle<IResource>& resource, const Path& path) = 0;
 		virtual bool supports_ext(const Path& ext) = 0;
 	};
 }

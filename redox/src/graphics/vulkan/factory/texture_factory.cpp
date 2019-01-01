@@ -28,36 +28,43 @@ SOFTWARE.
 #define STB_IMAGE_IMPLEMENTATION
 #include <thirdparty/stbimage/stb_image.h>
 
-redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(const Path& path) {
-	
-	[[maybe_unused]] i32 chan, width, height;
-	auto ps = path.string();
-	stbi_uc* pixels = stbi_load(ps.c_str(),
-		&width, &height, &chan, STBI_rgb_alpha);
+namespace {
+	bool load_image(const redox::Path& path, redox::Buffer<redox::byte>& buffer, redox::i32& width, redox::i32& height) {
+		[[maybe_unused]] redox::i32 chan;
+		auto ps = path.string();
+		stbi_uc* pixels = stbi_load(ps.c_str(),
+			&width, &height, &chan, STBI_rgb_alpha);
 
-	if (pixels == nullptr)
-		throw Exception("failed to load texture");
+		if (pixels == nullptr) {
+			RDX_LOG("failed to load image: {0}", redox::ConsoleColor::RED, stbi_failure_reason());
+			return false;
+		}
 
-	auto size = width * height * 4;
-	redox::Buffer<byte> buffer(pixels, pixels + size);
+		RDX_SCOPE_GUARD([pixels]() {
+			stbi_image_free(pixels);
+		});
 
-	stbi_image_free(pixels);
-
-	VkExtent2D dimensions{ 
-		static_cast<uint32_t>(width),
-		static_cast<uint32_t>(height) 
-	};
-
-	return std::make_shared<SampleTexture>(
-		std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM, dimensions);
+		auto size = width * height * 4;
+		buffer.assign(pixels, pixels + size);
+		return true;
+	}
 }
 
-void redox::graphics::TextureFactory::reload(const ResourceHandle<IResource>& resource, const Path& path) {
-	auto texture = std::static_pointer_cast<SampleTexture>(resource);
+redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(const Path& path) {
+	i32 width, height;
+	redox::Buffer<byte> buffer;
+	if (!load_image(path, buffer, width, height)) {
+		return nullptr;
+	}
+
+	return std::make_shared<SampleTexture>(
+		std::move(buffer), VK_FORMAT_R8G8B8A8_UNORM,
+		VkExtent2D{ static_cast<uint32_t>(width), static_cast<uint32_t>(height) 
+	});
 }
 
 bool redox::graphics::TextureFactory::supports_ext(const Path& ext) {
-	Array<StringView, 8> supported = { ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
+	Array<StringView, 9> supported = { ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
 	return std::find(supported.begin(), supported.end(), ext) != supported.end();
 }
 

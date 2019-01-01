@@ -72,7 +72,7 @@
     <Link>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>NotSet</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -96,6 +96,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>NotSet</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -136,6 +137,7 @@
   <ItemGroup>
     <ClInclude Include="src\core\config\config.h" />
     <ClInclude Include="src\core\container.h" />
+    <ClInclude Include="src\core\event.h" />
     <ClInclude Include="src\core\meta\reflection.h" />
     <ClInclude Include="src\core\meta\type_hash.h" />
     <ClInclude Include="src\graphics\vulkan\descriptor_layout.h" />

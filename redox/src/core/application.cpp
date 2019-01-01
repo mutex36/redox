@@ -26,8 +26,6 @@ SOFTWARE.
 #include <core/application.h>
 #include <core/string_format.h>
 
-#include <thread> //std::this_thread::sleep_for
-
 redox::Application* redox::Application::instance = nullptr;
 
 redox::Application::Application(Path directory) :
@@ -35,9 +33,9 @@ redox::Application::Application(Path directory) :
 	_config(_directory / "engine.ini") {
 
 	RDX_LOG("Initializing Redox...", ConsoleColor::GREEN);
-	io::current_path(_directory);
+	_threadId = std::this_thread::get_id();
 
-	_resourceManager = make_unique<ResourceManager>("assets\\");
+	_resourceManager = make_unique<ResourceManager>("builtin_resources\\", _directory / "resources\\");
 	_init_window();
 	_graphics = make_unique<graphics::Graphics>(*_window);
 	_renderSystem = make_unique<graphics::RenderSystem>();
@@ -79,8 +77,8 @@ void redox::Application::run() {
 
 			if (!_window->is_closed()) {
 				_renderSystem->render();
-				_window->set_title(
-					redox::format("redox engine | {0}fps", 1000. / dt_ms));
+				auto fps = 1000. / dt_ms;
+				_window->set_title(redox::format("redox engine | {0}fps", fps));
 			}
 		}
 	}
@@ -89,6 +87,10 @@ void redox::Application::run() {
 void redox::Application::stop() {
 	RDX_LOG("Terminating Application...", ConsoleColor::RED);
 	_state = State::TERMINATED;
+}
+
+std::thread::id redox::Application::main_thread() const {
+	return _threadId;
 }
 
 const redox::Configuration* redox::Application::config() const {

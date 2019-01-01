@@ -31,6 +31,8 @@ SOFTWARE.
 #include <input/input_system.h>
 #include <resources/resource_manager.h>
 
+#include <thread> //std::thread::id
+
 namespace redox {
 	class Application {
 	public:
@@ -46,18 +48,21 @@ namespace redox {
 		void run();
 		void stop();
 
+		std::thread::id main_thread() const;
+
 		const Configuration* config() const;
 		const platform::Timer* timer() const;
-		ResourceManager* resource_manager();
 		const input::InputSystem* input_system() const;
 		const graphics::RenderSystem* render_system() const;
 		const graphics::Graphics* graphics() const;
+
+		ResourceManager* resource_manager();
 
 	private:
 		void _init_window();
 
 		static_instance_wrapper _iw{ this };
-
+		std::thread::id _threadId;
 		Path _directory;
 		Configuration _config;
 		platform::Timer _timer;

@@ -53,6 +53,9 @@ if (!redox::detail::assert_true(a))		\
 if (!redox::detail::assert_false(a))	\
 	RDX_DEBUG_BREAK();					\
 
+#define RDX_ASSERT_MAIN_THREAD															\
+RDX_ASSERT(::redox::Application::instance->main_thread() == std::this_thread::get_id()); \
+
 namespace redox {
 
 	enum class ConsoleColor {

@@ -28,21 +28,18 @@ SOFTWARE.
 
 #include <algorithm> //std::find
 
-redox::graphics::ShaderFactory::ShaderFactory() : 
-	_compiler(io::absolute("assets\\shader\\compiled\\")) {
-	_compiler.clear_output();
-}
-
 redox::ResourceHandle<redox::IResource> redox::graphics::ShaderFactory::load(const Path& path) {
-	auto output = _compiler.compile(path);
+
+	auto outputDir = path.parent_path() / "compiled";
+	if (!io::exists(outputDir)) {
+		io::create_directory(outputDir);
+	}
+
+	auto output = ShaderCompiler::compile(path, outputDir, true);
 	io::File fstream(output, io::File::Mode::READ | io::File::Mode::THROW_IF_INVALID);
+
 	auto buffer = fstream.read();
-
 	return std::make_shared<Shader>(std::move(buffer));
-}
-
-void redox::graphics::ShaderFactory::reload(const ResourceHandle<IResource>& resource, const Path& path) {
-	//TODO: implement
 }
 
 bool redox::graphics::ShaderFactory::supports_ext(const Path& ext) {

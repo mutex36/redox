@@ -35,7 +35,7 @@ const redox::graphics::RenderSystem* redox::graphics::RenderSystem::instance() {
 
 redox::graphics::RenderSystem::RenderSystem() :
 	_mvpBuffer(sizeof(mvp_uniform)),
-	_descriptorPool(10, 10, 10) {
+	_descriptorPool(30, 30, 30) {
 
 	_swapchain = make_unique<Swapchain>();
 	_swapchain->set_resize_callback(std::bind(&RenderSystem::_swapchain_event_resize, this));
@@ -109,7 +109,7 @@ void redox::graphics::RenderSystem::_demo_draw() {
 }
 
 void redox::graphics::RenderSystem::_demo_load_assets() {
-	_demoModel = ResourceManager::instance()->load<Model>("meshes\\centurion.gltf");
+	_demoModel = ResourceManager::instance()->load<Model>("meshes\\scene.gltf");
 
 	for (auto& mat : _demoModel->materials())
 		mat->set_buffer(BufferKeys::MVP, _mvpBuffer);

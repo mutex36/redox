@@ -26,31 +26,25 @@ SOFTWARE.
 #include "resource_manager.h"
 #include "core/application.h"
 
-redox::ResourceManager::ResourceManager(const Path& resourcePath) :
-	_resourcePath(io::absolute(resourcePath)) {
+redox::ResourceManager* redox::ResourceManager::instance() {
+	return Application::instance->resource_manager();
+}
+
+redox::ResourceManager::ResourceManager(const Path& builtinResources, const Path& appResources) :
+	_builtinResources(io::absolute(builtinResources)),
+	_appResources(io::absolute(appResources)) {
 
 	RDX_LOG("Initializing Resource Manager...", ConsoleColor::GREEN);
-
 	auto config = Application::instance->config();
 
 	if (config->get("Resources", "HotReloading")) {
 		_monitor.emplace();
 		_monitor->subscribe([this](auto file, auto event) {
-			std::lock_guard guard(_resourcesMutex);
 			_event_resource_modified(file, event);
 		});
-		_monitor->start(_resourcePath, io::ChangeEvents::FILE_MODIFIED);
-
-		RDX_LOG("Hot-Reload enabled. Monitoring {0}", resourcePath);
+		_monitor->start(_appResources, io::ChangeEvents::FILE_MODIFIED);
+		RDX_LOG("Hot-Reload enabled. Monitoring App resources...");
 	}
-}
-
-redox::ResourceManager* redox::ResourceManager::instance() {
-	return Application::instance->resource_manager();
-}
-
-const redox::Path& redox::ResourceManager::resource_path() const {
-	return _resourcePath;
 }
 
 void redox::ResourceManager::clear_cache(ResourceGroup groups) {
@@ -62,16 +56,11 @@ void redox::ResourceManager::clear_cache(ResourceGroup groups) {
 	}
 }
 
-void redox::ResourceManager::_purge_resources() {
-	for (auto it = _cache.begin(); it != _cache.end();) {
-		if (it->second.use_count() == 1) {
-			it = _cache.erase(it);
-		} else ++it;
+redox::Path redox::ResourceManager::resolve_path(const Path& path) const {
+	if (auto id = path.string(); id.find("builtin:") == 0) {
+		return _builtinResources / id.substr(8);
 	}
-}
-
-redox::Path redox::ResourceManager::resolve_path(const Path& path) const{
-	return _resourcePath / path;
+	return _appResources / path;
 }
 
 void redox::ResourceManager::register_factory(IResourceFactory* factory) {
@@ -88,28 +77,51 @@ redox::IResourceFactory* redox::ResourceManager::_find_factory(const Path& ext) 
 }
 
 void redox::ResourceManager::_event_resource_modified(const Path& file, io::ChangeEvents event) {
+	std::lock_guard guard(_resourcesMutex);
 	if (auto cit = _cache.find(file); cit != _cache.end()) {
 		RDX_LOG("Resource {0} modified. Attempting to reload...", file);
-		auto factory = _find_factory(file.extension());
-		
-		if (factory) {
-			factory->reload(cit->second, file);
-		}
+		auto nr = load(file);
+		onReloadResource.fire(cit->second, nr);
 	}
 }
 
-redox::ResourceHandle<redox::IResource> redox::ResourceManager::load(const redox::Path& path) {
-	std::lock_guard guard(_resourcesMutex);
+redox::ResourceHandle<redox::IResource> redox::ResourceManager::load(const Path& path) {
+	auto resolvedPath = resolve_path(path);
+	if (!io::is_regular_file(resolvedPath)) {
+		RDX_LOG("Resource does not exist: {0}", ConsoleColor::RED, path);
+		return nullptr;
+	}
 
-	if (auto cit = _cache.find(path); cit != _cache.end())
-		return cit->second;
-
-	auto factory = _find_factory(path.extension());
-	if (factory == nullptr)
-		throw Exception("not suitable factory found");
-	
 	RDX_LOG("Loading {0}...", ConsoleColor::WHITE, path);
-	auto resource = factory->load(_resourcePath / path);
-	_cache[path] = resource;
+	std::lock_guard guard(_resourcesMutex);
+	if (auto cit = _cache.find(resolvedPath); cit != _cache.end()) {
+		return cit->second;
+	}
+
+	auto factory = _find_factory(resolvedPath.extension());
+	if (factory == nullptr) {
+		throw Exception(redox::format("no suitable factory found for {0}",
+			resolvedPath.extension()));
+	}
+
+	auto resource = factory->load(resolvedPath);
+	if (resource) {
+		_cache[resolvedPath] = resource;
+	}
 	return resource;
+}
+
+redox::ResourceHandle<redox::IResource> redox::ResourceManager::load(const Path& path, const Path& fallback) {
+	
+	auto resource = load(path);
+	if (resource) {
+		return resource;
+	}
+
+	auto fallbackResource = load(fallback);
+	if (fallbackResource) {
+		return fallbackResource;
+	}
+
+	throw Exception("failed to load resources.");
 }

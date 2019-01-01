@@ -37,7 +37,6 @@ namespace redox::graphics {
 		~ModelFactory() = default;
 
 		ResourceHandle<IResource> load(const Path& path) override;
-		void reload(const ResourceHandle<IResource>& resource, const Path & path) override;
 		bool supports_ext(const Path& ext) override;
 
 	private:

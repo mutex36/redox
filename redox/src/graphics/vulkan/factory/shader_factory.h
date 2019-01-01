@@ -31,13 +31,7 @@ SOFTWARE.
 namespace redox::graphics {
 	class ShaderFactory : public IResourceFactory {
 	public:
-		ShaderFactory();
-		~ShaderFactory() = default;
 		ResourceHandle<IResource> load(const Path& path) override;
-		void reload(const ResourceHandle<IResource>& resource, const Path & path) override;
 		bool supports_ext(const Path& ext) override;
-
-	private:
-		ShaderCompiler _compiler;
 	};
 }

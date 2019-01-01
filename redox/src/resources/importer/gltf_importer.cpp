@@ -75,7 +75,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 		throw Exception("mesh index not found");
 
 	const auto& mesh = _data.meshes[index];
-	mesh_data output{ mesh.name, 0 };
+	mesh_data output{ mesh.name ? mesh.name : "", 0 };
 
 	output.submeshes.reserve(mesh.primitives_count);
 
@@ -93,8 +93,8 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 			output.indices.push_back(value);
 		});
 		submesh.indexCount = output.indices.size() - submesh.indexOffset;
-
 		submesh.attributeOffset = output.positions.size() / 3;
+
 		for (std::size_t attrIndex = 0; attrIndex < primitive.attributes_count; attrIndex++) {
 			const auto& attribute = primitive.attributes[attrIndex];
 			const auto& bufferView = attribute.data->buffer_view;
@@ -133,6 +133,7 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 			}
 			}
 		}
+
 		submesh.attributeCount = output.positions.size() / 3 - submesh.attributeOffset;
 		submesh.materialIndex = primitive.material - _data.materials;
 		output.submeshes.push_back(std::move(submesh));

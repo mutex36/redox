@@ -28,6 +28,5 @@ SOFTWARE.
 #include <stdexcept>
 
 namespace redox {
-
 	using Exception = std::runtime_error;
 }

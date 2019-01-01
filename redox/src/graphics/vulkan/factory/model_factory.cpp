@@ -49,8 +49,8 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 		for (std::size_t i = 0; i < vertices.capacity(); ++i) {
 			vertices.push_back({
 				{ mesh.positions[i * 3 + 0], mesh.positions[i * 3 + 1], mesh.positions[i * 3 + 2] },
-				{ mesh.normals[i * 3 + 0], mesh.normals[i * 3 + 1], mesh.normals[i * 3 + 2] },
-				{ mesh.texcoords[i * 2 + 0], mesh.texcoords[i * 2 + 1] }
+				( mesh.normals.empty() ? math::Vec3f{} : math::Vec3f{ mesh.normals[i * 3 + 0], mesh.normals[i * 3 + 1], mesh.normals[i * 3 + 2] }),
+				( mesh.texcoords.empty() ? math::Vec2f{} : math::Vec2f{ mesh.texcoords[i * 2 + 0], mesh.texcoords[i * 2 + 1] })
 			});
 		}
 
@@ -74,26 +74,31 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 	redox::Buffer<ResourceHandle<Material>> materials;
 	materials.reserve(importer.material_count());
 
+	auto resources = ResourceManager::instance();
+
 	for (std::size_t i = 0; i < importer.material_count(); i++) {
 		auto impMat = importer.import_material(i);
-
 		auto pipeline = _pipelineCache->load(PipelineType::DEFAULT_MESH_PIPELINE);
 		auto dset = _descriptorPool->allocate(pipeline->descriptorLayout());
 
 		auto& material = materials.emplace_back(std::make_shared<Material>(pipeline, dset));
 
-		auto albedo = ResourceManager::instance()->load<SampleTexture>(Path("textures\\") / impMat.albedoMap);
+		Path albedoPath(impMat.albedoMap);
+		auto albedo = resources->load<SampleTexture>(
+			"textures" / albedoPath.filename(),
+			"builtin:textures/uvcheck.png"
+		);
 		material->set_texture(TextureKeys::ALBEDO, std::move(albedo));
 
-		auto normal = ResourceManager::instance()->load<SampleTexture>(Path("textures\\") / impMat.normalMap);
+		Path normalPath(impMat.normalMap);
+		auto normal = resources->load<SampleTexture>(
+			"textures" / normalPath.filename(),
+			"builtin:textures/uvcheck.png"
+		);
 		material->set_texture(TextureKeys::NORMAL, std::move(normal));
 	}
 
 	return std::make_shared<Model>(std::move(meshes), std::move(materials));
-}
-
-void redox::graphics::ModelFactory::reload(const ResourceHandle<IResource>& resource, const Path & path) {
-	//TODO: implement
 }
 
 bool redox::graphics::ModelFactory::supports_ext(const Path& ext) {

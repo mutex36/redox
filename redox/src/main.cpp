@@ -24,6 +24,6 @@ int main(int argc, const char* argv[]) {
 		return 3;
 	}
 
-
+	std::cin.ignore();
 	return 0;
 }
