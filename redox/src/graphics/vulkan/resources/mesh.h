@@ -39,8 +39,8 @@ namespace redox::graphics {
 	};
 
 	struct SubMesh {
-		uint32_t vertexOffset;
-		uint32_t vertexCount;
+		uint32_t indexOffset;
+		uint32_t indexCount;
 		std::size_t materialIndex;
 	};
 

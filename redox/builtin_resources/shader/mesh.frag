@@ -21,17 +21,15 @@ float lambert(vec3 N, vec3 L) {
 }
 
 void main() {
- //    vec3 baseColor = texture(albedoTexture, fragUV).rgb;
- //    vec3 normalColor = texture(normalTexture, fragUV).rgb;
+    vec3 baseColor = texture(albedoTexture, fragUV).rgb;
+    vec3 normalColor = texture(normalTexture, fragUV).rgb;
 
- //    vec3 normal = normalize(fragNormal);
+    vec3 normal = normalize(fragNormal);
 
- //    vec3 ambientColor = ambientStrength * lightColor;
- //    float diffuse = lambert(normal, lightDir);
-	// vec3 diffuseColor = diffuse * lightColor;
+    vec3 ambientColor = ambientStrength * lightColor;
+    float diffuse = lambert(normal, lightDir);
+	vec3 diffuseColor = diffuse * lightColor;
 
-	// vec3 result = (ambientColor + diffuseColor) * baseColor;
-	// outColor = vec4(result, 1);
-
-	outColor = vec4(1,0,0,1);
+	vec3 result = (ambientColor + diffuseColor) * baseColor;
+	outColor = vec4(result, 1);
 }

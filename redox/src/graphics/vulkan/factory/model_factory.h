@@ -42,6 +42,5 @@ namespace redox::graphics {
 	private:
 		const DescriptorPool* _descriptorPool;
 		PipelineCache* _pipelineCache;
-
 	};
 }

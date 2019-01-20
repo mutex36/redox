@@ -183,7 +183,7 @@ redox::graphics::StagedTexture::StagedTexture(const redox::Buffer<byte>& pixels,
 	});
 }
 
-void redox::graphics::StagedTexture::map(FunctionRef<void(void*)> fn) const {
+void redox::graphics::StagedTexture::map(FunctionRef<void(void*)> fn) {
 	_stagingBuffer.map(fn);
 }
 

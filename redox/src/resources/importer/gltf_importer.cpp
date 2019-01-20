@@ -34,8 +34,9 @@ redox::GLTFImporter::GLTFImporter(const Path& filePath) :
 
 	cgltf_options options{};
 	cgltf_result result = cgltf_parse(&options, buffer.data(), buffer.size(), &_data);
-	if (result != cgltf_result_success)
+	if (result != cgltf_result_success) {
 		throw Exception("failed to load gltf file");
+	}
 }
 
 redox::GLTFImporter::~GLTFImporter() {
@@ -51,41 +52,47 @@ std::size_t redox::GLTFImporter::material_count() const {
 }
 
 redox::GLTFImporter::material_data redox::GLTFImporter::import_material(std::size_t index) {
-	if (index >= _data.material_count)
+	if (index >= _data.material_count) {
 		throw Exception("material index not found");
+	}
 
 	const auto& material = _data.materials[index];
-	material_data output{ material.name };
+	material_data output{ material.name ? material.name : "unknown" };
 
-	if (material.pbr.base_color_texture.texture)
+	if (material.pbr.base_color_texture.texture) {
 		output.albedoMap = material.pbr.base_color_texture.texture->image->uri;
+	}
 
-	if (material.normal_texture.texture)
+	if (material.normal_texture.texture) {
 		output.normalMap = material.normal_texture.texture->image->uri;
+	}
 
-	if (material.occlusion_texture.texture)
+	if (material.occlusion_texture.texture) {
 		output.aoMap = material.occlusion_texture.texture->image->uri;
+	}
 
 	return output;
 }
 
 redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t index) {
 
-	if (index >= _data.meshes_count)
+	if (index >= _data.meshes_count) {
 		throw Exception("mesh index not found");
+	}
 
 	const auto& mesh = _data.meshes[index];
-	mesh_data output{ mesh.name ? mesh.name : "", 0 };
+	mesh_data output{ mesh.name ? mesh.name : "" };
 
 	output.submeshes.reserve(mesh.primitives_count);
 
 	for (std::size_t primIndex = 0; primIndex < mesh.primitives_count; primIndex++) {
 		const auto& primitive = mesh.primitives[primIndex];
 
-		if (primitive.type != cgltf_type_triangles)
+		if (primitive.type != cgltf_type_triangles) {
 			throw Exception("unsupported primitive type");
+		}
 
-		submesh_data submesh;
+		submesh_data submesh{};
 		submesh.indexOffset = output.indices.size();
 		output.indices.reserve(primitive.indices->count);
 		read_buffer<uint16_t>(primitive.indices->buffer_view,
@@ -99,8 +106,10 @@ redox::GLTFImporter::mesh_data redox::GLTFImporter::import_mesh(std::size_t inde
 			const auto& attribute = primitive.attributes[attrIndex];
 			const auto& bufferView = attribute.data->buffer_view;
 
-			if (bufferView->type != cgltf_buffer_view_type_vertices)
-				throw Exception("invalid buffer type");
+			if (bufferView->type != cgltf_buffer_view_type_vertices) {
+				RDX_LOG("Skipped buffer of type: {0}", bufferView->type);
+				continue;
+			}
 
 			switch (attribute.name) {
 			case cgltf_attribute_type_position: {

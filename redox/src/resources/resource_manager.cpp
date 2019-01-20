@@ -93,7 +93,8 @@ redox::ResourceHandle<redox::IResource> redox::ResourceManager::load(const Path&
 	}
 
 	RDX_LOG("Loading {0}...", ConsoleColor::WHITE, path);
-	std::lock_guard guard(_resourcesMutex);
+	RDX_UNUSED(std::lock_guard(_resourcesMutex));
+
 	if (auto cit = _cache.find(resolvedPath); cit != _cache.end()) {
 		return cit->second;
 	}

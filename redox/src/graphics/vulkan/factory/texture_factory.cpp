@@ -64,7 +64,7 @@ redox::ResourceHandle<redox::IResource> redox::graphics::TextureFactory::load(co
 }
 
 bool redox::graphics::TextureFactory::supports_ext(const Path& ext) {
-	Array<StringView, 9> supported = { ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
+	Array<StringView, 9> supported = { ".jpeg", ".jpg", ".png", ".tga", ".bmp", ".psd", ".gif", ".hdr", ".pic" };
 	return std::find(supported.begin(), supported.end(), ext) != supported.end();
 }
 

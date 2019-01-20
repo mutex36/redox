@@ -42,7 +42,14 @@ namespace redox::graphics {
 		VkDeviceSize size() const;
 		VkBuffer handle() const;
 
-		void map(FunctionRef<void(void*)> fn) const;
+		template<class T>
+		void map(FunctionRef<void(T*)> fn) {
+			map([&fn](void* data) {
+				fn(reinterpret_cast<T*>(data));
+			});
+		}
+
+		void map(FunctionRef<void(void*)> fn);
 		void copy_to(const Buffer& other);
 		void copy_to(const Texture& texture);
 
@@ -57,9 +64,13 @@ namespace redox::graphics {
 		StagedBuffer(VkDeviceSize size, VkBufferUsageFlags usage);
 		~StagedBuffer() = default;
 
-		template<class Fn>
-		void map(Fn&& fn) {
-			_stagingBuffer.map(std::forward<Fn>(fn));
+		template<class T>
+		void map(FunctionRef<void(T*)> fn) {
+			_stagingBuffer.map<T>(fn);
+		}
+
+		void map(FunctionRef<void(void*)> fn) {
+			_stagingBuffer.map(fn);
 		}
 
 		void upload();

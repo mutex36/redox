@@ -58,10 +58,10 @@ redox::ResourceHandle<redox::IResource> redox::graphics::ModelFactory::load(cons
 		submeshes.reserve(mesh.submeshes.size());
 
 		for (auto& sm : mesh.submeshes) {
-			SubMesh submesh;
+			SubMesh submesh{};
 			submesh.materialIndex = static_cast<uint32_t>(sm.materialIndex);
-			submesh.vertexCount = static_cast<uint32_t>(sm.indexCount);
-			submesh.vertexOffset = static_cast<uint32_t>(sm.indexOffset);
+			submesh.indexCount = static_cast<uint32_t>(sm.indexCount);
+			submesh.indexOffset = static_cast<uint32_t>(sm.indexOffset);
 
 			submeshes.push_back(submesh);
 		}

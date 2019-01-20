@@ -28,7 +28,7 @@ SOFTWARE.
 #include "command_pool.h"
 #include "render_pass.h"
 
-redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass, const VertexLayout& vLayout, 
+redox::graphics::Pipeline::Pipeline(const RenderPass& renderPass, const VertexLayout& vLayout,
 	const DescriptorLayout& dLayout, ResourceHandle<Shader> vs, ResourceHandle<Shader> fs) :
 	_vs(std::move(vs)),
 	_fs(std::move(fs)) {
@@ -126,8 +126,9 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	pipelineLayoutInfo.setLayoutCount = 1;
 	pipelineLayoutInfo.pSetLayouts = &_descriptorSetLayout;
 
-	if (vkCreatePipelineLayout(Graphics::instance().device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(Graphics::instance().device(), &pipelineLayoutInfo, nullptr, &_layout) != VK_SUCCESS) {
 		throw Exception("failed to create pipeline layout");
+	}
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -148,8 +149,7 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	dynamicStateInfo.dynamicStateCount = util::array_size<uint32_t>(dynamicStates);
 	dynamicStateInfo.pDynamicStates = dynamicStates;
 
-	const VkPipelineShaderStageCreateInfo shaderStages[] = 
-		{ vertShaderStageInfo, fragShaderStageInfo };
+	const VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -168,9 +168,11 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	pipelineInfo.renderPass = renderPass.handle();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(
-		Graphics::instance().device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS)
-			throw Exception("failed to create pipeline");
+	if (vkCreateGraphicsPipelines(Graphics::instance().device(),
+		VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_handle) != VK_SUCCESS) {
+
+		throw Exception("failed to create pipeline");
+	}
 }
 
 void redox::graphics::Pipeline::_init_desriptors(const DescriptorLayout& dLayout) {

@@ -35,7 +35,8 @@ const redox::graphics::RenderSystem* redox::graphics::RenderSystem::instance() {
 
 redox::graphics::RenderSystem::RenderSystem() :
 	_mvpBuffer(sizeof(mvp_uniform)),
-	_descriptorPool(30, 30, 30) {
+	//TODO: Set depending on application
+	_descriptorPool(100, 100, 100) {
 
 	_swapchain = make_unique<Swapchain>();
 	_swapchain->set_resize_callback(std::bind(&RenderSystem::_swapchain_event_resize, this));
@@ -44,7 +45,8 @@ redox::graphics::RenderSystem::RenderSystem() :
 	_swapchain->create_fbs(*_forwardPass);
 
 	_pipelineCache = make_unique<PipelineCache>(_forwardPass.get());
-	_pipelineCache->set_creation_callback(std::bind(&RenderSystem::_pipeline_event_create, this, std::placeholders::_1));
+	_pipelineCache->set_creation_callback(std::bind(
+		&RenderSystem::_pipeline_event_create, this, std::placeholders::_1));
 
 	_textureFactory = make_unique<TextureFactory>();
 	_modelFactory = make_unique<ModelFactory>(&_descriptorPool, _pipelineCache.get());
@@ -62,7 +64,8 @@ redox::graphics::RenderSystem::~RenderSystem() {
 }
 
 void redox::graphics::RenderSystem::_demo_cam_move() {
-	static math::Vec3f camPosition{ 0,0,-2 };
+	static math::Vec3f camPosition{ 0,0,-30 };
+	//static float k = 0.0f;
 
 	auto input = Application::instance->input_system();
 	if (input->key_state(input::Keys::W) == input::KeyState::PRESSED) {
@@ -79,14 +82,20 @@ void redox::graphics::RenderSystem::_demo_cam_move() {
 		camPosition.x -= 0.5f;
 	}
 
-	_mvpBuffer.map([this](void* data) {
+	if (input->key_state(input::Keys::Q) == input::KeyState::PRESSED) {
+		camPosition.y += 0.5f;
+	}
+	else if (input->key_state(input::Keys::E) == input::KeyState::PRESSED) {
+		camPosition.y -= 0.5f;
+	}
+
+	_mvpBuffer.map<mvp_uniform>([this](mvp_uniform* data) {
 		auto extent = _swapchain->extent();
 		auto ratio = static_cast<f32>(extent.width) / static_cast<f32>(extent.height);
 
-		auto bf = reinterpret_cast<mvp_uniform*>(data);
-		bf->model = math::Mat44f::rotate_y(90);
-		bf->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 100.f);
-		bf->view = math::Mat44f::translate(camPosition);
+		data->model = math::Mat44f::rotate_euler({ -90, 0, 0 });
+		data->projection = math::Mat44f::perspective(45.0f, ratio, 0.1f, 1000.f);
+		data->view = math::Mat44f::translate(camPosition);
 	});
 
 	_mvpBuffer.upload();
@@ -94,14 +103,14 @@ void redox::graphics::RenderSystem::_demo_cam_move() {
 
 void redox::graphics::RenderSystem::_demo_draw() {
 	_swapchain->visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
-		auto rg = commandBuffer.scoped_record();
-		auto pg = _forwardPass->scoped_begin(frameBuffer, commandBuffer);
+		RDX_UNUSED(commandBuffer.scoped_record());
+		RDX_UNUSED(_forwardPass->scoped_begin(frameBuffer, commandBuffer));
 
 		for (const auto& mesh : _demoModel->meshes()) {
 			for (const auto& sm : mesh->submeshes()) {
 				auto material = _demoModel->materials()[sm.materialIndex];
 				commandBuffer.submit(IndexedDraw{
-					mesh, material, {sm.vertexOffset, sm.vertexCount}
+					mesh, material, {sm.indexOffset, sm.indexCount}
 				});
 			}
 		}
@@ -111,8 +120,13 @@ void redox::graphics::RenderSystem::_demo_draw() {
 void redox::graphics::RenderSystem::_demo_load_assets() {
 	_demoModel = ResourceManager::instance()->load<Model>("meshes\\scene.gltf");
 
-	for (auto& mat : _demoModel->materials())
+	if (!_demoModel) {
+		throw Exception("failed to load model.");
+	}
+
+	for (auto& mat : _demoModel->materials()) {
 		mat->set_buffer(BufferKeys::MVP, _mvpBuffer);
+	}
 
 	_demoModel->upload();
 }
@@ -124,8 +138,9 @@ void redox::graphics::RenderSystem::render() {
 }
 
 void redox::graphics::RenderSystem::_swapchain_event_resize() {
-	for (const auto& p : *_pipelineCache)
+	for (const auto& p : *_pipelineCache) {
 		p.second->set_viewport(_swapchain->extent());
+	}
 
 	_forwardPass->resize_attachments(_swapchain->extent());
 	_swapchain->create_fbs(*_forwardPass);

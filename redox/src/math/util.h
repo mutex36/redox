@@ -29,6 +29,6 @@ SOFTWARE.
 namespace redox::math {
 	template<class T>
 	constexpr auto deg2rad(T n) {
-		return std::tan(n * constants::d2r);
+		return n * constants::d2r;
 	}
 }

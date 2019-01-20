@@ -39,8 +39,9 @@ redox::graphics::Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(Graphics::instance().device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateBuffer(Graphics::instance().device(), &bufferInfo, nullptr, &_handle) != VK_SUCCESS) {
 		throw Exception("failed to create buffer");
+	}
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(Graphics::instance().device(), _handle, &memRequirements);
@@ -50,13 +51,15 @@ redox::graphics::Buffer::Buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	allocInfo.allocationSize = memRequirements.size;
 
 	auto memType = Graphics::instance().pick_memory_type(memRequirements.memoryTypeBits, memFlags);
-	if (!memType)
+	if (!memType) {
 		throw Exception("failed to determine memory type");
+	}
 
 	allocInfo.memoryTypeIndex = memType.value();
 
-	if (vkAllocateMemory(Graphics::instance().device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS)
+	if (vkAllocateMemory(Graphics::instance().device(), &allocInfo, nullptr, &_memory) != VK_SUCCESS) {
 		throw Exception("failed to allocate vertex buffer memory");
+	}
 
 	vkBindBufferMemory(Graphics::instance().device(), _handle, _memory, 0);
 }
@@ -74,7 +77,7 @@ VkBuffer redox::graphics::Buffer::handle() const {
 	return _handle;
 }
 
-void redox::graphics::Buffer::map(FunctionRef<void(void*)> fn) const {
+void redox::graphics::Buffer::map(FunctionRef<void(void*)> fn) {
 	void* data;
 	vkMapMemory(Graphics::instance().device(), _memory, 0, _size, 0, &data);
 	fn(data);
@@ -90,18 +93,11 @@ void redox::graphics::Buffer::copy_to(const Buffer& other) {
 }
 
 void redox::graphics::Buffer::copy_to(const Texture& texture) {
-	VkBufferImageCopy region{};
-	region.bufferOffset = 0;
-	region.bufferRowLength = 0;
-	region.bufferImageHeight = 0;
-
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.mipLevel = 0;
-	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 1;
-	region.imageOffset = { 0, 0, 0 };
-
 	const auto& ts = texture.dimension();
+
+	VkBufferImageCopy region{};
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.layerCount = 1;
 	region.imageExtent = { ts.width, ts.height, 1 };
 
 	CommandPool::aux_submit([this, &texture, &region](CommandBufferView cbo) {

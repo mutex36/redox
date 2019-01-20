@@ -107,7 +107,7 @@ redox::graphics::CommandBufferView::CommandBufferView(VkCommandBuffer handle) :
 void redox::graphics::CommandBufferView::submit(const IndexedDraw& command) const {
 	command.material->bind(_handle);
 	command.mesh->bind(_handle);
-	vkCmdDrawIndexed(_handle, command.range.start, 1, command.range.end, 0, 0);
+	vkCmdDrawIndexed(_handle, command.range.count, 1, command.range.start, 0, 0);
 }
 
 void redox::graphics::CommandBufferView::begin_record() const {
@@ -115,13 +115,15 @@ void redox::graphics::CommandBufferView::begin_record() const {
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-	if (vkBeginCommandBuffer(_handle, &beginInfo) != VK_SUCCESS)
+	if (vkBeginCommandBuffer(_handle, &beginInfo) != VK_SUCCESS) {
 		throw Exception("failed to begin recording of commandBuffer");
+	}
 }
 
 void redox::graphics::CommandBufferView::end_record() const {
-	if (vkEndCommandBuffer(_handle) != VK_SUCCESS)
+	if (vkEndCommandBuffer(_handle) != VK_SUCCESS) {
 		throw Exception("failed to end recording of commandBuffer");
+	}
 }
 
 VkCommandBuffer redox::graphics::CommandBufferView::handle() const {

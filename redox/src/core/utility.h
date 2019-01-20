@@ -30,8 +30,11 @@ SOFTWARE.
 #define RDX_HELPER_CONCAT_IMPL(x,y) x##y
 #define RDX_HELPER_CONCAT(x,y) RDX_HELPER_CONCAT_IMPL(x,y)
 
-#define RDX_SCOPE_GUARD(fn)															\
-auto RDX_HELPER_CONCAT(_scope_guard_, __COUNTER__) = redox::make_scope_guard(fn)	\
+#define RDX_SCOPE_GUARD(fn)																			\
+[[maybe_unused]] auto RDX_HELPER_CONCAT(_scope_guard_, __COUNTER__) = redox::make_scope_guard(fn)	\
+
+#define RDX_UNUSED(v)												\
+[[maybe_unused]] auto RDX_HELPER_CONCAT(_unused_, __COUNTER__) = v	\
 
 #define RDX_ENABLE_ENUM_FLAGS(en) 								\
 	template<>													\

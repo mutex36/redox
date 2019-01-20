@@ -32,14 +32,14 @@ SOFTWARE.
 namespace redox::graphics {
 	class Graphics;
 
-	struct VertexRange {
-		uint32_t start, end;
+	struct IndexRange {
+		uint32_t start, count;
 	};
 
 	struct IndexedDraw {
 		ResourceHandle<Mesh> mesh;
 		ResourceHandle<Material> material;
-		VertexRange range;
+		IndexRange range;
 	};
 
 	class CommandBufferView {

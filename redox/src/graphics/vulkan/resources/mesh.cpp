@@ -45,9 +45,9 @@ redox::graphics::Mesh::Mesh(const redox::Buffer<MeshVertex>& vertices,
 }
 
 void redox::graphics::Mesh::bind(const CommandBufferView& commandBuffer) {
-	VkBuffer vertexBuffers[] = { _vertexBuffer.handle() };
-	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer.handle(), 0, 1, vertexBuffers, offsets);
+	VkBuffer vb = _vertexBuffer.handle();
+	VkDeviceSize offset = 0;
+	vkCmdBindVertexBuffers(commandBuffer.handle(), 0, 1, &vb, &offset);
 	vkCmdBindIndexBuffer(commandBuffer.handle(), _indexBuffer.handle(), 0, VK_INDEX_TYPE_UINT16);
 }
 
