@@ -266,6 +266,7 @@ void redox::graphics::Graphics::_init_device() {
 	queueInfo.pQueuePriorities = &queuePriority;
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.fillModeNonSolid = VK_TRUE;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo{};
@@ -301,8 +302,10 @@ std::optional<VkPhysicalDevice> redox::graphics::Graphics::_pick_device() {
 
 		RDX_LOG("Physical device: {0}", deviceProperties.deviceName);
 
-		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+
+		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
 			return dev;
+		}
 	}
 
 	return std::nullopt;

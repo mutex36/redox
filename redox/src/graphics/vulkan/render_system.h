@@ -52,7 +52,6 @@ namespace redox::graphics {
 		};
 		
 		void _swapchain_event_resize();
-		void _pipeline_event_create(const PipelineHandle& pipeline);
 
 		UniformBuffer _mvpBuffer;
 		DescriptorPool _descriptorPool;

@@ -9,18 +9,14 @@ namespace redox {
 	public:
 		using FnType = Function<void(Signature...)>;
 
-		Event& operator+=(FnType&& fn) {
-			_subscriber.push_back(std::move(fn));
-			return *this;
-		}
-
-		Event& operator+=(const FnType& fn) {
-			_subscriber.push_back(fn);
+		template<class Fn>
+		Event& operator+=(Fn&& fn) {
+			_subscriber.emplace_back(std::forward<Fn>(fn));
 			return *this;
 		}
 
 		template<class...Args>
-		void fire(Args&&...args) {
+		void operator()(Args&&...args) {
 			for (const auto& fn : _subscriber) {
 				fn(std::forward<Args>(args)...);
 			}

@@ -87,7 +87,7 @@ void redox::graphics::Buffer::map(FunctionRef<void(void*)> fn) {
 void redox::graphics::Buffer::copy_to(const Buffer& other) {
 	VkBufferCopy copyRegion{};
 	copyRegion.size = _size;
-	CommandPool::aux_submit([this, &other, &copyRegion](CommandBufferView cbo) {
+	AuxCommandPool::instance().submit([this, &other, &copyRegion](CommandBufferView cbo) {
 		vkCmdCopyBuffer(cbo.handle(), _handle, other.handle(), 1, &copyRegion);
 	});
 }
@@ -100,7 +100,7 @@ void redox::graphics::Buffer::copy_to(const Texture& texture) {
 	region.imageSubresource.layerCount = 1;
 	region.imageExtent = { ts.width, ts.height, 1 };
 
-	CommandPool::aux_submit([this, &texture, &region](CommandBufferView cbo) {
+	AuxCommandPool::instance().submit([this, &texture, &region](CommandBufferView cbo) {
 		vkCmdCopyBufferToImage(cbo.handle(), _handle, texture.handle(),
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	});

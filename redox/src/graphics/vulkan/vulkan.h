@@ -31,6 +31,7 @@ SOFTWARE.
 #define RDX_VULKAN_VALIDATION
 #endif
 
+//#define RDX_DEBUG_WIREFRAME
 
 RDX_INLINE redox::String lexical_cast(const VkResult& result) {
 	switch (result) {

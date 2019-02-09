@@ -81,7 +81,7 @@ void redox::ResourceManager::_event_resource_modified(const Path& file, io::Chan
 	if (auto cit = _cache.find(file); cit != _cache.end()) {
 		RDX_LOG("Resource {0} modified. Attempting to reload...", file);
 		auto nr = load(file);
-		onReloadResource.fire(cit->second, nr);
+		onReloadResource(cit->second, nr);
 	}
 }
 

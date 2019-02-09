@@ -24,6 +24,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
+#include <core/event.h>
+
 #include "pipeline.h"
 
 namespace redox::graphics {
@@ -40,21 +42,19 @@ namespace redox::graphics {
 
 	class PipelineCache : public NonCopyable {
 	public:
-		using PipelineCreatedCallback = Function<void(const PipelineHandle&)>;
 
 		PipelineCache(const RenderPass* rp);
-
-		void set_creation_callback(PipelineCreatedCallback callback);
 		PipelineHandle load(PipelineType type);
 
 		auto begin() const { return _pipelines.begin(); }
 		auto end() const { return _pipelines.end(); }
 
+		Event<PipelineHandle> onCreate;
+
 	private:
 		PipelineHandle _create_pipeline(PipelineType type);
 		PipelineHandle _create_default_mesh_pipeline();
 
-		PipelineCreatedCallback _createCallback;
 		Hashmap<PipelineType, PipelineHandle> _pipelines;
 		const RenderPass* _renderPass;
 	};

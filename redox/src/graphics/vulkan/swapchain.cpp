@@ -48,10 +48,6 @@ redox::graphics::Swapchain::~Swapchain() {
 	_destroy();
 }
 
-void redox::graphics::Swapchain::set_resize_callback(ResizeCallback callback) {
-	_resizeCallback = std::move(callback);
-}
-
 void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 	_frameBuffers.clear();
 	_frameBuffers.reserve(_imageViews.size());
@@ -111,7 +107,7 @@ void redox::graphics::Swapchain::_reload() {
 	_init();
 	_init_semaphores();
 	_init_images();
-	_resizeCallback();
+	onResize();
 }
 
 VkSwapchainKHR redox::graphics::Swapchain::handle() const {

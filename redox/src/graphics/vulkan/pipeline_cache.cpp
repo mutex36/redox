@@ -32,16 +32,12 @@ redox::graphics::PipelineCache::PipelineCache(const RenderPass* rp) :
 	_renderPass(rp) {
 }
 
-void redox::graphics::PipelineCache::set_creation_callback(PipelineCreatedCallback callback) {
-	_createCallback = std::move(callback);
-}
-
 redox::graphics::PipelineHandle redox::graphics::PipelineCache::load(PipelineType type) {
 	if (auto hit = _pipelines.find(type); hit != _pipelines.end())
 		return hit->second;
 
 	auto pipeline = _create_pipeline(type);
-	_createCallback(pipeline);
+	onCreate(pipeline);
 	return pipeline;
 }
 

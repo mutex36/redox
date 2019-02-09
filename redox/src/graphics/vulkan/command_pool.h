@@ -70,13 +70,29 @@ namespace redox::graphics {
 		void free_all();
 		void allocate(uint32_t numBuffers);
 
-		//TODO: put somewhere else...
-		static void aux_submit(FunctionRef<void(const CommandBufferView&)> fn);
-
 		CommandBufferView operator[](std::size_t index) const;
 
-	private:
+	protected:
 		VkCommandPool _handle;
 		redox::Buffer<VkCommandBuffer> _commandBuffers;
 	};
+
+	class AuxCommandPool : public CommandPool {
+	public:
+		AuxCommandPool();
+		~AuxCommandPool();
+
+		static const AuxCommandPool& instance() {
+			static AuxCommandPool instance;
+			return instance;
+		}
+
+		void submit(FunctionRef<void(
+			const CommandBufferView&)> fn, bool sync = true,
+			uint64_t timeout = std::numeric_limits<uint64_t>::max()) const noexcept;
+
+	private:
+		VkFence _queueFence;
+	};
+
 }

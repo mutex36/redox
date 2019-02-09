@@ -42,7 +42,7 @@ namespace redox::graphics {
 
 	class Pipeline {
 	public:
-		Pipeline(const RenderPass& renderPass, 
+		Pipeline(const RenderPass& renderPass,
 			const VertexLayout& vLayout, const DescriptorLayout& dLayout,
 			ResourceHandle<Shader> vs, ResourceHandle<Shader> fs);
 		~Pipeline();
@@ -60,10 +60,11 @@ namespace redox::graphics {
 
 		VkPipeline _handle;
 		VkPipelineLayout _layout;
-		VkExtent2D _viewport;
 
 		VkDescriptorSetLayout _descriptorSetLayout;
 		ResourceHandle<Shader> _vs;
 		ResourceHandle<Shader> _fs;
+
+		VkExtent2D _viewport{ 0,0 };
 	};
 }

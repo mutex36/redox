@@ -24,8 +24,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #pragma once
-#include "core\core.h"
-#include "core\non_copyable.h"
+#include <core\core.h>
+#include <core\event.h>
+#include <core\non_copyable.h>
 
 #include "vulkan.h"
 #include "command_pool.h"
@@ -37,12 +38,9 @@ namespace redox::graphics {
 
 	class Swapchain : public NonCopyable {
 	public:
-		using ResizeCallback = Function<void()>;
-
 		Swapchain();
 		~Swapchain();
 
-		void set_resize_callback(ResizeCallback callback);
 		void create_fbs(const RenderPass& renderPass);
 		void visit(FunctionRef<void(const Framebuffer&, const CommandBufferView&)> fn) const;
 		void present();
@@ -50,14 +48,14 @@ namespace redox::graphics {
 		VkSwapchainKHR handle() const;
 		VkExtent2D extent() const;
 
+		redox::Event<> onResize;
+
 	private:
 		void _init();
 		void _init_semaphores();
 		void _init_images();
 		void _destroy();
 		void _reload();
-
-		ResizeCallback _resizeCallback;
 
 		redox::Buffer<VkImageView> _imageViews;
 		redox::Buffer<Framebuffer> _frameBuffers;

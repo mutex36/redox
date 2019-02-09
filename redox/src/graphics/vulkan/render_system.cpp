@@ -39,14 +39,17 @@ redox::graphics::RenderSystem::RenderSystem() :
 	_descriptorPool(100, 100, 100) {
 
 	_swapchain = make_unique<Swapchain>();
-	_swapchain->set_resize_callback(std::bind(&RenderSystem::_swapchain_event_resize, this));
+	_swapchain->onResize += [this]() {
+		_swapchain_event_resize();
+	};
 
 	_forwardPass = make_unique<RenderPass>(_swapchain->extent());
 	_swapchain->create_fbs(*_forwardPass);
 
 	_pipelineCache = make_unique<PipelineCache>(_forwardPass.get());
-	_pipelineCache->set_creation_callback(std::bind(
-		&RenderSystem::_pipeline_event_create, this, std::placeholders::_1));
+	_pipelineCache->onCreate += [this](PipelineHandle pipeline) {
+		pipeline->set_viewport(_swapchain->extent());
+	};
 
 	_textureFactory = make_unique<TextureFactory>();
 	_modelFactory = make_unique<ModelFactory>(&_descriptorPool, _pipelineCache.get());
@@ -65,7 +68,6 @@ redox::graphics::RenderSystem::~RenderSystem() {
 
 void redox::graphics::RenderSystem::_demo_cam_move() {
 	static math::Vec3f camPosition{ 0,0,-30 };
-	//static float k = 0.0f;
 
 	auto input = Application::instance->input_system();
 	if (input->key_state(input::Keys::W) == input::KeyState::PRESSED) {
@@ -144,8 +146,4 @@ void redox::graphics::RenderSystem::_swapchain_event_resize() {
 
 	_forwardPass->resize_attachments(_swapchain->extent());
 	_swapchain->create_fbs(*_forwardPass);
-}
-
-void redox::graphics::RenderSystem::_pipeline_event_create(const PipelineHandle& pipeline) {
-	pipeline->set_viewport(_swapchain->extent());
 }

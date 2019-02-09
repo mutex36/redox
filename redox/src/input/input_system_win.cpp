@@ -145,8 +145,9 @@ void redox::input::InputSystem::poll() {
 }
 
 redox::input::KeyState redox::input::InputSystem::key_state(Keys key) const {
-	if (auto state = _internal->keyStates.find(key); state != _internal->keyStates.end())
+	if (auto state = _internal->keyStates.find(key); state != _internal->keyStates.end()) {
 		return state->second;
+	}
 
 	return KeyState::NORMAL;
 }

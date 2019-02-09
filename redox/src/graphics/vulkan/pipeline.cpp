@@ -89,7 +89,11 @@ void redox::graphics::Pipeline::_init(const VertexLayout& vLayout, const RenderP
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
+#ifndef RDX_DEBUG_WIREFRAME
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+#else 
+	rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+#endif
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;

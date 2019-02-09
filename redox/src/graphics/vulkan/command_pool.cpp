@@ -32,8 +32,9 @@ redox::graphics::CommandPool::CommandPool(VkCommandPoolCreateFlags flags) {
 	poolInfo.queueFamilyIndex = Graphics::instance().queue_family();
 	poolInfo.flags = flags; // VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-	if (vkCreateCommandPool(Graphics::instance().device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS)
+	if (vkCreateCommandPool(Graphics::instance().device(), &poolInfo, nullptr, &_handle) != VK_SUCCESS) {
 		throw Exception("failed to create commandpool");
+	}
 }
 
 redox::graphics::CommandPool::~CommandPool() {
@@ -54,47 +55,11 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = static_cast<uint32_t>(_commandBuffers.size());
 
-	if (vkAllocateCommandBuffers(Graphics::instance().device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
+	if (vkAllocateCommandBuffers(Graphics::instance().device(), &allocInfo, _commandBuffers.data()) != VK_SUCCESS) {
 		throw Exception("failed to create commandbuffers");
+	}
 }
 
-void redox::graphics::CommandPool::aux_submit(FunctionRef<void(const CommandBufferView&)> fn) {
-
-	//TODO: make it live somewhere...
-	CommandPool cp(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
-
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = cp._handle;
-	allocInfo.commandBufferCount = 1;
-
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(Graphics::instance().device(), &allocInfo, &commandBuffer);
-
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-	fn(CommandBufferView{ commandBuffer });
-	vkEndCommandBuffer(commandBuffer);
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	VkFence fence;
-	VkFenceCreateInfo fenceInfo{};
-	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	vkCreateFence(Graphics::instance().device(), &fenceInfo, VK_NULL_HANDLE, &fence);
-
-	vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, fence);
-	vkWaitForFences(Graphics::instance().device(), 1, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkFreeCommandBuffers(Graphics::instance().device(), cp._handle, 1, &commandBuffer);
-	vkDestroyFence(Graphics::instance().device(), fence, VK_NULL_HANDLE);
-}
 
 redox::graphics::CommandBufferView redox::graphics::CommandPool::operator[](std::size_t index) const {
 	return _commandBuffers[index];
@@ -128,4 +93,49 @@ void redox::graphics::CommandBufferView::end_record() const {
 
 VkCommandBuffer redox::graphics::CommandBufferView::handle() const {
 	return _handle;
+}
+
+redox::graphics::AuxCommandPool::AuxCommandPool()
+	: CommandPool(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT) {
+
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	vkCreateFence(Graphics::instance().device(), &fenceInfo, VK_NULL_HANDLE, &_queueFence);
+}
+
+redox::graphics::AuxCommandPool::~AuxCommandPool() {
+	vkDestroyFence(Graphics::instance().device(), _queueFence, VK_NULL_HANDLE);
+}
+
+void redox::graphics::AuxCommandPool::submit(FunctionRef<void(const CommandBufferView&)> fn,
+	bool sync, uint64_t timeout) const noexcept {
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = _handle;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(Graphics::instance().device(), &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	fn(CommandBufferView{ commandBuffer });
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, sync ? _queueFence : NULL);
+	if (sync) {
+		vkWaitForFences(Graphics::instance().device(), 1, &_queueFence, VK_TRUE, timeout);
+		vkResetFences(Graphics::instance().device(), 1, &_queueFence);
+	}
+	vkFreeCommandBuffers(Graphics::instance().device(), _handle, 1, &commandBuffer);
 }

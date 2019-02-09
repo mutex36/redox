@@ -167,7 +167,7 @@ void redox::graphics::Texture::_transfer_layout(VkImageLayout oldLayout, VkImage
 	}
 	else throw Exception("unsupported layout transition");
 
-	CommandPool::aux_submit([&](CommandBufferView cbo) {
+	AuxCommandPool::instance().submit([&](CommandBufferView cbo) {
 		vkCmdPipelineBarrier(cbo.handle(), sourceStage, destinationStage,
 			0, 0, nullptr, 0, nullptr, 1, &barrier);
 	});
