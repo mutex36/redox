@@ -36,8 +36,9 @@ redox::graphics::Swapchain::Swapchain() {
 }
 
 void redox::graphics::Swapchain::_destroy() {
-	for (auto& iv : _imageViews)
+	for (auto& iv : _imageViews) {
 		vkDestroyImageView(Graphics::instance().device(), iv, nullptr);
+	}
 
 	vkDestroySwapchainKHR(Graphics::instance().device(), _handle, nullptr);
 	vkDestroySemaphore(Graphics::instance().device(), _renderFinishedSemaphore, nullptr);
@@ -52,13 +53,15 @@ void redox::graphics::Swapchain::create_fbs(const RenderPass& renderPass) {
 	_frameBuffers.clear();
 	_frameBuffers.reserve(_imageViews.size());
 
-	for (size_t i = 0; i < _frameBuffers.capacity(); i++)
+	for (size_t i = 0; i < _frameBuffers.capacity(); i++) {
 		_frameBuffers.emplace_back(renderPass, _imageViews[i], _extent);
+	}
 }
 
-void redox::graphics::Swapchain::visit(FunctionRef<void(const Framebuffer&, const CommandBufferView&)> fn) const {
-	for (std::size_t index = 0; index < _frameBuffers.size(); ++index)
+void redox::graphics::Swapchain::visit(FunctionRef<void(const Framebuffer&, CommandBufferView)> fn) const {
+	for (std::size_t index = 0; index < _frameBuffers.size(); ++index) {
 		fn(_frameBuffers[index], _commandPool[index]);
+	}
 }
 
 void redox::graphics::Swapchain::present() {
@@ -84,8 +87,9 @@ void redox::graphics::Swapchain::present() {
 	submitInfo.signalSemaphoreCount = util::array_size<uint32_t>(signalSemaphores);
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+	if (vkQueueSubmit(Graphics::instance().graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
 		throw Exception("failed to submit queue");
+	}
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -96,8 +100,9 @@ void redox::graphics::Swapchain::present() {
 	presentInfo.pImageIndices = &imageIndex;
 
 	auto result = vkQueuePresentKHR(Graphics::instance().present_queue(), &presentInfo);
-	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR))
+	if ((result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)) {
 		_reload();
+	}
 }
 
 void redox::graphics::Swapchain::_reload() {

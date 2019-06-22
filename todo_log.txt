@@ -1,0 +1,18 @@
+
+
+363899
+
+.gitignore 144 # TODO: Comment the next line if you want to checkin your web deploy settings
+
+
+Luis von der Eltz
+
+redox/src/graphics/vulkan/render_system.cpp  38 //TODO: Set depending on application
+redox/src/math/mat.h 162 //TODO: Optimize
+redox/src/math/mat.h 140 //TODO: Optimize
+redox/src/platform/window_win.cpp 197 //TODO: implement more
+redox/thirdparty/function_ref/function_ref.hpp 214 // TODO, will require some kind of callable traits
+redox/thirdparty/gltf/cgltf.h  540 //TODO: error handling?
+redox/thirdparty/stbimage/stb_image.h 1099 // @TODO: move stbi__convert_format to here
+redox/thirdparty/stbimage/stb_image.h 1123 // @TODO: move stbi__convert_format16 to here
+redox/thirdparty/stbimage/stb_image.h 1124 for 8-bit-to-16-bit case to keep more precision

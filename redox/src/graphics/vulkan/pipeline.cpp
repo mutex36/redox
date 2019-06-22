@@ -187,8 +187,10 @@ void redox::graphics::Pipeline::_init_desriptors(const DescriptorLayout& dLayout
 	layoutInfo.pBindings = dLayout.bindings.data();
 	//VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 
-	if (vkCreateDescriptorSetLayout(Graphics::instance().device(), &layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS)
+	if (vkCreateDescriptorSetLayout(Graphics::instance().device(), 
+		&layoutInfo, nullptr, &_descriptorSetLayout) != VK_SUCCESS) {
 		throw Exception("failed to create descriptor set layout");
+	}
 }
 
 void redox::graphics::Pipeline::_update_viewport(const CommandBufferView& cbo) {

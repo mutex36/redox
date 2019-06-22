@@ -25,6 +25,7 @@ SOFTWARE.
 */
 #include "command_pool.h"
 #include "graphics.h"
+#include "commands.h"
 
 redox::graphics::CommandPool::CommandPool(VkCommandPoolCreateFlags flags) {
 	VkCommandPoolCreateInfo poolInfo{};
@@ -60,7 +61,6 @@ void redox::graphics::CommandPool::allocate(uint32_t numBuffers) {
 	}
 }
 
-
 redox::graphics::CommandBufferView redox::graphics::CommandPool::operator[](std::size_t index) const {
 	return _commandBuffers[index];
 }
@@ -69,13 +69,22 @@ redox::graphics::CommandBufferView::CommandBufferView(VkCommandBuffer handle) :
 	_handle(handle) {
 }
 
-void redox::graphics::CommandBufferView::submit(const IndexedDraw& command) const {
-	command.material->bind(_handle);
-	command.mesh->bind(_handle);
-	vkCmdDrawIndexed(_handle, command.range.count, 1, command.range.start, 0, 0);
+//void redox::graphics::CommandBufferView::_flush() {
+//	std::sort(_commands.begin(), _commands.end(), [](const auto& a, const auto& b) {
+//		return a->sort_key() < b->sort_key();
+//	});
+//
+//	for (auto& command : _commands) {
+//		command->execute(*this);
+//	}
+//}
+
+void redox::graphics::CommandBufferView::submit(UniquePtr<ICommand> command) {
+	//_commands.push_back(std::move(command));
+	command->execute(*this);
 }
 
-void redox::graphics::CommandBufferView::begin_record() const {
+void redox::graphics::CommandBufferView::begin_record() {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -85,7 +94,9 @@ void redox::graphics::CommandBufferView::begin_record() const {
 	}
 }
 
-void redox::graphics::CommandBufferView::end_record() const {
+void redox::graphics::CommandBufferView::end_record() {
+	//_flush();
+
 	if (vkEndCommandBuffer(_handle) != VK_SUCCESS) {
 		throw Exception("failed to end recording of commandBuffer");
 	}

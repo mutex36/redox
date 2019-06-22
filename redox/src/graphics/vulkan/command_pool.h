@@ -25,40 +25,31 @@ SOFTWARE.
 */
 #pragma once
 #include "vulkan.h"
-
+#include "commands.h"
 #include "resources/mesh.h"
 #include "resources/material.h"
 
 namespace redox::graphics {
-	class Graphics;
-
-	struct IndexRange {
-		uint32_t start, count;
-	};
-
-	struct IndexedDraw {
-		ResourceHandle<Mesh> mesh;
-		ResourceHandle<Material> material;
-		IndexRange range;
-	};
 
 	class CommandBufferView {
 	public:
 		CommandBufferView(VkCommandBuffer handle);
 		~CommandBufferView() = default;
 
-		void submit(const IndexedDraw& command) const;
+		void submit(UniquePtr<ICommand> command);
 
-		[[nodiscard]] auto scoped_record() const {
+		[[nodiscard]] auto scoped_record() {
 			begin_record();
 			return make_scope_guard([this]() { end_record(); });
 		}
-		void begin_record() const;
-		void end_record() const;
+		void begin_record();
+		void end_record();
 
 		VkCommandBuffer handle() const;
 
 	private:
+		//void _flush();
+		//redox::Buffer<UniquePtr<ICommand>> _commands;
 		VkCommandBuffer _handle;
 	};
 

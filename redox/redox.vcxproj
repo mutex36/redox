@@ -103,6 +103,7 @@
     <ClCompile Include="src\core\config\config.cpp" />
     <ClCompile Include="src\core\logging\log_win.cpp" />
     <ClCompile Include="src\graphics\vulkan\buffer.cpp" />
+    <ClCompile Include="src\graphics\vulkan\commands.cpp" />
     <ClCompile Include="src\graphics\vulkan\descriptor_pool.cpp" />
     <ClCompile Include="src\graphics\vulkan\factory\model_factory.cpp" />
     <ClCompile Include="src\graphics\vulkan\factory\shader_factory.cpp" />
@@ -143,6 +144,7 @@
     <ClInclude Include="src\graphics\vulkan\descriptor_layout.h" />
     <ClInclude Include="src\graphics\vulkan\descriptor_pool.h" />
     <ClInclude Include="src\graphics\vulkan\buffer.h" />
+    <ClInclude Include="src\graphics\vulkan\commands.h" />
     <ClInclude Include="src\graphics\vulkan\factory\model_factory.h" />
     <ClInclude Include="src\graphics\vulkan\factory\shader_factory.h" />
     <ClInclude Include="src\graphics\vulkan\factory\texture_factory.h" />

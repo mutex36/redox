@@ -42,7 +42,7 @@ namespace redox::graphics {
 		~Swapchain();
 
 		void create_fbs(const RenderPass& renderPass);
-		void visit(FunctionRef<void(const Framebuffer&, const CommandBufferView&)> fn) const;
+		void visit(FunctionRef<void(const Framebuffer&, CommandBufferView)> fn) const;
 		void present();
 
 		VkSwapchainKHR handle() const;

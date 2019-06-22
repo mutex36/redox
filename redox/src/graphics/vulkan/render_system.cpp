@@ -24,7 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include <graphics/vulkan/render_system.h>
-
 #include <core/utility.h>
 #include <core/profiling/profiler.h>
 #include <core/application.h>
@@ -104,16 +103,16 @@ void redox::graphics::RenderSystem::_demo_cam_move() {
 }
 
 void redox::graphics::RenderSystem::_demo_draw() {
-	_swapchain->visit([this](const Framebuffer& frameBuffer, const CommandBufferView& commandBuffer) {
+	_swapchain->visit([this](const Framebuffer& frameBuffer, CommandBufferView commandBuffer) {
 		RDX_UNUSED(commandBuffer.scoped_record());
 		RDX_UNUSED(_forwardPass->scoped_begin(frameBuffer, commandBuffer));
 
 		for (const auto& mesh : _demoModel->meshes()) {
 			for (const auto& sm : mesh->submeshes()) {
 				auto material = _demoModel->materials()[sm.materialIndex];
-				commandBuffer.submit(IndexedDraw{
-					mesh, material, {sm.indexOffset, sm.indexCount}
-				});
+				commandBuffer.submit(make_unique<IndexedDraw>(
+					mesh, material, IndexRange{sm.indexOffset, sm.indexCount}
+				));
 			}
 		}
 	});

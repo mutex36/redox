@@ -53,6 +53,9 @@ if (!redox::detail::assert_true(a))		\
 if (!redox::detail::assert_false(a))	\
 	RDX_DEBUG_BREAK();					\
 
+#define RDX_DBG(exp)							   \
+redox::detail::dbg(__FILE__, __LINE__, #exp, exp)  \
+
 #define RDX_ASSERT_MAIN_THREAD															\
 RDX_ASSERT(::redox::Application::instance->main_thread() == std::this_thread::get_id()); \
 
@@ -68,51 +71,57 @@ namespace redox {
 		void impl_restore_console_color();
 
 		template<class...Args>
-		RDX_INLINE void debug_log(redox::StringView fmts, const Args&...args) {
+		void debug_log(redox::StringView fmts, const Args&...args) {
 			auto fmt = redox::format(fmts, args...);
 			impl_debug_log(fmt);
 		}
 
 		template<class...Args>
-		RDX_INLINE void log(redox::StringView fmts, const Args&...args) {
+		void log(redox::StringView fmts, const Args&...args) {
 			auto fmt = redox::format(fmts, args...);
 			auto fst = redox::format("[{0}] {1}", std::chrono::system_clock::now(), fmt);
 			std::puts(fst.c_str());
 		}
 
 		template<class...Args>
-		RDX_INLINE void log(redox::StringView fmts, redox::ConsoleColor color, const Args&...args) {
+		void log(redox::StringView fmts, redox::ConsoleColor color, const Args&...args) {
 			impl_set_console_color(color);
 			log(fmts, args...);
 			impl_restore_console_color();
 		}
 
 		template<class T1>
-		RDX_INLINE bool assert_true(const T1& a) {
+		bool assert_true(const T1& a) {
 			if (a) return true;
 			log("Assertion failed: {0} == true\n", ConsoleColor::RED, a);
 			return false;
 		}
 
 		template<class T1>
-		RDX_INLINE bool assert_false(const T1& a) {
+		bool assert_false(const T1& a) {
 			if (!a) return true;
 			log("Assertion failed: {0} == false\n", ConsoleColor::RED, a);
 			return false;
 		}
 
 		template<class T1, class T2>
-		RDX_INLINE bool assert_eq(const T1& a, const T2& b) {
+		bool assert_eq(const T1& a, const T2& b) {
 			if (a == b) return true;
 			log("Assertion failed: {0} == {1}\n", ConsoleColor::RED, a, b);
 			return false;
 		}
 
 		template<class T1, class T2>
-		RDX_INLINE bool assert_neq(const T1& a, const T2& b) {
+		bool assert_neq(const T1& a, const T2& b) {
 			if (a != b) return true;
 			log("Assertion failed: {0} != {1}\n", ConsoleColor::RED, a, b);
 			return false;
+		}
+
+		template<class T>
+		T dbg(redox::StringView file, i32 line, redox::StringView exp, T&& value) {
+			log("[{0}:{1}] {2} = {3}", ConsoleColor::GREEN, file, line, exp, value);
+			return value;
 		}
 	}
 }
